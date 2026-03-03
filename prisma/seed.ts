@@ -1,5 +1,6 @@
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient } from "../src/generated/prisma/client"
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import bcrypt from 'bcrypt'
 
 const adapter = new PrismaBetterSqlite3({
     url: 'file:./prisma/dev.db'
@@ -139,6 +140,15 @@ async function main() {
             }
         })
     }
+
+    await prisma.user.create({
+  data: {
+    email: 'test2@example.com',
+    password: await bcrypt.hash('123456', 10),
+    name: 'Test User 2',
+    role: 'user'
+  }
+})
 
 
 
