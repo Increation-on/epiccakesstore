@@ -26,7 +26,9 @@ const handler = NextAuth({
                 if (!user) {
                     return null
                 }
-
+                if (!user.password) {
+                    return null
+                }
                 const isValid = await bcrypt.compare(
                     credentials.password,
                     user.password
@@ -65,6 +67,10 @@ const handler = NextAuth({
                 session.user.role = token.role
             }
             return session
+        },
+
+        async redirect({ url, baseUrl }) {
+            return baseUrl
         }
     }
 })
