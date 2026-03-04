@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from 'next/font/google';
 import Link from "next/link";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/layout/Navbar";
 import { SessionProvider } from "next-auth/react";
 
 // Подключаем шрифты

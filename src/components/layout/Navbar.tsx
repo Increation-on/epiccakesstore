@@ -1,6 +1,6 @@
 // src/components/Navbar.tsx
 import Link from 'next/link';
-import { AuthStatus } from './AuthStatus'; // путь может отличаться
+import { AuthStatus } from '../auth/AuthStatus'; // путь может отличаться
 
 export default function Navbar() {
   return (
