@@ -88,7 +88,7 @@ async function main() {
         where: { slug: 'klubnichnye-kapkeyki' }
     })
 
-    if(!strawberryCupkakes) {
+    if (!strawberryCupkakes) {
         await prisma.product.create({
             data: {
                 name: 'Клубничные капкейки',
@@ -141,14 +141,20 @@ async function main() {
         })
     }
 
-    await prisma.user.create({
-  data: {
-    email: 'test2@example.com',
-    password: await bcrypt.hash('123456', 10),
-    name: 'Test User 2',
-    role: 'user'
-  }
-})
+    const existingUser2 = await prisma.user.findUnique({
+        where: { email: 'test2@example.com' }
+    });
+    if (!existingUser2) {
+        await prisma.user.create({
+            data: {
+                email: 'test2@example.com',
+                password: await bcrypt.hash('123456', 10),
+                name: 'Test User 2',
+                role: 'user'
+            }
+        })
+    }
+
 
 
 
