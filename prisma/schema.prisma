@@ -34,6 +34,12 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Индексы для фильтрации
+  @@index([price])           // для фильтра по цене
+  @@index([inStock])         // для фильтра "в наличии"
+  @@index([createdAt])       // для сортировки по новизне
+  @@index([name])            // для поиска/сортировки по имени
+
   orderItems OrderItem[]
 
   categories Category[]

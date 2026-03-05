@@ -9,8 +9,8 @@ export async function GET(request: NextRequest) {
     const searchQuery = searchParams.get('search') || '';
     const categoryId = searchParams.get('category');
     const sort = searchParams.get('sort') || 'newest';
-    const minPrice = searchParams.get('minPrice');  // новый параметр
-    const maxPrice = searchParams.get('maxPrice');  // новый параметр 
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice'); 
     const limit = 12;
     const skip = (page - 1) * limit;
     const inStock = searchParams.get('inStock') === 'true';
@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
     // Собираем условия where
     const where: any = {};
 
-    // Поиск по тексту
     if (searchQuery) {
       where.OR = [
         { name: { contains: searchQuery } },
@@ -44,26 +43,22 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Фильтр по категории
     if (categoryId) {
       where.categories = {
         some: { id: categoryId }
       };
     }
 
-    // Фильтр по цене
     if (minPrice || maxPrice) {
       where.price = {};
       if (minPrice) where.price.gte = Number(minPrice);
       if (maxPrice) where.price.lte = Number(maxPrice);
     }
 
-     // Фильтр "только в наличии"
+    // ✅ Добавляем фильтр "только в наличии"
     if (inStock) {
-      console.log('Filtering inStock only');
       where.inStock = true;
     }
-    console.log('Where condition:', JSON.stringify(where, null, 2))
 
     const [products, totalCount] = await prisma.$transaction([
       prisma.product.findMany({
@@ -76,8 +71,14 @@ export async function GET(request: NextRequest) {
       prisma.product.count({ where })
     ]);
 
+    // Преобразуем images из JSON в массив
+    const formattedProducts = products.map(p => ({
+      ...p,
+      imageUrls: JSON.parse(p.images || '[]')
+    }));
+
     return NextResponse.json({
-      products,
+      products: formattedProducts,  // ✅ правильное имя
       totalCount,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit)

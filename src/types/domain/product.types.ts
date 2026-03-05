@@ -1,26 +1,16 @@
+// src/types/domain/product.types.ts
 import { WithId, Timestamp } from '../core';
+import { Category } from './categoery.types';
 
-// ---------- БАЗОВЫЙ ТИП (то, что в БД) ----------
+// ---------- БАЗОВЫЙ ТИП (соответствует Prisma) ----------
 export type Product = WithId & Timestamp & {
   name: string;
+  slug: string;
   description: string;
   price: number;
-  imageUrls: string[];        // массив фото
-  categoryId: number;
-  stockQuantity: number;       // реальное количество на складе
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-// ---------- ДЛЯ ПОЛЬЗОВАТЕЛЯ (клиент) ----------
-export type ProductResponse = Omit<Product, 'stockQuantity'> & {
-  inStock: boolean;  // вычисляемое поле: stockQuantity > 0
-};
-
-// ---------- ДЛЯ АДМИНА ----------
-export type ProductAdminResponse = Product & {
-  // можно добавить служебные поля, если нужно
-  lowStock: boolean;  // например, мало осталось
+  images: string | string[];           // JSON строка из БД
+  inStock: boolean;         // вместо stockQuantity
+  categories?: Category[];  // для include
 };
 
 // ---------- ДЛЯ СОЗДАНИЯ ----------
@@ -29,10 +19,11 @@ export type CreateProductInput = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
 // ---------- ДЛЯ ОБНОВЛЕНИЯ ----------
 export type UpdateProductInput = Partial<CreateProductInput>;
 
-// ---------- ДЛЯ ФИЛЬТРАЦИИ (опционально) ----------
+// ---------- ДЛЯ ФИЛЬТРАЦИИ ----------
 export type ProductFilters = {
-  categoryId?: number;
+  categoryId?: string;     // теперь string (cuid)
   minPrice?: number;
   maxPrice?: number;
   inStockOnly?: boolean;
+  search?: string;
 };

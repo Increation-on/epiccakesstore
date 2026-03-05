@@ -7,12 +7,12 @@ type ProductCardProps = {
   product: Product;  // используем готовый тип
 };
 
-export default function ProductCard({ product }: ProductCardProps) {
+export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Card className="p-4">  {/* если Card сам не добавляет padding */}
       <div className="bg-gray-200 h-48 mb-4 rounded flex items-center justify-center text-gray-500">
-        {product.imageUrls?.[0] ? (
-          <img src={product.imageUrls[0]} alt={product.name} className="object-cover w-full h-full" />
+        {product.images?.[0] ? (
+          <img src={product.images[0]} alt={product.name} className="object-cover w-full h-full" />
         ) : (
           `[Фото: ${product.name}]`
         )}
@@ -24,3 +24,5 @@ export default function ProductCard({ product }: ProductCardProps) {
     </Card>
   );
 }
+
+export default ProductCard
