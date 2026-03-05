@@ -8,7 +8,7 @@ export type DeepPartial<T> = {
 };
 
 export type WithId = {
-  id: number;
+  id: number | string;
 };
 
 export type Timestamp = {

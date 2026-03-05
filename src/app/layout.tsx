@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from 'next/font/google';
 import Link from "next/link";
 import "./globals.css";
-import { AuthStatus } from "@/components/AuthStatus";
+import Navbar from "@/components/layout/Navbar";
 import { SessionProvider } from "next-auth/react";
 
 // Подключаем шрифты
@@ -29,7 +29,7 @@ export default function RootLayout({
     <html>
       <body>
         <SessionProvider refetchInterval={0}>
-          <AuthStatus />
+          <Navbar/>
           {children}
         </SessionProvider>
 
