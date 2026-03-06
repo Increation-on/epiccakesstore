@@ -21,6 +21,35 @@ model User {
   accounts      Account[]
   sessions      Session[]
   orders        Order[]             // твоя связь
+
+  carts Cart[]
+}
+
+// Добавить после модели User или в любое место
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  addedAt   DateTime @default(now())
+
+  @@unique([cartId, productId])  // один товар - одна запись в корзине
+  @@index([cartId])
+  @@index([productId])
 }
 
 model Product {
@@ -43,6 +72,7 @@ model Product {
   orderItems OrderItem[]
 
   categories Category[]
+  cartItems CartItem[]
 }
 
 model Category {

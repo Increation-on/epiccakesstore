@@ -1,13 +1,16 @@
 import { User as AppUser } from './domain/user.types'
+import { DefaultSession } from 'next-auth'
 
 declare module 'next-auth' {
   interface Session {
     user: {
-      role: AppUser['role']  // используем твой тип роли
+      id: string              // добавляем id
+      role: AppUser['role']   // используем твой тип роли
     } & DefaultSession['user']
   }
 
   interface User {
-    role: AppUser['role']  // 'admin' | 'user' | 'guest'
+    id: string                // добавляем id
+    role: AppUser['role']     // 'admin' | 'user' | 'guest'
   }
 }

@@ -3,10 +3,11 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import bcrypt from 'bcrypt'
-import { User as NextAuthUser } from "next-auth"
+import { User as NextAuthUser, NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 
-const handler = NextAuth({
+
+export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
     providers: [
         CredentialsProvider({
@@ -58,13 +59,15 @@ const handler = NextAuth({
         async jwt({ token, user }) {
             if (user) {
                 token.role = user.role
+                token.id = user.id
             }
             return token
         },
 
         async session({ session, token }) {
             if (session?.user) {
-                session.user.role = token.role
+                session.user.role = token.role as 'user' | 'admin' | 'guest'
+                session.user.id = token.id as string
             }
             return session
         },
@@ -73,6 +76,8 @@ const handler = NextAuth({
             return baseUrl
         }
     }
-})
+}
+
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }
