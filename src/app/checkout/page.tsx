@@ -5,6 +5,19 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Product } from '@/types/domain/product.types'
 import Link from 'next/link'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+
+// Схема валидации
+const checkoutSchema = z.object({
+  fullName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
+  email: z.string().email('Некорректный email'),
+  phone: z.string().min(10, 'Телефон должен содержать минимум 10 символов'),
+  address: z.string().min(5, 'Адрес должен содержать минимум 5 символов')
+})
+
+type CheckoutFormData = z.infer<typeof checkoutSchema>
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -13,9 +26,17 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<CheckoutFormData>({
+    resolver: zodResolver(checkoutSchema)
+  })
+  
   const cartItems = Array.isArray(items) ? items : []
   
-  // Загружаем товары для отображения
+  // Загружаем товары
   useEffect(() => {
     async function loadProducts() {
       if (cartItems.length === 0) {
@@ -45,34 +66,16 @@ export default function CheckoutPage() {
     loadProducts()
   }, [cartItems.length])
   
-  // Если корзина пуста - редирект или показываем сообщение
-  if (cartItems.length === 0) {
-    return (
-      <div className="container mx-auto p-4 text-center">
-        <h1 className="text-2xl font-bold mb-4">Корзина пуста</h1>
-        <p className="mb-4">Нельзя оформить заказ с пустой корзиной</p>
-        <Link href="/cart" className="text-blue-500 hover:underline">
-          Вернуться в корзину
-        </Link>
-      </div>
-    )
-  }
-  
   const totalPrice = cartItems.reduce((sum, item) => {
     const product = products.find(p => p.id === item.productId)
     return sum + (product?.price || 0) * (item?.quantity || 0)
   }, 0)
   
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const onSubmit = async (data: CheckoutFormData) => {
     setSubmitting(true)
     
-    const formData = new FormData(e.currentTarget)
     const orderData = {
-      fullName: formData.get('fullName'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      address: formData.get('address'),
+      ...data,
       items: cartItems.map(item => {
         const product = products.find(p => p.id === item.productId)
         return {
@@ -85,8 +88,7 @@ export default function CheckoutPage() {
       total: totalPrice
     }
     
-    // TODO: отправка на сервер
-    console.log('Заказ:', orderData)
+    console.log('✅ Валидация пройдена!', orderData)
     
     // Имитация отправки
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -94,6 +96,18 @@ export default function CheckoutPage() {
     alert('Заказ оформлен! (тестовый режим)')
     clearCart()
     router.push('/')
+  }
+  
+  if (cartItems.length === 0) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <h1 className="text-2xl font-bold mb-4">Корзина пуста</h1>
+        <p className="mb-4">Нельзя оформить заказ с пустой корзиной</p>
+        <Link href="/cart" className="text-blue-500 hover:underline">
+          Вернуться в корзину
+        </Link>
+      </div>
+    )
   }
   
   return (
@@ -122,46 +136,54 @@ export default function CheckoutPage() {
             </div>
           </div>
           
-          {/* Форма */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Форма с валидацией */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block mb-1 font-medium">Имя *</label>
               <input
                 type="text"
-                name="fullName"
-                required
-                className="w-full p-2 border rounded"
+                {...register('fullName')}
+                className={`w-full p-2 border rounded ${errors.fullName ? 'border-red-500' : ''}`}
               />
+              {errors.fullName && (
+                <p className="text-red-500 text-sm mt-1">{errors.fullName.message}</p>
+              )}
             </div>
             
             <div>
               <label className="block mb-1 font-medium">Email *</label>
               <input
                 type="email"
-                name="email"
-                required
-                className="w-full p-2 border rounded"
+                {...register('email')}
+                className={`w-full p-2 border rounded ${errors.email ? 'border-red-500' : ''}`}
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+              )}
             </div>
             
             <div>
               <label className="block mb-1 font-medium">Телефон *</label>
               <input
                 type="tel"
-                name="phone"
-                required
-                className="w-full p-2 border rounded"
+                {...register('phone')}
+                className={`w-full p-2 border rounded ${errors.phone ? 'border-red-500' : ''}`}
               />
+              {errors.phone && (
+                <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+              )}
             </div>
             
             <div>
               <label className="block mb-1 font-medium">Адрес доставки *</label>
               <textarea
-                name="address"
-                required
+                {...register('address')}
                 rows={3}
-                className="w-full p-2 border rounded"
+                className={`w-full p-2 border rounded ${errors.address ? 'border-red-500' : ''}`}
               />
+              {errors.address && (
+                <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>
+              )}
             </div>
             
             <div className="flex gap-4 pt-4">
