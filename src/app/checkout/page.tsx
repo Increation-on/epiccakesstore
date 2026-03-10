@@ -12,9 +12,12 @@ import { z } from 'zod'
 // Схема валидации
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
-  email: z.string().email('Некорректный email'),
+  email: z.email('Некорректный email'),
   phone: z.string().min(10, 'Телефон должен содержать минимум 10 символов'),
-  address: z.string().min(5, 'Адрес должен содержать минимум 5 символов')
+  address: z.string().min(5, 'Адрес должен содержать минимум 5 символов'),
+  paymentMethod: z.enum(['card', 'cash']).refine(val => val, {
+    message: 'Выберите способ оплаты'
+  })
 })
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>
@@ -25,7 +28,7 @@ export default function CheckoutPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  
+
   const {
     register,
     handleSubmit,
@@ -33,9 +36,9 @@ export default function CheckoutPage() {
   } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema)
   })
-  
+
   const cartItems = Array.isArray(items) ? items : []
-  
+
   // Загружаем товары
   useEffect(() => {
     async function loadProducts() {
@@ -44,9 +47,9 @@ export default function CheckoutPage() {
         setLoading(false)
         return
       }
-      
+
       const productIds = cartItems.map(item => item.productId)
-      
+
       try {
         const res = await fetch('/api/products/by-ids', {
           method: 'POST',
@@ -62,18 +65,18 @@ export default function CheckoutPage() {
         setLoading(false)
       }
     }
-    
+
     loadProducts()
   }, [cartItems.length])
-  
+
   const totalPrice = cartItems.reduce((sum, item) => {
     const product = products.find(p => p.id === item.productId)
     return sum + (product?.price || 0) * (item?.quantity || 0)
   }, 0)
-  
+
   const onSubmit = async (data: CheckoutFormData) => {
     setSubmitting(true)
-    
+
     const orderData = {
       ...data,
       items: cartItems.map(item => {
@@ -87,17 +90,17 @@ export default function CheckoutPage() {
       }),
       total: totalPrice
     }
-    
+
     console.log('✅ Валидация пройдена!', orderData)
-    
+
     // Имитация отправки
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     alert('Заказ оформлен! (тестовый режим)')
     clearCart()
     router.push('/')
   }
-  
+
   if (cartItems.length === 0) {
     return (
       <div className="container mx-auto p-4 text-center">
@@ -109,11 +112,11 @@ export default function CheckoutPage() {
       </div>
     )
   }
-  
+
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Оформление заказа</h1>
-      
+
       {loading ? (
         <div>Загрузка...</div>
       ) : (
@@ -135,7 +138,7 @@ export default function CheckoutPage() {
               <span>{totalPrice} ₽</span>
             </div>
           </div>
-          
+
           {/* Форма с валидацией */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
@@ -149,7 +152,7 @@ export default function CheckoutPage() {
                 <p className="text-red-500 text-sm mt-1">{errors.fullName.message}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block mb-1 font-medium">Email *</label>
               <input
@@ -161,7 +164,7 @@ export default function CheckoutPage() {
                 <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block mb-1 font-medium">Телефон *</label>
               <input
@@ -173,7 +176,7 @@ export default function CheckoutPage() {
                 <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
               )}
             </div>
-            
+
             <div>
               <label className="block mb-1 font-medium">Адрес доставки *</label>
               <textarea
@@ -185,7 +188,35 @@ export default function CheckoutPage() {
                 <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>
               )}
             </div>
-            
+
+            {/* Способ оплаты */}
+            <div>
+              <label className="block mb-1 font-medium">Способ оплаты *</label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    value="card"
+                    {...register('paymentMethod')}
+                    className="w-4 h-4"
+                  />
+                  <span>Картой онлайн</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    value="cash"
+                    {...register('paymentMethod')}
+                    className="w-4 h-4"
+                  />
+                  <span>Наличными при получении</span>
+                </label>
+              </div>
+              {errors.paymentMethod && (
+                <p className="text-red-500 text-sm mt-1">{errors.paymentMethod.message}</p>
+              )}
+            </div>
+
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
@@ -194,7 +225,7 @@ export default function CheckoutPage() {
               >
                 {submitting ? 'Оформляем...' : 'Подтвердить заказ'}
               </button>
-              
+
               <Link
                 href="/cart"
                 className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600"
