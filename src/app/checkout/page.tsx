@@ -75,31 +75,31 @@ export default function CheckoutPage() {
   }, 0)
 
   const onSubmit = async (data: CheckoutFormData) => {
-    setSubmitting(true)
-
-    const orderData = {
-      ...data,
-      items: cartItems.map(item => {
-        const product = products.find(p => p.id === item.productId)
-        return {
-          productId: item.productId,
-          name: product?.name,
-          quantity: item.quantity,
-          price: product?.price
-        }
-      }),
-      total: totalPrice
-    }
-
-    console.log('✅ Валидация пройдена!', orderData)
-
-    // Имитация отправки
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    alert('Заказ оформлен! (тестовый режим)')
-    clearCart()
-    router.push('/')
+  setSubmitting(true)
+  
+  // Сохраняем данные в sessionStorage
+  sessionStorage.setItem('checkoutFormData', JSON.stringify(data))
+  
+  // Можно залогировать данные для отладки
+  const orderData = {
+    ...data,
+    items: cartItems.map(item => {
+      const product = products.find(p => p.id === item.productId)
+      return {
+        productId: item.productId,
+        name: product?.name,
+        quantity: item.quantity,
+        price: product?.price
+      }
+    }),
+    total: totalPrice
   }
+  console.log('✅ Данные сохранены, переходим к подтверждению:', orderData)
+  
+  // Переходим на страницу подтверждения
+  router.push('/checkout/confirm')
+ 
+}
 
   if (cartItems.length === 0) {
     return (
@@ -238,4 +238,4 @@ export default function CheckoutPage() {
       )}
     </div>
   )
-}
+} 
