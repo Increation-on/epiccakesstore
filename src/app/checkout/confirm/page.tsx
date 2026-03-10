@@ -97,7 +97,7 @@ export default function ConfirmPage() {
             sessionStorage.removeItem('checkoutFormData')
             clearCart()
             alert('✅ Заказ оформлен!')
-            router.push('/')
+            window.location.href = `/order/${result.orderId}/success`
         } else {
             // Ошибка от сервера
             alert('❌ Ошибка при оформлении заказа: ' + (result.error || 'Неизвестная ошибка'))
