@@ -9,9 +9,9 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart } = useCartStore()
   const [products, setProducts] = useState<Product[]>([]) // типизируем
   const [loading, setLoading] = useState(true)
-  
+
   const cartItems = Array.isArray(items) ? items : []
-  
+
   useEffect(() => {
     async function loadProducts() {
       if (cartItems.length === 0) {
@@ -19,9 +19,9 @@ export default function CartPage() {
         setLoading(false)
         return
       }
-      
+
       const productIds = cartItems.map(item => item.productId)
-      
+
       try {
         const res = await fetch('/api/products/by-ids', {
           method: 'POST',
@@ -37,15 +37,15 @@ export default function CartPage() {
         setLoading(false)
       }
     }
-    
+
     loadProducts()
   }, [cartItems.length])
-  
+
   const totalPrice = cartItems.reduce((sum, item) => {
     const product = products.find(p => p.id === item.productId)
     return sum + (product?.price || 0) * (item?.quantity || 0)
   }, 0)
-  
+
   if (cartItems.length === 0) {
     return (
       <div className="container mx-auto p-4 text-center">
@@ -56,11 +56,11 @@ export default function CartPage() {
       </div>
     )
   }
-  
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Корзина</h1>
-      
+
       {loading ? (
         <div>Загрузка...</div>
       ) : (
@@ -89,11 +89,15 @@ export default function CartPage() {
               )
             })}
           </div>
-          
+
           <div className="mt-4 text-xl font-bold">
             Итого: {totalPrice} ₽
           </div>
-          
+          <Link href="/checkout">
+            <button className="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg mr-4 hover:bg-green-700 transition">
+              Оформить заказ
+            </button>
+          </Link>
           <button onClick={clearCart} className="mt-4 bg-gray-500 text-white px-4 py-2 rounded">
             Очистить
           </button>

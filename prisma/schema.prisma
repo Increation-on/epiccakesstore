@@ -10,17 +10,17 @@ datasource db {
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String?   @unique  // теперь опциональный!
-  emailVerified DateTime?           // добавили
-  image         String?             // добавили
-  password      String?             // твоё кастомное поле
-  role          String   @default("user")  // твоё кастомное поле
-  createdAt     DateTime @default(now())   // можно оставить
-  updatedAt     DateTime @updatedAt        // можно оставить
+  email         String?   @unique // теперь опциональный!
+  emailVerified DateTime? // добавили
+  image         String? // добавили
+  password      String? // твоё кастомное поле
+  role          String    @default("user") // твоё кастомное поле
+  createdAt     DateTime  @default(now()) // можно оставить
+  updatedAt     DateTime  @updatedAt // можно оставить
 
-  accounts      Account[]
-  sessions      Session[]
-  orders        Order[]             // твоя связь
+  accounts Account[]
+  sessions Session[]
+  orders   Order[] // твоя связь
 
   carts Cart[]
 }
@@ -28,12 +28,12 @@ model User {
 // Добавить после модели User или в любое место
 
 model Cart {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     CartItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   @@index([userId])
 }
@@ -47,7 +47,7 @@ model CartItem {
   quantity  Int
   addedAt   DateTime @default(now())
 
-  @@unique([cartId, productId])  // один товар - одна запись в корзине
+  @@unique([cartId, productId]) // один товар - одна запись в корзине
   @@index([cartId])
   @@index([productId])
 }
@@ -63,16 +63,16 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Индексы для фильтрации
-  @@index([price])           // для фильтра по цене
-  @@index([inStock])         // для фильтра "в наличии"
-  @@index([createdAt])       // для сортировки по новизне
-  @@index([name])            // для поиска/сортировки по имени
-
   orderItems OrderItem[]
 
   categories Category[]
-  cartItems CartItem[]
+  cartItems  CartItem[]
+
+  // Индексы для фильтрации
+  @@index([price]) // для фильтра по цене
+  @@index([inStock]) // для фильтра "в наличии"
+  @@index([createdAt]) // для сортировки по новизне
+  @@index([name]) // для поиска/сортировки по имени
 }
 
 model Category {
@@ -86,27 +86,44 @@ model Category {
 }
 
 model Order {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Данные покупателя (НОВЫЕ)
+  fullName      String
+  email         String
+  phone         String
+  address       String
+  paymentMethod String // 'card' или 'cash'
+
+  // Существующие поля
   status    String   @default("pending")
   total     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   orderItems OrderItem[]
+
+  @@index([userId])
+  @@index([status])
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id])
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  quantity    Int
-  priceAtTime Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId    String
+  productName  String // НОВОЕ: сохраняем название на момент заказа
+  productPrice Float // переименовать priceAtTime -> productPrice для ясности
+  quantity     Int
+
+  // Опционально: связь с Product (если нужно)
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 // Модели для PrismaAdapter
