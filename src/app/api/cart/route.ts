@@ -57,35 +57,41 @@ export async function POST(request: Request) {
   
   if (!session?.user?.id) {
     console.log('3. Нет userId, возвращаем 401')
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) // ✅ есть return
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
     const { items } = await request.json()
-    console.log('4. Получены items:', items)
+    console.log('4. Получены items:', JSON.stringify(items, null, 2))
+    console.log('4a. Количество items:', items?.length)
 
     const result = await prisma.$transaction(async (tx) => {
+      console.log('5. Начинаем транзакцию для user:', session.user.id)
+      
       const cart = await tx.cart.upsert({
         where: { userId: session.user.id },
         update: {},
         create: { userId: session.user.id }
       })
+      console.log('6. Cart после upsert:', cart)
 
-      await tx.cartItem.deleteMany({
+      const deleted = await tx.cartItem.deleteMany({
         where: { cartId: cart.id }
       })
+      console.log('7. Удалено старых items:', deleted.count)
 
       if (items?.length > 0) {
-        await tx.cartItem.createMany({
+        const created = await tx.cartItem.createMany({
           data: items.map((item: any) => ({
             cartId: cart.id,
             productId: item.productId,
             quantity: item.quantity
           }))
         })
+        console.log('8. Создано новых items:', created.count)
       }
 
-      return tx.cart.findUnique({
+      const finalCart = await tx.cart.findUnique({
         where: { id: cart.id },
         include: {
           items: {
@@ -103,16 +109,19 @@ export async function POST(request: Request) {
           }
         }
       })
+      console.log('9. Финальная корзина:', finalCart?.items?.length, 'товаров')
+      
+      return finalCart
     })
 
-    console.log('5. Успешно сохранено')
-    return NextResponse.json(result?.items || []) // ✅ есть return
+    console.log('10. Успешно сохранено, возвращаем:', result?.items?.length, 'товаров')
+    return NextResponse.json(result?.items || [])
 
   } catch (error) {
-    console.error('6. Ошибка:', error)
+    console.error('11. Ошибка:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    ) // ✅ есть return
+    )
   }
 }

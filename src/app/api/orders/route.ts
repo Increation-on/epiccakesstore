@@ -8,19 +8,18 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions)
     const body = await req.json()
     
-    const { fullName, email, phone, address, paymentMethod, items, total } = body
+    const { fullName, email, phone, address, paymentMethod, items, total, status } = body
     
-    // Создаём заказ в БД
     const order = await prisma.order.create({
       data: {
-        userId: session?.user?.id, // может быть undefined для гостей
+        userId: session?.user?.id,
         fullName,
         email,
         phone,
         address,
         paymentMethod,
         total,
-        status: 'pending',
+        status: status || 'PENDING', // если не передан статус — по умолчанию PENDING
         orderItems: {
           create: items.map((item: any) => ({
             productId: item.productId,
@@ -35,12 +34,7 @@ export async function POST(req: Request) {
       }
     })
     
-    // Если пользователь авторизован - очищаем корзину
-    if (session?.user?.id) {
-      await prisma.cart.deleteMany({
-        where: { userId: session.user.id }
-      })
-    }
+    // НЕ очищаем корзину сразу! Очистим после оплаты
     
     return NextResponse.json({ 
       message: 'Заказ создан',

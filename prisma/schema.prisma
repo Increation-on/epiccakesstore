@@ -126,6 +126,15 @@ model OrderItem {
   @@index([productId])
 }
 
+enum OrderStatus {
+  PENDING_PAYMENT  // ожидает оплаты
+  PAID             // оплачен
+  PROCESSING       // в обработке
+  SHIPPED          // отправлен
+  DELIVERED        // доставлен
+  CANCELLED        // отменён
+}
+
 // Модели для PrismaAdapter
 model Account {
   id                String  @id @default(cuid())

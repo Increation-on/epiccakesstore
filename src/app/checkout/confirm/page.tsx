@@ -5,18 +5,127 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Product } from '@/types/domain/product.types'
 import Link from 'next/link'
+import { StripePayment } from '@/components/features/StripePayment'
+import { useSession } from 'next-auth/react'
 
 export default function ConfirmPage() {
     const router = useRouter()
-    const { items, clearCart } = useCartStore()
+    const { data: session, status } = useSession()
+    const { items, setItems, addItem, clearCart } = useCartStore()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+    const [loadingPayment, setLoadingPayment] = useState(false)
+    const [showPayment, setShowPayment] = useState(false)
+    const [clientSecret, setClientSecret] = useState<string | null>(null)
+    const [orderId, setOrderId] = useState<string | null>(null)
+    const [cartLoaded, setCartLoaded] = useState(false)
 
     // Получаем данные из sessionStorage (где сохранили после шага 1)
     const [formData, setFormData] = useState<any>(null)
 
     const cartItems = Array.isArray(items) ? items : []
+
+    // 🔥 НОВОЕ: Перенос корзины после входа/регистрации
+    useEffect(() => {
+        const transferCart = async () => {
+            // Проверяем, есть ли параметр cartTransfer в URL
+            const urlParams = new URLSearchParams(window.location.search)
+            const shouldTransfer = urlParams.get('cartTransfer') === 'true'
+
+            if (session && shouldTransfer && status === 'authenticated') {
+                console.log('🔄 Переносим гостевую корзину в БД')
+
+                // Получаем гостевую корзину из localStorage
+                const savedCart = localStorage.getItem('cart-storage')
+                if (savedCart) {
+                    const guestCart = JSON.parse(savedCart)
+                    const items = guestCart.state?.items || []
+
+                    if (items.length > 0) {
+                        // 1. Получаем текущую корзину пользователя
+                        const userCartRes = await fetch('/api/cart')
+                        const userCart = await userCartRes.json()
+
+                        // 2. Объединяем корзины
+                        const mergedItems = [...userCart]
+
+                        items.forEach((guestItem: any) => {
+                            const existing = mergedItems.find(
+                                (item: any) => item.productId === guestItem.productId
+                            )
+
+                            if (existing) {
+                                // Если товар уже есть — увеличиваем количество
+                                existing.quantity += guestItem.quantity
+                            } else {
+                                // Если нет — добавляем новый
+                                mergedItems.push({
+                                    id: crypto.randomUUID(),
+                                    productId: guestItem.productId,
+                                    quantity: guestItem.quantity,
+                                    addedAt: new Date().toISOString()
+                                })
+                            }
+                        })
+
+                        // 3. Отправляем объединённую корзину на сервер
+                        await fetch('/api/cart', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ items: mergedItems })
+                        })
+
+                        // 4. Обновляем стор
+                        setItems(mergedItems)
+                    }
+                }
+
+                // Убираем параметр из URL
+                const url = new URL(window.location.href)
+                url.searchParams.delete('cartTransfer')
+                window.history.replaceState({}, '', url.toString())
+            }
+        }
+
+        transferCart()
+    }, [session, status, setItems])
+
+    // Восстанавливаем состояние оплаты при загрузке
+    useEffect(() => {
+        const savedPaymentState = sessionStorage.getItem('paymentState')
+        if (savedPaymentState) {
+            const { showPayment, clientSecret, orderId, timestamp } = JSON.parse(savedPaymentState)
+
+            // Проверяем, что прошло не больше 5 минут (300000 мс)
+            if (timestamp && Date.now() - timestamp < 5 * 60 * 1000) {
+                setShowPayment(showPayment)
+                setClientSecret(clientSecret)
+                setOrderId(orderId)
+            } else {
+                sessionStorage.removeItem('paymentState')
+            }
+        }
+    }, [])
+
+    // Сохраняем состояние оплаты при изменении
+    useEffect(() => {
+        if (showPayment && clientSecret && orderId) {
+            sessionStorage.setItem('paymentState', JSON.stringify({
+                showPayment,
+                clientSecret,
+                orderId,
+                timestamp: Date.now()
+            }))
+        } else {
+            sessionStorage.removeItem('paymentState')
+        }
+    }, [showPayment, clientSecret, orderId])
+
+    // Следим за загрузкой корзины
+    useEffect(() => {
+        if (items) setCartLoaded(true)
+    }, [items])
 
     useEffect(() => {
         // Загружаем товары
@@ -62,53 +171,134 @@ export default function ConfirmPage() {
         return sum + (product?.price || 0) * (item?.quantity || 0)
     }, 0)
 
-   const handleConfirm = async () => {
-    setSubmitting(true)
+    const handleConfirm = async () => {
+        setSubmitting(true)
 
-    const orderData = {
-        ...formData,
-        items: cartItems.map(item => {
-            const product = products.find(p => p.id === item.productId)
-            return {
-                productId: item.productId,
-                name: product?.name,
-                quantity: item.quantity,
-                price: product?.price
-            }
-        }),
-        total: totalPrice
-    }
-
-    console.log('✅ Отправляем заказ:', orderData)
-
-    try {
-        // Отправляем на API
-        const res = await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData)
-        })
-
-        const result = await res.json()
-        console.log('Ответ от сервера:', result)
-
-        if (res.ok) {
-            // Всё хорошо - чистим и редиректим
-            sessionStorage.removeItem('checkoutFormData')
-            clearCart()
-            alert('✅ Заказ оформлен!')
-            window.location.href = `/order/${result.orderId}/success`
-        } else {
-            // Ошибка от сервера
-            alert('❌ Ошибка при оформлении заказа: ' + (result.error || 'Неизвестная ошибка'))
+        const orderData = {
+            ...formData,
+            items: cartItems.map(item => {
+                const product = products.find(p => p.id === item.productId)
+                return {
+                    productId: item.productId,
+                    name: product?.name,
+                    quantity: item.quantity,
+                    price: product?.price
+                }
+            }),
+            total: totalPrice,
+            status: 'PENDING'
         }
-    } catch (error) {
-        console.error('Ошибка:', error)
-        alert('❌ Ошибка при отправке заказа')
-    } finally {
-        setSubmitting(false)
+
+        try {
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            })
+
+            const result = await res.json()
+
+            if (res.ok) {
+                sessionStorage.removeItem('checkoutFormData')
+                sessionStorage.removeItem('paymentState')
+                clearCart()
+                window.location.href = `/order/${result.orderId}/success`
+            } else {
+                alert('❌ Ошибка при оформлении заказа: ' + (result.error || 'Неизвестная ошибка'))
+            }
+        } catch (error) {
+            console.error('Ошибка:', error)
+            alert('❌ Ошибка при отправке заказа')
+        } finally {
+            setSubmitting(false)
+        }
     }
-}
+
+    const handleTestPayment = async () => {
+        setLoadingPayment(true)
+        try {
+            const res = await fetch('/api/create-payment-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: totalPrice })
+            })
+
+            const data = await res.json()
+            console.log('✅ PaymentIntent создан:', data)
+            alert('PaymentIntent создан! Смотри консоль (F12)')
+        } catch (error) {
+            console.error('Ошибка:', error)
+            alert('❌ Ошибка при создании PaymentIntent')
+        } finally {
+            setLoadingPayment(false)
+        }
+    }
+
+    const handleStartPayment = async () => {
+        setLoadingPayment(true)
+        try {
+            const orderData = {
+                ...formData,
+                items: cartItems.map(item => {
+                    const product = products.find(p => p.id === item.productId)
+                    return {
+                        productId: item.productId,
+                        name: product?.name,
+                        quantity: item.quantity,
+                        price: product?.price
+                    }
+                }),
+                total: totalPrice,
+                status: 'PENDING_PAYMENT'
+            }
+
+            const orderRes = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            })
+
+            const orderResult = await orderRes.json()
+            const newOrderId = orderResult.orderId
+            setOrderId(newOrderId)
+
+            const paymentRes = await fetch('/api/create-payment-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: totalPrice,
+                    orderId: newOrderId
+                })
+            })
+
+            const paymentData = await paymentRes.json()
+            setClientSecret(paymentData.clientSecret)
+            setShowPayment(true)
+
+            sessionStorage.setItem('paymentState', JSON.stringify({
+                showPayment: true,
+                clientSecret: paymentData.clientSecret,
+                orderId: newOrderId,
+                timestamp: Date.now()
+            }))
+
+        } catch (error) {
+            console.error('Ошибка:', error)
+            alert('❌ Ошибка при создании платежа')
+        } finally {
+            setLoadingPayment(false)
+        }
+    }
+
+    // Защита от неавторизованных
+    if (status === 'unauthenticated') {
+        router.push('/cart')
+        return null
+    }
+
+    if (!cartLoaded) {
+        return <div className="container mx-auto p-4 text-center">Загрузка корзины...</div>
+    }
 
     if (cartItems.length === 0 || !formData) {
         return (
@@ -159,23 +349,52 @@ export default function ConfirmPage() {
                         </div>
                     </div>
 
-                    {/* Кнопки */}
-                    <div className="flex gap-4">
-                        <button
-                            onClick={handleConfirm}
-                            disabled={submitting}
-                            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 flex-1"
-                        >
-                            {submitting ? 'Оформляем...' : 'Подтвердить заказ'}
-                        </button>
+                    {/* Кнопки или форма оплаты */}
+                    {showPayment && clientSecret && orderId ? (
+                        <div className="border rounded-lg p-4 mt-4">
+                            <h2 className="text-xl font-semibold mb-4">Оплата картой</h2>
+                            <StripePayment
+                                amount={totalPrice}
+                                clientSecret={clientSecret}
+                                orderId={orderId}
+                                onSuccess={handleConfirm}
+                            />
+                            <button
+                                onClick={() => setShowPayment(false)}
+                                className="mt-4 text-gray-500 hover:text-gray-700 text-sm"
+                            >
+                                ← Вернуться к выбору оплаты
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-4 flex-col sm:flex-row">
+                            {formData?.paymentMethod === 'cash' ? (
+                                <button
+                                    onClick={handleConfirm}
+                                    disabled={submitting}
+                                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 flex-1"
+                                >
+                                    {submitting ? 'Оформляем...' : 'Подтвердить заказ'}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleStartPayment}
+                                    disabled={loadingPayment}
+                                    className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex-1"
+                                >
+                                    {loadingPayment ? 'Создаём платёж...' : '💳 Перейти к оплате'}
+                                </button>
+                            )}
 
-                        <Link
-                            href="/checkout"
-                            className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600"
-                        >
-                            Назад
-                        </Link>
-                    </div>
+                            <Link
+                                href="/checkout"
+                                className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 text-center"
+                            >
+                                Назад
+                            </Link>
+                        </div>
+                    )}
+
                 </>
             )}
         </div>
