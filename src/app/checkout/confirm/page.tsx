@@ -6,14 +6,15 @@ import { useEffect, useState } from 'react'
 import { Product } from '@/types/domain/product.types'
 import Link from 'next/link'
 import { StripePayment } from '@/components/features/StripePayment'
+import { useSession } from 'next-auth/react'
 
 export default function ConfirmPage() {
     const router = useRouter()
-    const { items, clearCart } = useCartStore()
+    const { data: session, status } = useSession()
+    const { items, setItems, addItem, clearCart } = useCartStore()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
-    const [paymentIntent, setPaymentIntent] = useState(null)
     const [loadingPayment, setLoadingPayment] = useState(false)
     const [showPayment, setShowPayment] = useState(false)
     const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -25,24 +26,87 @@ export default function ConfirmPage() {
 
     const cartItems = Array.isArray(items) ? items : []
 
-    // Восстанавливаем состояние оплаты при загрузке
-    // Восстанавливаем состояние оплаты при загрузке
-useEffect(() => {
-    const savedPaymentState = sessionStorage.getItem('paymentState')
-    if (savedPaymentState) {
-        const { showPayment, clientSecret, orderId, timestamp } = JSON.parse(savedPaymentState)
-        
-        // Проверяем, что прошло не больше 5 минут (300000 мс)
-        if (timestamp && Date.now() - timestamp < 5 * 60 * 1000) {
-            setShowPayment(showPayment)
-            setClientSecret(clientSecret)
-            setOrderId(orderId)
-        } else {
-            // Если прошло больше 5 минут - удаляем устаревшее состояние
-            sessionStorage.removeItem('paymentState')
+    // 🔥 НОВОЕ: Перенос корзины после входа/регистрации
+    useEffect(() => {
+        const transferCart = async () => {
+            // Проверяем, есть ли параметр cartTransfer в URL
+            const urlParams = new URLSearchParams(window.location.search)
+            const shouldTransfer = urlParams.get('cartTransfer') === 'true'
+
+            if (session && shouldTransfer && status === 'authenticated') {
+                console.log('🔄 Переносим гостевую корзину в БД')
+
+                // Получаем гостевую корзину из localStorage
+                const savedCart = localStorage.getItem('cart-storage')
+                if (savedCart) {
+                    const guestCart = JSON.parse(savedCart)
+                    const items = guestCart.state?.items || []
+
+                    if (items.length > 0) {
+                        // 1. Получаем текущую корзину пользователя
+                        const userCartRes = await fetch('/api/cart')
+                        const userCart = await userCartRes.json()
+
+                        // 2. Объединяем корзины
+                        const mergedItems = [...userCart]
+
+                        items.forEach((guestItem: any) => {
+                            const existing = mergedItems.find(
+                                (item: any) => item.productId === guestItem.productId
+                            )
+
+                            if (existing) {
+                                // Если товар уже есть — увеличиваем количество
+                                existing.quantity += guestItem.quantity
+                            } else {
+                                // Если нет — добавляем новый
+                                mergedItems.push({
+                                    id: crypto.randomUUID(),
+                                    productId: guestItem.productId,
+                                    quantity: guestItem.quantity,
+                                    addedAt: new Date().toISOString()
+                                })
+                            }
+                        })
+
+                        // 3. Отправляем объединённую корзину на сервер
+                        await fetch('/api/cart', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ items: mergedItems })
+                        })
+
+                        // 4. Обновляем стор
+                        setItems(mergedItems)
+                    }
+                }
+
+                // Убираем параметр из URL
+                const url = new URL(window.location.href)
+                url.searchParams.delete('cartTransfer')
+                window.history.replaceState({}, '', url.toString())
+            }
         }
-    }
-}, [])
+
+        transferCart()
+    }, [session, status, setItems])
+
+    // Восстанавливаем состояние оплаты при загрузке
+    useEffect(() => {
+        const savedPaymentState = sessionStorage.getItem('paymentState')
+        if (savedPaymentState) {
+            const { showPayment, clientSecret, orderId, timestamp } = JSON.parse(savedPaymentState)
+
+            // Проверяем, что прошло не больше 5 минут (300000 мс)
+            if (timestamp && Date.now() - timestamp < 5 * 60 * 1000) {
+                setShowPayment(showPayment)
+                setClientSecret(clientSecret)
+                setOrderId(orderId)
+            } else {
+                sessionStorage.removeItem('paymentState')
+            }
+        }
+    }, [])
 
     // Сохраняем состояние оплаты при изменении
     useEffect(() => {
@@ -50,7 +114,8 @@ useEffect(() => {
             sessionStorage.setItem('paymentState', JSON.stringify({
                 showPayment,
                 clientSecret,
-                orderId
+                orderId,
+                timestamp: Date.now()
             }))
         } else {
             sessionStorage.removeItem('paymentState')
@@ -160,7 +225,6 @@ useEffect(() => {
 
             const data = await res.json()
             console.log('✅ PaymentIntent создан:', data)
-            setPaymentIntent(data)
             alert('PaymentIntent создан! Смотри консоль (F12)')
         } catch (error) {
             console.error('Ошибка:', error)
@@ -171,66 +235,67 @@ useEffect(() => {
     }
 
     const handleStartPayment = async () => {
-    setLoadingPayment(true)
-    try {
-        // 1. Создаём заказ со статусом PENDING_PAYMENT
-        const orderData = {
-            ...formData,
-            items: cartItems.map(item => {
-                const product = products.find(p => p.id === item.productId)
-                return {
-                    productId: item.productId,
-                    name: product?.name,
-                    quantity: item.quantity,
-                    price: product?.price
-                }
-            }),
-            total: totalPrice,
-            status: 'PENDING_PAYMENT'
-        }
+        setLoadingPayment(true)
+        try {
+            const orderData = {
+                ...formData,
+                items: cartItems.map(item => {
+                    const product = products.find(p => p.id === item.productId)
+                    return {
+                        productId: item.productId,
+                        name: product?.name,
+                        quantity: item.quantity,
+                        price: product?.price
+                    }
+                }),
+                total: totalPrice,
+                status: 'PENDING_PAYMENT'
+            }
 
-        const orderRes = await fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(orderData),
-        })
-
-        const orderResult = await orderRes.json()
-        const newOrderId = orderResult.orderId
-        setOrderId(newOrderId)
-
-        // 2. Создаём PaymentIntent
-        const paymentRes = await fetch('/api/create-payment-intent', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                amount: totalPrice,
-                orderId: newOrderId
+            const orderRes = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
             })
-        })
 
-        const paymentData = await paymentRes.json()
-        setClientSecret(paymentData.clientSecret)
-        setShowPayment(true)
+            const orderResult = await orderRes.json()
+            const newOrderId = orderResult.orderId
+            setOrderId(newOrderId)
 
-        // 3. Сохраняем состояние оплаты с timestamp
-        sessionStorage.setItem('paymentState', JSON.stringify({
-            showPayment: true,
-            clientSecret: paymentData.clientSecret,
-            orderId: newOrderId,
-            timestamp: Date.now()  // добавляем время создания
-        }))
+            const paymentRes = await fetch('/api/create-payment-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: totalPrice,
+                    orderId: newOrderId
+                })
+            })
 
-    } catch (error) {
-        console.error('Ошибка:', error)
-        alert('❌ Ошибка при создании платежа')
-    } finally {
-        setLoadingPayment(false)
+            const paymentData = await paymentRes.json()
+            setClientSecret(paymentData.clientSecret)
+            setShowPayment(true)
+
+            sessionStorage.setItem('paymentState', JSON.stringify({
+                showPayment: true,
+                clientSecret: paymentData.clientSecret,
+                orderId: newOrderId,
+                timestamp: Date.now()
+            }))
+
+        } catch (error) {
+            console.error('Ошибка:', error)
+            alert('❌ Ошибка при создании платежа')
+        } finally {
+            setLoadingPayment(false)
+        }
     }
-}
 
-    // Защита от обновления страницы
+    // Защита от неавторизованных
+    if (status === 'unauthenticated') {
+        router.push('/cart')
+        return null
+    }
+
     if (!cartLoaded) {
         return <div className="container mx-auto p-4 text-center">Загрузка корзины...</div>
     }

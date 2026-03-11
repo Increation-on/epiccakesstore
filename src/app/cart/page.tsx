@@ -4,11 +4,16 @@ import { useCartStore } from '@/store/cart.store'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Product } from '@/types/domain/product.types'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 export default function CartPage() {
+  const router = useRouter()
+  const { data: session } = useSession()
   const { items, removeItem, updateQuantity, clearCart } = useCartStore()
-  const [products, setProducts] = useState<Product[]>([]) // типизируем
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   const cartItems = Array.isArray(items) ? items : []
 
@@ -45,6 +50,14 @@ export default function CartPage() {
     const product = products.find(p => p.id === item.productId)
     return sum + (product?.price || 0) * (item?.quantity || 0)
   }, 0)
+
+  const handleCheckout = () => {
+    if (!session) {
+      setShowAuthModal(true)
+    } else {
+      router.push('/checkout/confirm')
+    }
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -93,15 +106,59 @@ export default function CartPage() {
           <div className="mt-4 text-xl font-bold">
             Итого: {totalPrice} ₽
           </div>
-          <Link href="/checkout">
-            <button className="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg mr-4 hover:bg-green-700 transition">
-              Оформить заказ
-            </button>
-          </Link>
-          <button onClick={clearCart} className="mt-4 bg-gray-500 text-white px-4 py-2 rounded">
-            Очистить
+
+          <button
+            onClick={handleCheckout}
+            className="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg mr-4 hover:bg-green-700 transition"
+          >
+            Оформить заказ
+          </button>
+
+          <button onClick={clearCart} className="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">
+            Очистить корзину
           </button>
         </>
+      )}
+
+      {/* Модалка для неавторизованных */}
+      {/* Модалка для неавторизованных */}
+      {/* Модалка для неавторизованных */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md">
+            <h2 className="text-xl font-bold mb-4">Необходима авторизация</h2>
+            <p className="mb-4">
+              Чтобы оформить заказ, пожалуйста, войдите или зарегистрируйтесь.
+              Ваши товары сохранятся и будут перенесены в ваш аккаунт.
+            </p>
+            <div className="space-y-3">
+              <Link
+                href="/api/auth/signin?callbackUrl=/checkout/confirm&cartTransfer=true"
+                className="block w-full text-center bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                onClick={() => setShowAuthModal(false)}
+              >
+                Войти
+              </Link>
+
+              <div className="text-center text-sm text-gray-500">или</div>
+
+              <Link
+                href="/register?callbackUrl=/checkout/confirm&cartTransfer=true"
+                className="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                onClick={() => setShowAuthModal(false)}
+              >
+                Зарегистрироваться
+              </Link>
+
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="block w-full text-center bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
