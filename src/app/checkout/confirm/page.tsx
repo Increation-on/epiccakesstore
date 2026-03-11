@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Product } from '@/types/domain/product.types'
 import Link from 'next/link'
+import { StripePayment } from '@/components/features/StripePayment'
 
 export default function ConfirmPage() {
     const router = useRouter()
@@ -12,11 +13,54 @@ export default function ConfirmPage() {
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+    const [paymentIntent, setPaymentIntent] = useState(null)
+    const [loadingPayment, setLoadingPayment] = useState(false)
+    const [showPayment, setShowPayment] = useState(false)
+    const [clientSecret, setClientSecret] = useState<string | null>(null)
+    const [orderId, setOrderId] = useState<string | null>(null)
+    const [cartLoaded, setCartLoaded] = useState(false)
 
     // Получаем данные из sessionStorage (где сохранили после шага 1)
     const [formData, setFormData] = useState<any>(null)
 
     const cartItems = Array.isArray(items) ? items : []
+
+    // Восстанавливаем состояние оплаты при загрузке
+    // Восстанавливаем состояние оплаты при загрузке
+useEffect(() => {
+    const savedPaymentState = sessionStorage.getItem('paymentState')
+    if (savedPaymentState) {
+        const { showPayment, clientSecret, orderId, timestamp } = JSON.parse(savedPaymentState)
+        
+        // Проверяем, что прошло не больше 5 минут (300000 мс)
+        if (timestamp && Date.now() - timestamp < 5 * 60 * 1000) {
+            setShowPayment(showPayment)
+            setClientSecret(clientSecret)
+            setOrderId(orderId)
+        } else {
+            // Если прошло больше 5 минут - удаляем устаревшее состояние
+            sessionStorage.removeItem('paymentState')
+        }
+    }
+}, [])
+
+    // Сохраняем состояние оплаты при изменении
+    useEffect(() => {
+        if (showPayment && clientSecret && orderId) {
+            sessionStorage.setItem('paymentState', JSON.stringify({
+                showPayment,
+                clientSecret,
+                orderId
+            }))
+        } else {
+            sessionStorage.removeItem('paymentState')
+        }
+    }, [showPayment, clientSecret, orderId])
+
+    // Следим за загрузкой корзины
+    useEffect(() => {
+        if (items) setCartLoaded(true)
+    }, [items])
 
     useEffect(() => {
         // Загружаем товары
@@ -62,53 +106,134 @@ export default function ConfirmPage() {
         return sum + (product?.price || 0) * (item?.quantity || 0)
     }, 0)
 
-   const handleConfirm = async () => {
-    setSubmitting(true)
+    const handleConfirm = async () => {
+        setSubmitting(true)
 
-    const orderData = {
-        ...formData,
-        items: cartItems.map(item => {
-            const product = products.find(p => p.id === item.productId)
-            return {
-                productId: item.productId,
-                name: product?.name,
-                quantity: item.quantity,
-                price: product?.price
+        const orderData = {
+            ...formData,
+            items: cartItems.map(item => {
+                const product = products.find(p => p.id === item.productId)
+                return {
+                    productId: item.productId,
+                    name: product?.name,
+                    quantity: item.quantity,
+                    price: product?.price
+                }
+            }),
+            total: totalPrice,
+            status: 'PENDING'
+        }
+
+        try {
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            })
+
+            const result = await res.json()
+
+            if (res.ok) {
+                sessionStorage.removeItem('checkoutFormData')
+                sessionStorage.removeItem('paymentState')
+                clearCart()
+                window.location.href = `/order/${result.orderId}/success`
+            } else {
+                alert('❌ Ошибка при оформлении заказа: ' + (result.error || 'Неизвестная ошибка'))
             }
-        }),
-        total: totalPrice
+        } catch (error) {
+            console.error('Ошибка:', error)
+            alert('❌ Ошибка при отправке заказа')
+        } finally {
+            setSubmitting(false)
+        }
     }
 
-    console.log('✅ Отправляем заказ:', orderData)
+    const handleTestPayment = async () => {
+        setLoadingPayment(true)
+        try {
+            const res = await fetch('/api/create-payment-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: totalPrice })
+            })
 
+            const data = await res.json()
+            console.log('✅ PaymentIntent создан:', data)
+            setPaymentIntent(data)
+            alert('PaymentIntent создан! Смотри консоль (F12)')
+        } catch (error) {
+            console.error('Ошибка:', error)
+            alert('❌ Ошибка при создании PaymentIntent')
+        } finally {
+            setLoadingPayment(false)
+        }
+    }
+
+    const handleStartPayment = async () => {
+    setLoadingPayment(true)
     try {
-        // Отправляем на API
-        const res = await fetch('/api/orders', {
+        // 1. Создаём заказ со статусом PENDING_PAYMENT
+        const orderData = {
+            ...formData,
+            items: cartItems.map(item => {
+                const product = products.find(p => p.id === item.productId)
+                return {
+                    productId: item.productId,
+                    name: product?.name,
+                    quantity: item.quantity,
+                    price: product?.price
+                }
+            }),
+            total: totalPrice,
+            status: 'PENDING_PAYMENT'
+        }
+
+        const orderRes = await fetch('/api/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData)
+            credentials: 'include',
+            body: JSON.stringify(orderData),
         })
 
-        const result = await res.json()
-        console.log('Ответ от сервера:', result)
+        const orderResult = await orderRes.json()
+        const newOrderId = orderResult.orderId
+        setOrderId(newOrderId)
 
-        if (res.ok) {
-            // Всё хорошо - чистим и редиректим
-            sessionStorage.removeItem('checkoutFormData')
-            clearCart()
-            alert('✅ Заказ оформлен!')
-            window.location.href = `/order/${result.orderId}/success`
-        } else {
-            // Ошибка от сервера
-            alert('❌ Ошибка при оформлении заказа: ' + (result.error || 'Неизвестная ошибка'))
-        }
+        // 2. Создаём PaymentIntent
+        const paymentRes = await fetch('/api/create-payment-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: totalPrice,
+                orderId: newOrderId
+            })
+        })
+
+        const paymentData = await paymentRes.json()
+        setClientSecret(paymentData.clientSecret)
+        setShowPayment(true)
+
+        // 3. Сохраняем состояние оплаты с timestamp
+        sessionStorage.setItem('paymentState', JSON.stringify({
+            showPayment: true,
+            clientSecret: paymentData.clientSecret,
+            orderId: newOrderId,
+            timestamp: Date.now()  // добавляем время создания
+        }))
+
     } catch (error) {
         console.error('Ошибка:', error)
-        alert('❌ Ошибка при отправке заказа')
+        alert('❌ Ошибка при создании платежа')
     } finally {
-        setSubmitting(false)
+        setLoadingPayment(false)
     }
 }
+
+    // Защита от обновления страницы
+    if (!cartLoaded) {
+        return <div className="container mx-auto p-4 text-center">Загрузка корзины...</div>
+    }
 
     if (cartItems.length === 0 || !formData) {
         return (
@@ -159,23 +284,52 @@ export default function ConfirmPage() {
                         </div>
                     </div>
 
-                    {/* Кнопки */}
-                    <div className="flex gap-4">
-                        <button
-                            onClick={handleConfirm}
-                            disabled={submitting}
-                            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 flex-1"
-                        >
-                            {submitting ? 'Оформляем...' : 'Подтвердить заказ'}
-                        </button>
+                    {/* Кнопки или форма оплаты */}
+                    {showPayment && clientSecret && orderId ? (
+                        <div className="border rounded-lg p-4 mt-4">
+                            <h2 className="text-xl font-semibold mb-4">Оплата картой</h2>
+                            <StripePayment
+                                amount={totalPrice}
+                                clientSecret={clientSecret}
+                                orderId={orderId}
+                                onSuccess={handleConfirm}
+                            />
+                            <button
+                                onClick={() => setShowPayment(false)}
+                                className="mt-4 text-gray-500 hover:text-gray-700 text-sm"
+                            >
+                                ← Вернуться к выбору оплаты
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-4 flex-col sm:flex-row">
+                            {formData?.paymentMethod === 'cash' ? (
+                                <button
+                                    onClick={handleConfirm}
+                                    disabled={submitting}
+                                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 flex-1"
+                                >
+                                    {submitting ? 'Оформляем...' : 'Подтвердить заказ'}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleStartPayment}
+                                    disabled={loadingPayment}
+                                    className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex-1"
+                                >
+                                    {loadingPayment ? 'Создаём платёж...' : '💳 Перейти к оплате'}
+                                </button>
+                            )}
 
-                        <Link
-                            href="/checkout"
-                            className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600"
-                        >
-                            Назад
-                        </Link>
-                    </div>
+                            <Link
+                                href="/checkout"
+                                className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 text-center"
+                            >
+                                Назад
+                            </Link>
+                        </div>
+                    )}
+
                 </>
             )}
         </div>

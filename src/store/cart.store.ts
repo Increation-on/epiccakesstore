@@ -44,14 +44,42 @@ export const useCartStore = create<CartStore>()(
       
       clearCart: () => set({ items: [] }),
       
-      setItems: (newItems) => set({ items: newItems }),
+      setItems: (newItems) => {
+  console.log('🟢 setItems вызван с:', newItems, 'время:', new Date().toISOString())
+  console.trace('🟢 Стек вызова setItems:')  // покажет кто вызвал
+  set({ items: newItems })
+},
       
       get totalItems() {
-        return get().items.reduce((sum, item) => sum + item.quantity, 0);
+        try {
+          const state = get()
+          if (!state || !state.items) return 0
+          return state.items.reduce((sum, item) => sum + item.quantity, 0)
+        } catch {
+          return 0
+        }
       }
     }),
     {
       name: 'cart-storage',
+      partialize: (state) => ({
+        items: state.items
+      }),
+      onRehydrateStorage: (state) => {
+        console.log('🔄 Загружаем из localStorage...')
+        return (restoredState, error) => {
+          if (error) {
+            console.error('❌ Ошибка загрузки:', error)
+          } else {
+            console.log('✅ Загружено:', restoredState)
+          }
+        }
+      }
     }
   )
 );
+
+// Для отладки в консоли
+if (typeof window !== 'undefined') {
+  (window as any).cartStore = useCartStore;
+}

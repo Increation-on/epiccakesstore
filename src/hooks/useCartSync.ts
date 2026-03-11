@@ -1,4 +1,3 @@
-// hooks/useCartSync.ts
 'use client'
 
 import { useEffect } from 'react'
@@ -7,35 +6,56 @@ import { useSession } from 'next-auth/react'
 
 export function useCartSync() {
   const { data: session, status } = useSession()
-  const { setItems } = useCartStore()
+  const { items, setItems } = useCartStore()
   
+  // 1. Загрузка с сервера при входе
   useEffect(() => {
     const syncCart = async () => {
       if (status === 'authenticated' && session?.user?.id) {
         try {
+          console.log('🔄 Загружаем корзину с сервера')
+          
           const res = await fetch('/api/cart')
           
           if (!res.ok) {
-            console.error('Ошибка загрузки корзины:', res.status)
+            console.error('❌ Ошибка загрузки корзины:', res.status)
             return
           }
           
-          const text = await res.text() // сначала как текст
-          console.log('Ответ от сервера (текст):', text)
+          const serverCart = await res.json()
+          console.log('📦 Серверная корзина:', serverCart)
           
-          if (!text) {
-            console.log('Пустой ответ')
-            return
-          }
+          setItems(serverCart)
           
-          const serverItems = JSON.parse(text) // потом парсим
-          setItems(serverItems)
         } catch (error) {
-          console.error('Ошибка:', error)
+          console.error('❌ Ошибка:', error)
         }
       }
     }
     
     syncCart()
   }, [session?.user?.id, status, setItems])
+  
+  // 2. Отправка изменений на сервер
+useEffect(() => {
+  const saveCart = async () => {
+    if (status === 'authenticated' && session?.user?.id) {
+      console.log('🔄 Сохраняем корзину на сервер:', items)
+      
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items })
+      })
+      
+      if (!res.ok) {
+        console.error('❌ Ошибка сохранения корзины:', res.status)
+      } else {
+        console.log('✅ Корзина сохранена на сервер')
+      }
+    }
+  }
+  
+  saveCart()
+}, [items, session?.user?.id, status]) // убрал проверку items.length > 0
 }
