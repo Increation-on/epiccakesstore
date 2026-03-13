@@ -186,7 +186,8 @@ export default function ConfirmPage() {
                 }
             }),
             total: totalPrice,
-            status: 'PENDING'
+            status: 'PENDING',
+            userId: session?.user?.id
         }
 
         try {
@@ -249,7 +250,8 @@ export default function ConfirmPage() {
                     }
                 }),
                 total: totalPrice,
-                status: 'PENDING_PAYMENT'
+                status: 'PENDING_PAYMENT',
+                userId: session?.user?.id
             }
 
             const orderRes = await fetch('/api/orders', {
@@ -289,6 +291,36 @@ export default function ConfirmPage() {
             setLoadingPayment(false)
         }
     }
+
+    const handlePaymentSuccess = async () => {
+    if (!orderId) {
+        console.error('Нет orderId')
+        return
+    }
+
+    try {
+        // Используем существующий эндпоинт /api/orders/[id]/paid
+        const res = await fetch(`/api/orders/${orderId}/paid`, {
+            method: 'POST',  // У тебя POST в роуте
+            headers: { 'Content-Type': 'application/json' }
+            // Тело не нужно, статус уже PAID в эндпоинте
+        })
+
+        if (!res.ok) {
+            const error = await res.json()
+            throw new Error(error.error || 'Ошибка при обновлении статуса')
+        }
+
+        // Очищаем все и редиректим на страницу успеха
+        sessionStorage.removeItem('checkoutFormData')
+        sessionStorage.removeItem('paymentState')
+        clearCart()
+        window.location.href = `/order/${orderId}/success`
+    } catch (error) {
+        console.error('Ошибка:', error)
+        alert('❌ Ошибка при подтверждении оплаты')
+    }
+}
 
     // Защита от неавторизованных
     if (status === 'unauthenticated') {
@@ -357,7 +389,7 @@ export default function ConfirmPage() {
                                 amount={totalPrice}
                                 clientSecret={clientSecret}
                                 orderId={orderId}
-                                onSuccess={handleConfirm}
+                                onSuccess={handlePaymentSuccess}
                             />
                             <button
                                 onClick={() => setShowPayment(false)}

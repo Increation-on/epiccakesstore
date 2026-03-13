@@ -1,3 +1,5 @@
+//app/profile/page.tsx
+
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 
