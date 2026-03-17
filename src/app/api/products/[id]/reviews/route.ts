@@ -29,6 +29,8 @@ export async function GET(
             },
         })
 
+
+
         return NextResponse.json(reviews)
     } catch (error) {
         console.error('GET /api/products/[id]/reviews error:', error)
@@ -53,7 +55,29 @@ export async function POST(
             )
         }
 
+
+
         const { id } = await params
+
+
+        const hasPurchased = await prisma.order.findFirst({
+            where: {
+                userId: session.user.id,
+                status: { in: ['PAID', 'DELIVERED'] },
+                orderItems: {
+                    some: {
+                        productId: id,
+                    },
+                },
+            },
+        })
+
+        if (!hasPurchased) {
+            return NextResponse.json(
+                { error: 'Вы можете оставить отзыв только на купленный товар' },
+                { status: 403 }
+            )
+        }
         const { rating, text } = await req.json()
 
         // Валидация

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import ProductCard from '@/components/features/products/ProductCard';
 import { ReviewForm } from '@/components/features/reviews/ReviewForm';
 import { ReviewList } from '@/components/features/reviews/ReviewList';
+import { AddToCartButton } from '@/components/features/products/AddToCartButton';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -122,13 +123,7 @@ export default async function ProductPage({ params }: PageProps) {
             </div>
           </div>
 
-          <Button
-            size="lg"
-            disabled={!product.inStock}
-            className="w-full md:w-auto"
-          >
-            {product.inStock ? 'Добавить в корзину' : 'Нет в наличии'}
-          </Button>
+          <AddToCartButton productId={product.id} inStock={product.inStock} />
         </div>
       </div>
 

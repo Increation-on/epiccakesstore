@@ -1,8 +1,10 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useCartStore } from '@/store/cart.store'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Product } from '@/types/domain/product.types'
 import Link from 'next/link'
 import { StripePayment } from '@/components/features/payment/StripePayment'
@@ -25,6 +27,7 @@ export default function ConfirmPage() {
     const [formData, setFormData] = useState<any>(null)
 
     const cartItems = Array.isArray(items) ? items : []
+
 
     // 🔥 НОВОЕ: Перенос корзины после входа/регистрации
     useEffect(() => {
@@ -91,22 +94,49 @@ export default function ConfirmPage() {
         transferCart()
     }, [session, status, setItems])
 
-    // Восстанавливаем состояние оплаты при загрузке
-    useEffect(() => {
-        const savedPaymentState = sessionStorage.getItem('paymentState')
-        if (savedPaymentState) {
-            const { showPayment, clientSecret, orderId, timestamp } = JSON.parse(savedPaymentState)
-
-            // Проверяем, что прошло не больше 5 минут (300000 мс)
-            if (timestamp && Date.now() - timestamp < 5 * 60 * 1000) {
-                setShowPayment(showPayment)
-                setClientSecret(clientSecret)
-                setOrderId(orderId)
-            } else {
-                sessionStorage.removeItem('paymentState')
-            }
+  // Восстанавливаем состояние оплаты при загрузке
+useEffect(() => {
+    const savedPaymentState = sessionStorage.getItem('paymentState')
+    console.log('📦 savedPaymentState:', savedPaymentState)
+    
+    if (savedPaymentState) {
+        const { showPayment, clientSecret, orderId, timestamp } = JSON.parse(savedPaymentState)
+        console.log('📦 restored:', { showPayment, clientSecret, orderId, timestamp })
+        
+        // Проверяем, что прошло не больше 5 минут
+        if (timestamp && Date.now() - timestamp < 5 * 60 * 1000) {
+            // Проверим статус заказа
+            fetch(`/api/orders/${orderId}`)
+                .then(res => res.json())
+                .then(order => {
+                    console.log('📦 Статус заказа:', order.status)
+                    // Если заказ уже оплачен или не в статусе ожидания — сбрасываем
+                    if (order.status === 'PAID' || order.status === 'DELIVERED') {
+                        console.log('🔄 Заказ уже оплачен, сбрасываем paymentState')
+                        sessionStorage.removeItem('paymentState')
+                        setShowPayment(false)
+                        setClientSecret(null)
+                        setOrderId(null)
+                    } else {
+                        console.log('🔄 Восстанавливаем платёж')
+                        setShowPayment(showPayment)
+                        setClientSecret(clientSecret)
+                        setOrderId(orderId)
+                    }
+                })
+                .catch(() => {
+                    console.log('🔄 Не удалось получить заказ, сбрасываем')
+                    sessionStorage.removeItem('paymentState')
+                    setShowPayment(false)
+                    setClientSecret(null)
+                    setOrderId(null)
+                })
+        } else {
+            console.log('🔄 paymentState устарел (больше 5 минут)')
+            sessionStorage.removeItem('paymentState')
         }
-    }, [])
+    }
+}, [])
 
     // Сохраняем состояние оплаты при изменении
     useEffect(() => {
@@ -156,6 +186,7 @@ export default function ConfirmPage() {
 
         // Получаем данные формы из sessionStorage
         const savedData = sessionStorage.getItem('checkoutFormData')
+        console.log('📦 savedData:', savedData)
         if (savedData) {
             setFormData(JSON.parse(savedData))
         } else {
