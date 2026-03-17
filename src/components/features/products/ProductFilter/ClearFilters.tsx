@@ -1,7 +1,7 @@
 // src/components/features/ClearFilters.tsx
 'use client';
 
-import { Button } from '../ui/Button';
+import { Button } from "@/components/ui/Button";
 
 type ClearFiltersProps = {
   hasFilters: boolean;

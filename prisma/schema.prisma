@@ -23,6 +23,8 @@ model User {
   orders   Order[] // твоя связь
 
   carts Cart[]
+
+  reviews Review[]
 }
 
 // Добавить после модели User или в любое место
@@ -62,6 +64,7 @@ model Product {
   inStock     Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  averageRating Float @default(0)
 
   orderItems OrderItem[]
 
@@ -73,6 +76,7 @@ model Product {
   @@index([inStock]) // для фильтра "в наличии"
   @@index([createdAt]) // для сортировки по новизне
   @@index([name]) // для поиска/сортировки по имени
+  reviews Review[]
 }
 
 model Category {
@@ -169,4 +173,25 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1–5
+  text      String   
+  status    String   @default("pending") // pending / approved / rejected
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Один пользователь — один отзыв на товар
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([status])
 }

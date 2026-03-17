@@ -3,40 +3,51 @@
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useCartStore } from '@/store/cart.store'
 
 export default function OrderSuccessPage() {
   const params = useParams()
   const orderId = params.id as string
   const [mounted, setMounted] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'pending'>('pending')
+  const clearCart = useCartStore(state => state.clearCart)
 
-useEffect(() => {
-  console.log('🔥 orderId из params:', orderId)
-  console.log('🔥 window.location:', window.location.href)
-  
-  setMounted(true)
-  
-  const query = new URLSearchParams(window.location.search)
-  const paymentIntent = query.get('payment_intent')
-  
-  if (paymentIntent) {
-    console.log('🔥 paymentIntent найден:', paymentIntent)
-    setPaymentStatus('paid')
+  useEffect(() => {
+    console.log('🔥 orderId из params:', orderId)
+    console.log('🔥 window.location:', window.location.href)
     
-    // Добавим проверку перед fetch
-    if (!orderId) {
-      console.error('❌ orderId отсутствует! Невозможно обновить статус')
-      return
+    setMounted(true)
+    
+    // 🔥 Очищаем sessionStorage
+    sessionStorage.removeItem('checkoutFormData')
+    sessionStorage.removeItem('paymentState')
+    console.log('🧹 sessionStorage очищен')
+    
+    // 🔥 Очищаем корзину
+    clearCart()
+    localStorage.removeItem('cart-storage')
+    console.log('🧹 корзина очищена')
+    
+    const query = new URLSearchParams(window.location.search)
+    const paymentIntent = query.get('payment_intent')
+    
+    if (paymentIntent) {
+      console.log('🔥 paymentIntent найден:', paymentIntent)
+      setPaymentStatus('paid')
+      
+      if (!orderId) {
+        console.error('❌ orderId отсутствует! Невозможно обновить статус')
+        return
+      }
+      
+      fetch(`/api/orders/${orderId}/paid`, { 
+        method: 'POST'
+      })
+        .then(res => res.json())
+        .then(data => console.log('✅ Ответ от сервера:', data))
+        .catch(console.error)
     }
-    
-    fetch(`/api/orders/${orderId}/paid`, { 
-      method: 'POST'
-    })
-      .then(res => res.json())
-      .then(data => console.log('✅ Ответ от сервера:', data))
-      .catch(console.error)
-  }
-}, [orderId])
+  }, [orderId, clearCart])
 
   if (!mounted) return null
 

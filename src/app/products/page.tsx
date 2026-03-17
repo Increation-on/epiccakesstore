@@ -4,17 +4,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Product } from '@/types/domain/product.types';
 import { Category } from '@/types/domain/categoery.types';
-import ProductCard from '@/components/features/ProductCard';
-import CategorySidebar from '@/components/features/CategorySideBar';
+import ProductCard from '@/components/features/products/ProductCard';
+import CategorySidebar from '@/components/features/products/ProductFilter/CategorySideBar';
 import Pagination from '@/components/ui/Pagination';
 import { Input } from '@/components/ui/Input';
 import { useDebounce } from 'use-debounce';
-import ProductSort from '@/components/features/ProductSort';
-import { SortOption } from '@/components/features/ProductSort';
-import PriceFilter from '@/components/features/PriceFilter';
+import ProductSort from '@/components/features/products/ProductSort';
+import { SortOption } from '@/components/features/products/ProductSort';
+import PriceFilter from '@/components/features/products/ProductFilter/PriceFilter';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import ClearFilters from '@/components/features/ClearFilters';
-import EmptyState from '@/components/features/EmptyState';
+import ClearFilters from '@/components/features/products/ProductFilter/ClearFilters';
+import EmptyState from '@/components/features/products/ProductFilter/EmptyProductsFilter';
 import CatalogSkeleton from '@/components/features/skeleton/CatalogSkeleton';
 
 type ProductsResponse = {

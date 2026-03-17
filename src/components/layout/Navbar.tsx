@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { AuthStatus } from '../auth/AuthStatus';
-import { CartIcon } from '../features/CartIcon';
+import { CartIcon } from '../features/cart/CartIcon';
 import { useCartStore } from '@/store/cart.store'
 import { useSession } from 'next-auth/react';
 
