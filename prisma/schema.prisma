@@ -64,6 +64,7 @@ model Product {
   inStock     Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  averageRating Float @default(0)
 
   orderItems OrderItem[]
 

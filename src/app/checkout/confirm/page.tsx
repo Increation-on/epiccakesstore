@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Product } from '@/types/domain/product.types'
 import Link from 'next/link'
-import { StripePayment } from '@/components/features/StripePayment'
+import { StripePayment } from '@/components/features/payment/StripePayment'
 import { useSession } from 'next-auth/react'
 
 export default function ConfirmPage() {

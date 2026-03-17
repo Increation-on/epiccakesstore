@@ -2,8 +2,9 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import ProductCard from '@/components/features/ProductCard';
-import { ReviewForm } from '@/components/features/ReviewForm';
+import ProductCard from '@/components/features/products/ProductCard';
+import { ReviewForm } from '@/components/features/reviews/ReviewForm';
+import { ReviewList } from '@/components/features/reviews/ReviewList';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -20,6 +21,19 @@ export default async function ProductPage({ params }: PageProps) {
   if (!product) {
     notFound();
   }
+
+  const reviewCount = await prisma.review.count({
+    where: {
+      productId: id,
+      status: 'approved',
+    },
+  })
+
+  console.log('🔥 product from DB:', {
+  id: product.id,
+  name: product.name,
+  averageRating: product.averageRating
+})
 
   // Получаем ID первой категории товара (если есть)
   const categoryId = product.categories[0]?.id;
@@ -60,6 +74,26 @@ export default async function ProductPage({ params }: PageProps) {
         {/* Информация */}
         <div>
           <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
+
+          {/* Рейтинг */}
+          {reviewCount > 0 ? (
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex text-yellow-400">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span key={star} className="text-xl">
+                    {star <= Math.round(product.averageRating) ? '★' : '☆'}
+                  </span>
+                ))}
+              </div>
+              <span className="text-sm text-gray-600">
+                {product.averageRating?.toFixed(1) ?? '0.0'} · {reviewCount} {reviewCount === 1 ? 'отзыв' : 'отзывов'}
+              </span>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-400 mb-4">
+              Нет отзывов
+            </div>
+          )}
 
           <div className="mb-4">
             <span className="text-2xl font-bold text-blue-600">
@@ -111,6 +145,7 @@ export default async function ProductPage({ params }: PageProps) {
       )}
       {/* 🔥 БЛОК ОТЗЫВОВ */}
       <div className="mt-12">
+        <ReviewList productId={product.id} />
         <ReviewForm productId={product.id} />
       </div>
     </div>

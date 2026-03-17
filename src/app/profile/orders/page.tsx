@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { OrderStatusBadge } from "@/components/OrderStatusBadge"
+import { OrderStatusBadge } from "@/components/features/shared/OrderStatusBadge"
 
 // Функция для форматирования даты
 function formatDate(date: Date) {

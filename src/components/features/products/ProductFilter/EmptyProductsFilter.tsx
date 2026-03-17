@@ -1,13 +1,12 @@
-// src/components/features/EmptyState.tsx
 'use client';
 
-import { Button } from '../ui/Button';
+import { Button } from '@/components/ui/Button';
 
-type EmptyStateProps = {
+type EmptyProductsFilterProps = {
   onClear: () => void;
 };
 
-export default function EmptyState({ onClear }: EmptyStateProps) {
+export default function EmptyProductsFilter({ onClear }: EmptyProductsFilterProps) {
   return (
     <div className="text-center py-12">
       <div className="text-6xl mb-4">🔍</div>

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { notFound, redirect } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { OrderStatusBadge } from "@/components/OrderStatusBadge"
+import { OrderStatusBadge } from "@/components/features/shared/OrderStatusBadge"
 import { RepeatOrderButton } from "./RepeatOrderButton"
 
 // Функция для форматирования даты
