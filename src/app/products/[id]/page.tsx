@@ -2,7 +2,8 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import ProductCard from '@/components/features/ProductCard'; // переиспользуем
+import ProductCard from '@/components/features/ProductCard';
+import { ReviewForm } from '@/components/features/ReviewForm';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -44,8 +45,8 @@ export default async function ProductPage({ params }: PageProps) {
         <div>
           {images[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img 
-              src={images[0]} 
+            <img
+              src={images[0]}
               alt={product.name}
               className="w-full rounded-lg shadow-lg"
             />
@@ -59,7 +60,7 @@ export default async function ProductPage({ params }: PageProps) {
         {/* Информация */}
         <div>
           <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-          
+
           <div className="mb-4">
             <span className="text-2xl font-bold text-blue-600">
               {product.price} ₽
@@ -77,7 +78,7 @@ export default async function ProductPage({ params }: PageProps) {
             <span className="text-sm text-gray-500">Категория:</span>
             <div className="flex gap-2 mt-1">
               {product.categories.map(cat => (
-                <span 
+                <span
                   key={cat.id}
                   className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700"
                 >
@@ -87,8 +88,8 @@ export default async function ProductPage({ params }: PageProps) {
             </div>
           </div>
 
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             disabled={!product.inStock}
             className="w-full md:w-auto"
           >
@@ -108,6 +109,10 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
         </div>
       )}
+      {/* 🔥 БЛОК ОТЗЫВОВ */}
+      <div className="mt-12">
+        <ReviewForm productId={product.id} />
+      </div>
     </div>
   );
 }

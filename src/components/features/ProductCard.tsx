@@ -1,20 +1,28 @@
-// src/components/features/ProductCard.tsx
+'use client'
+
 import { Product } from "@/types/domain/product.types";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { useCartStore } from "@/store/cart.store"; 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type ProductCardProps = {
   product: Product;
 };
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+  const router = useRouter();
   const addItem = useCartStore(state => state.addItem);
   const [imgError, setImgError] = useState(false);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation(); // не даём клику уйти на карточку
     addItem(product.id, 1);
+  };
+
+  const handleCardClick = () => {
+    router.push(`/products/${product.id}`);
   };
 
   // Проверяем, есть ли валидное изображение
@@ -24,7 +32,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     !imgError;
 
   return (
-    <Card className="p-4">
+    <Card 
+      className="p-4 cursor-pointer hover:shadow-lg transition"
+      onClick={handleCardClick}
+    >
       <div className="bg-gray-200 h-48 mb-4 rounded flex items-center justify-center text-gray-500">
         {hasValidImage ? (
           <img 
