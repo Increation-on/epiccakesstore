@@ -1,7 +1,10 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import { prisma } from "@/lib/prisma"
+console.log('🔥 [auth] Route loaded')
+console.log('🔥 [auth] Importing prisma...')
+import { prisma } from '@/lib/prisma'
+console.log('🔥 [auth] Prisma imported:', !!prisma)
 import bcrypt from 'bcrypt'
 import { User as NextAuthUser, NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
