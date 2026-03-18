@@ -1,10 +1,21 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaNeon } from '@prisma/adapter-neon'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Максимально просто - без任何 опций, без адаптеров, без ничего
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL!
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL is not set')
+}
+
+// ✅ Правильно: передаём строку напрямую в адаптер
+const adapter = new PrismaNeon({ connectionString })
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient({
+  adapter,
+})
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
