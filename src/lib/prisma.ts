@@ -1,23 +1,28 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaNeon } from '@prisma/adapter-neon'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
+console.log('🔥 [prisma] Starting initialization...')
+console.log('🔥 [prisma] NODE_ENV:', process.env.NODE_ENV)
+console.log('🔥 [prisma] DATABASE_URL exists:', !!process.env.DATABASE_URL)
+console.log('🔥 [prisma] POSTGRES_PRISMA_URL exists:', !!process.env.POSTGRES_PRISMA_URL)
 
 const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL!
 
 if (!connectionString) {
+  console.error('❌ [prisma] DATABASE_URL is not set!')
   throw new Error('DATABASE_URL is not set')
 }
 
-// ✅ Правильно для последних версий: адаптер принимает объект с connectionString
-const adapter = new PrismaNeon({
-  connectionString,
-})
+console.log('🔥 [prisma] Connection string obtained, creating adapter...')
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
+// Создаём адаптер
+const adapter = new PrismaNeon({ connectionString })
+console.log('🔥 [prisma] Adapter created successfully')
+
+// ✅ Экспорт должен быть на верхнем уровне
+export const prisma = new PrismaClient({ 
   adapter,
+  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
 })
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+console.log('🔥 [prisma] Client created successfully')
