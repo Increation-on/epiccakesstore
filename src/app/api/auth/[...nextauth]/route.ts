@@ -6,6 +6,8 @@ import bcrypt from 'bcrypt'
 import { User as NextAuthUser, NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 
+console.log('🔥 [auth] route loaded')
+console.log('🔥 [auth] prisma imported:', !!prisma)
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
