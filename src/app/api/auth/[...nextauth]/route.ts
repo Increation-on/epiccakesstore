@@ -1,13 +1,23 @@
+console.log('🔥 [auth] Starting auth route initialization')
+console.log('🔥 [auth] Environment check:', {
+  NODE_ENV: process.env.NODE_ENV,
+  HAS_DATABASE_URL: !!process.env.DATABASE_URL,
+  HAS_GOOGLE_ID: !!process.env.GOOGLE_CLIENT_ID,
+  HAS_GOOGLE_SECRET: !!process.env.GOOGLE_CLIENT_SECRET,
+  HAS_NEXTAUTH_SECRET: !!process.env.NEXTAUTH_SECRET
+})
+
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import { prisma } from "@/lib/prisma"
+import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
 import { User as NextAuthUser, NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 
-console.log('🔥 [auth] route loaded')
-console.log('🔥 [auth] prisma imported:', !!prisma)
+console.log('🔥 [auth] Prisma imported:', !!prisma)
+console.log('🔥 [auth] GOOGLE_CLIENT_ID from process.env:', process.env.GOOGLE_CLIENT_ID ? '✅ exists' : '❌ missing')
+console.log('🔥 [auth] GOOGLE_CLIENT_SECRET from process.env:', process.env.GOOGLE_CLIENT_SECRET ? '✅ exists' : '❌ missing')
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -50,8 +60,8 @@ export const authOptions: NextAuthOptions = {
             }
         }),
         GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID || '',
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         })
     ],
     session: {

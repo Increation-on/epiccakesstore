@@ -1,4 +1,3 @@
-// src/components/features/products/ProductsContent.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -42,7 +41,6 @@ export default function ProductsContent() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    // При монтировании читаем фильтры из URL
     useEffect(() => {
         const pageFromUrl = Number(searchParams.get('page')) || 1;
         const sortFromUrl = searchParams.get('sort') as SortOption || 'newest';
@@ -59,7 +57,7 @@ export default function ProductsContent() {
         setMinPrice(minPriceFromUrl ? Number(minPriceFromUrl) : undefined);
         setMaxPrice(maxPriceFromUrl ? Number(maxPriceFromUrl) : undefined);
         setInStockOnly(inStockFromUrl);
-    }, []); // только при загрузке
+    }, []);
 
     useEffect(() => {
         const params = new URLSearchParams();
@@ -73,12 +71,9 @@ export default function ProductsContent() {
 
         const queryString = params.toString();
         const url = queryString ? `${pathname}?${queryString}` : pathname;
-
-        router.push(url, { scroll: false }); // обновляем URL без перезагрузки
+        router.push(url, { scroll: false });
     }, [page, sort, search, selectedCategory, minPrice, maxPrice, inStockOnly]);
 
-
-    // Загружаем категории
     useEffect(() => {
         async function fetchCategories() {
             try {
@@ -122,7 +117,6 @@ export default function ProductsContent() {
         fetchProducts();
     }, [fetchProducts]);
 
-    // Сбрасываем на первую страницу при изменении фильтров
     useEffect(() => {
         setPage(1);
     }, [debouncedSearch, selectedCategory, sort, inStockOnly]);
@@ -149,13 +143,10 @@ export default function ProductsContent() {
         setInStockOnly(false);
         setSort('newest');
         setPage(1);
-
-        // Очищаем URL (опционально, useEffect сделает это автоматически)
     };
 
-    // Вместо проверки loading
     if (loading || !data) {
-          return <CatalogSkeleton />;  
+        return <CatalogSkeleton />;  
     }
 
     if (error) return <div className="container mx-auto p-4 text-red-500">{error}</div>;
@@ -167,14 +158,12 @@ export default function ProductsContent() {
 
             <div className="flex gap-6">
                 <div className="w-64 shrink-0">
-                    {/* Сайдбар с категориями */}
                     <CategorySidebar
                         categories={categories}
                         selectedCategory={selectedCategory}
                         onSelectCategory={setSelectedCategory}
                     />
 
-                    {/* Фильтр по цене */}
                     <PriceFilter
                         minPrice={minPrice}
                         maxPrice={maxPrice}
@@ -193,9 +182,8 @@ export default function ProductsContent() {
                         </label>
                     </div>
                 </div>
-                {/* Основной контент */}
+
                 <div className="flex-1">
-                    {/* Строка поиска */}
                     <div className="mb-6">
                         <Input
                             type="text"
@@ -205,21 +193,20 @@ export default function ProductsContent() {
                             className="w-full"
                         />
                     </div>
-                    {/* Кнопка сброса */}
+
                     <ClearFilters
                         hasFilters={hasActiveFilters}
                         onClear={handleClearFilters}
                     />
-                    {/* Сортировка */}
+
                     <ProductSort value={sort} onChange={setSort} />
-                    {/* Количество найденных товаров */}
+
                     {search && (
                         <p className="mb-4 text-gray-600">
                             Найдено товаров: {data.totalCount}
                         </p>
                     )}
 
-                    {/* Сетка товаров */}
                     {data.products.length === 0 ? (
                         <EmptyState onClear={handleClearFilters} />
                     ) : (
@@ -229,7 +216,6 @@ export default function ProductsContent() {
                                     <ProductCard key={product.id} product={product} />
                                 ))}
                             </div>
-                            {/* Пагинация */}
                             {data.totalPages > 1 && (
                                 <Pagination
                                     currentPage={page}
@@ -239,7 +225,6 @@ export default function ProductsContent() {
                             )}
                         </>
                     )}
-
                 </div>
             </div>
         </div>

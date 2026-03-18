@@ -1,39 +1,26 @@
 import { PrismaClient } from '@prisma/client'
-import { Pool } from '@neondatabase/serverless'
 import { PrismaNeon } from '@prisma/adapter-neon'
 
-// Глобальная переменная для синглтона (только для dev режима)
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Функция, которая гарантированно создает клиент с адаптером
-function createPrismaClient() {
-  const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL
+console.log('🔥 Env check:', {
+  DATABASE_URL: !!process.env.DATABASE_URL,
+  POSTGRES_PRISMA_URL: !!process.env.POSTGRES_PRISMA_URL,
+  NODE_ENV: process.env.NODE_ENV
+})
 
-  if (!connectionString) {
-    throw new Error('❌ DATABASE_URL is not set')
-  }
+const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL!
 
-  // Создаем пул и адаптер
-  const pool = new Pool({ connectionString })
-  const adapter = new PrismaNeon(pool)
-
-  // Создаем клиент с адаптером
-  return new PrismaClient({
-    adapter,
-    log: ['error', 'warn'],
-  })
+console.log('🔥 connectionString exists:', !!connectionString)
+if (!connectionString) {
+  throw new Error('❌ DATABASE_URL is not set')
 }
 
-// Ленивая инициализация: клиент создается только при первом обращении
-export const prisma = new Proxy({} as PrismaClient, {
-  get: (target, prop) => {
-    // Если клиент еще не создан в глобальной области (или мы не в проде)
-    if (!globalForPrisma.prisma) {
-      globalForPrisma.prisma = createPrismaClient()
-    }
-    // Возвращаем запрашиваемое свойство/метод
-    return globalForPrisma.prisma[prop as keyof PrismaClient]
-  },
-})
+// ✅ Передаём строку подключения напрямую в адаптер, без Pool
+const adapter = new PrismaNeon({ connectionString })
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter })
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
