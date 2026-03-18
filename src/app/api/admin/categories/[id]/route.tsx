@@ -8,11 +8,11 @@ import slugify from 'slugify'
 // GET /api/admin/categories/[id] - получить одну категорию
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (session?.user?.role !== 'admin') {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
@@ -46,11 +46,11 @@ export async function GET(
 // PUT /api/admin/categories/[id] - обновить категорию
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (session?.user?.role !== 'admin') {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
@@ -66,7 +66,7 @@ export async function PUT(
     }
 
     // Создаём slug через библиотеку
-    const slug = data.slug || slugify(data.name, { 
+    const slug = data.slug || slugify(data.name, {
       lower: true,
       strict: true,
       locale: 'ru'
@@ -93,11 +93,11 @@ export async function PUT(
 // DELETE /api/admin/categories/[id] - удалить категорию
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+{ params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (session?.user?.role !== 'admin') {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
