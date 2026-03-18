@@ -16,8 +16,8 @@ import { User as NextAuthUser, NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 
 console.log('🔥 [auth] Prisma imported:', !!prisma)
-
-
+console.log('🔥 [auth] GOOGLE_CLIENT_ID from process.env:', process.env.GOOGLE_CLIENT_ID ? '✅ exists' : '❌ missing')
+console.log('🔥 [auth] GOOGLE_CLIENT_SECRET from process.env:', process.env.GOOGLE_CLIENT_SECRET ? '✅ exists' : '❌ missing')
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
