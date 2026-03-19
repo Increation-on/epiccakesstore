@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma'
 // GET /api/admin/products/[id] - получить один товар
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+   { params }: { params: Promise<{ id: string }> } 
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -45,7 +45,7 @@ export async function GET(
 // PUT /api/admin/products/[id] - обновить товар
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -103,7 +103,7 @@ export async function PUT(
 // DELETE /api/admin/products/[id] - удалить товар
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+   { params }: { params: Promise<{ id: string }> } 
 ) {
   try {
     const session = await getServerSession(authOptions)

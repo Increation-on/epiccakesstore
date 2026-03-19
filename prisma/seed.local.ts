@@ -1,12 +1,8 @@
-import { PrismaClient } from "../src/generated/prisma/client"
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
+import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 
-const adapter = new PrismaBetterSqlite3({
-    url: 'file:./prisma/dev.db'
-})
 
-const prisma = new PrismaClient({ adapter })
+const prisma = new PrismaClient()
 
 async function main() {
     console.log('🌱 Начинаем заполнение базы...')

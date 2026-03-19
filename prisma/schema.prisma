@@ -1,10 +1,11 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
+  
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
+  
 }
 
 model User {
@@ -49,7 +50,7 @@ model CartItem {
   quantity  Int
   addedAt   DateTime @default(now())
 
-  @@unique([cartId, productId]) // один товар - одна запись в корзине
+  @@unique([cartId, productId]) 
   @@index([cartId])
   @@index([productId])
 }

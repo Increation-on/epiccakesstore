@@ -132,7 +132,6 @@ export async function POST(
         })
 
         // После успешного создания отзыва
-        // После создания отзыва
         try {
             const allReviews = await prisma.review.findMany({
                 where: {
