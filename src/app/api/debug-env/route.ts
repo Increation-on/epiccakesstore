@@ -15,6 +15,10 @@ export async function GET() {
     // 👇 Безопасно показываем первые символы (чтобы убедиться, что значение есть)
     GOOGLE_ID_PREVIEW: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.substring(0, 8) + '...' : null,
     GOOGLE_SECRET_PREVIEW: process.env.GOOGLE_CLIENT_SECRET ? '✅ exists' : null,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    STRIPE_KEY_PREVIEW: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+      ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.substring(0, 8) + '...'
+      : null,
   }
 
   return NextResponse.json({
