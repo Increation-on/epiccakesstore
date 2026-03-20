@@ -1,126 +1,80 @@
-// app/api/cart/route.ts
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '../auth/[...nextauth]/route'
+import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
 
-// app/api/cart/route.ts
-
-export async function GET() {
-  console.log('1. Начинаем GET /api/cart')
-  
-  const session = await getServerSession(authOptions)
-  console.log('2. Session:', JSON.stringify(session, null, 2))
-  
-  if (!session?.user?.id) {
-    console.log('3. Нет userId, возвращаем 401')
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+// GET - загрузить корзину
+export async function GET(req: Request) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const cart = await prisma.cart.findUnique({
       where: { userId: session.user.id },
       include: {
         items: {
           include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-                images: true,
-                inStock: true
-              }
-            }
+            product: true
           }
         }
       }
     })
 
-    console.log('4. Найдена корзина:', cart?.items?.length || 0, 'товаров')
     return NextResponse.json(cart?.items || [])
-    
   } catch (error) {
-    console.error('5. Ошибка:', error)
+    console.error('❌ GET cart error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to load cart' },
       { status: 500 }
     )
   }
 }
 
-export async function POST(request: Request) {
-  console.log('1. Начинаем POST /api/cart')
-  
-  const session = await getServerSession(authOptions)
-  console.log('2. Session:', JSON.stringify(session, null, 2))
-  
-  if (!session?.user?.id) {
-    console.log('3. Нет userId, возвращаем 401')
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+// POST - полностью заменить корзину
+export async function POST(req: Request) {
   try {
-    const { items } = await request.json()
-    console.log('4. Получены items:', JSON.stringify(items, null, 2))
-    console.log('4a. Количество items:', items?.length)
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-    const result = await prisma.$transaction(async (tx) => {
-      console.log('5. Начинаем транзакцию для user:', session.user.id)
-      
-      const cart = await tx.cart.upsert({
-        where: { userId: session.user.id },
-        update: {},
-        create: { userId: session.user.id }
-      })
-      console.log('6. Cart после upsert:', cart)
+    const { items } = await req.json()
+    if (!items || !Array.isArray(items)) {
+      return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
+    }
 
-      const deleted = await tx.cartItem.deleteMany({
-        where: { cartId: cart.id }
-      })
-      console.log('7. Удалено старых items:', deleted.count)
-
-      if (items?.length > 0) {
-        const created = await tx.cartItem.createMany({
-          data: items.map((item: any) => ({
-            cartId: cart.id,
-            productId: item.productId,
-            quantity: item.quantity
-          }))
-        })
-        console.log('8. Создано новых items:', created.count)
-      }
-
-      const finalCart = await tx.cart.findUnique({
-        where: { id: cart.id },
-        include: {
-          items: {
-            include: {
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  price: true,
-                  images: true,
-                  inStock: true
-                }
-              }
-            }
-          }
-        }
-      })
-      console.log('9. Финальная корзина:', finalCart?.items?.length, 'товаров')
-      
-      return finalCart
+    // Находим или создаём корзину
+    let cart = await prisma.cart.findUnique({
+      where: { userId: session.user.id }
     })
 
-    console.log('10. Успешно сохранено, возвращаем:', result?.items?.length, 'товаров')
-    return NextResponse.json(result?.items || [])
+    if (!cart) {
+      cart = await prisma.cart.create({
+        data: { userId: session.user.id }
+      })
+    }
 
+    // Удаляем все старые товары
+    await prisma.cartItem.deleteMany({
+      where: { cartId: cart.id }
+    })
+
+    // Создаём новые
+    await prisma.cartItem.createMany({
+      data: items.map((item: any) => ({
+        cartId: cart.id,
+        productId: item.productId,
+        quantity: item.quantity
+      }))
+    })
+
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('11. Ошибка:', error)
+    console.error('❌ POST cart error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to update cart' },
       { status: 500 }
     )
   }

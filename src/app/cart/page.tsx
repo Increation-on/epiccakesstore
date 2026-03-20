@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react'
 import { Product } from '@/types/domain/product.types'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
+import Image from 'next/image'
 
 export default function CartPage() {
   const router = useRouter()
@@ -59,100 +61,172 @@ export default function CartPage() {
     }
   }
 
+  // Пустая корзина
   if (cartItems.length === 0) {
     return (
-      <div className="container mx-auto p-4 text-center">
-        <h1 className="text-2xl font-bold mb-4">Корзина пуста</h1>
-        <Link href="/products" className="text-blue-500 hover:underline">
-          Перейти в каталог
-        </Link>
+      <div className="container mx-auto px-4 py-16 text-center">
+        <div className="max-w-md mx-auto">
+          <div className="text-6xl mb-6">🛒</div>
+          <h1 className="text-3xl font-bold text-(--text) mb-4 font-serif">
+            Корзина пуста
+          </h1>
+          <p className="text-(--text-muted) mb-8">
+            Похоже, вы ещё ничего не выбрали. Загляните в каталог — у нас много вкусного!
+          </p>
+          <Link href="/products">
+            <Button size="lg">Перейти в каталог</Button>
+          </Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Корзина</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold text-(--text) mb-8 font-serif">
+        🛒 Корзина
+      </h1>
 
       {loading ? (
-        <div>Загрузка...</div>
+        <div className="text-center py-12 text-(--text-muted)">Загрузка...</div>
       ) : (
-        <>
-          <div className="space-y-4">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Список товаров */}
+          <div className="lg:col-span-2 space-y-4">
             {cartItems.map(item => {
               const product = products.find(p => p.id === item.productId)
+              if (!product) return null
+
               return (
-                <div key={item.id} className="border p-4 rounded flex justify-between">
-                  <div>
-                    <div>{product?.name || 'Товар не найден'}</div>
-                    <div>{product?.price || 0} ₽ x {item.quantity}</div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
-                    <button onClick={() => {
-                      if (item.quantity > 1) {
-                        updateQuantity(item.id, item.quantity - 1)
-                      } else {
-                        if (confirm('Удалить?')) removeItem(item.id)
+                <div key={item.id} className="flex gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)">
+                  {/* Картинка */}
+                  {/* Картинка */}
+                  {/* Картинка */}
+                  <div className="w-24 h-24 bg-(--mint) rounded-lg flex items-center justify-center">
+                    {(() => {
+                      const imageUrl = product.images
+                        ? (typeof product.images === 'string' ? product.images : product.images[0])
+                        : null;
+
+                      if (imageUrl && imageUrl.startsWith('http')) {
+                        return (
+                          <Image
+                            src={imageUrl}
+                            alt={product.name}
+                            width={80}
+                            height={80}
+                            className="object-cover rounded"
+                          />
+                        );
                       }
-                    }}>-</button>
-                    <button onClick={() => removeItem(item.id)}>Удалить</button>
+                      return <span className="text-3xl">🍰</span>;
+                    })()}
+                  </div>
+
+                  {/* Информация */}
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-(--text) mb-1">{product.name}</h3>
+                    <p className="text-(--pink) font-bold">{product.price} BYN</p>
+                  </div>
+
+                  {/* Управление количеством */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (item.quantity > 1) {
+                          updateQuantity(item.id, item.quantity - 1)
+                        } else {
+                          if (confirm('Удалить товар из корзины?')) removeItem(item.id)
+                        }
+                      }}
+                      className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
+                    >
+                      -
+                    </button>
+                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="ml-2 text-gray-400 hover:text-red-500 transition"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
               )
             })}
           </div>
 
-          <div className="mt-4 text-xl font-bold">
-            Итого: {totalPrice} ₽
+          {/* Итоговая сумма */}
+          <div className="bg-(--bg) p-6 rounded-lg border border-(--border) h-fit">
+            <h2 className="text-xl font-semibold text-(--text) mb-4 font-serif">
+              Итого
+            </h2>
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-(--text-muted)">
+                <span>Товары</span>
+                <span>{totalPrice} BYN</span>
+              </div>
+              <div className="flex justify-between text-(--text-muted)">
+                <span>Доставка</span>
+                <span>Бесплатно</span>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div className="flex justify-between font-bold text-(--text)">
+                  <span>Итого</span>
+                  <span className="text-xl text-(--pink)">{totalPrice} BYN</span>
+                </div>
+              </div>
+            </div>
+
+            <Button onClick={handleCheckout} size="lg" className="w-full">
+              Оформить заказ
+            </Button>
+
+            <button
+              onClick={clearCart}
+              className="w-full mt-3 text-sm text-(--text-muted) hover:text-red-500 transition"
+            >
+              Очистить корзину
+            </button>
           </div>
-
-          <button
-            onClick={handleCheckout}
-            className="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg mr-4 hover:bg-green-700 transition"
-          >
-            Оформить заказ
-          </button>
-
-          <button onClick={clearCart} className="mt-4 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">
-            Очистить корзину
-          </button>
-        </>
+        </div>
       )}
 
-      {/* Модалка для неавторизованных */}
-      {/* Модалка для неавторизованных */}
-      {/* Модалка для неавторизованных */}
+      {/* Модалка для неавторизованных — тоже обновим стили */}
       {showAuthModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md">
-            <h2 className="text-xl font-bold mb-4">Необходима авторизация</h2>
-            <p className="mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md mx-4">
+            <h2 className="text-2xl font-bold text-(--text) mb-4 font-serif">
+              Необходима авторизация
+            </h2>
+            <p className="text-(--text-muted) mb-6">
               Чтобы оформить заказ, пожалуйста, войдите или зарегистрируйтесь.
               Ваши товары сохранятся и будут перенесены в ваш аккаунт.
             </p>
             <div className="space-y-3">
               <Link
                 href="/api/auth/signin?callbackUrl=/checkout/confirm&cartTransfer=true"
-                className="block w-full text-center bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                className="block w-full text-center bg-(--pink) text-white px-4 py-2 rounded hover:bg-(--pink-dark) transition"
                 onClick={() => setShowAuthModal(false)}
               >
                 Войти
               </Link>
-
-              <div className="text-center text-sm text-gray-500">или</div>
-
               <Link
                 href="/register?callbackUrl=/checkout/confirm&cartTransfer=true"
-                className="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="block w-full text-center bg-(--mint) text-(--text) px-4 py-2 rounded hover:bg-(--mint-dark) transition"
                 onClick={() => setShowAuthModal(false)}
               >
                 Зарегистрироваться
               </Link>
-
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="block w-full text-center bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                className="block w-full text-center bg-gray-200 text-(--text) px-4 py-2 rounded hover:bg-gray-300 transition"
               >
                 Отмена
               </button>

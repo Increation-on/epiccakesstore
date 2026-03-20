@@ -29,6 +29,6 @@ export default withAuth(
 export const config = {
   matcher: [
     '/profile/:path*',  // Только авторизованные
-    '/admin/:path*'     // Авторизованные + проверка роли в middleware
+    '/admin/:path*',     // Авторизованные + проверка роли в middleware
   ]
 }

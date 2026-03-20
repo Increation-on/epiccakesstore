@@ -17,10 +17,10 @@ export default function Hero() {
             <div className="absolute inset-0 bg-black/15" />
 
             <div className="relative container mx-auto px-4 text-center pb-44">
-                <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg cursor-default font-serif">
+                <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg cursor-default font-sans">
                     EpicCakesStore
                 </h1>
-                <p className="text-2xl text-white mb-8 max-w-2xl mx-auto drop-shadow-lg mt-8 cursor-default font-sans">
+                <p className="text-2xl text-white mb-8 max-w-2xl mx-auto drop-shadow-lg mt-8 cursor-default font-serif">
                     Торты на заказ с доставкой. Только натуральные ингредиенты и любовь в каждом кусочке
                 </p>
                 <Link href="/products">

@@ -9,7 +9,7 @@ type NavbarProps = {
 
 export default function Navbar({ isAdmin, isLoggedIn }: NavbarProps) {
   return (
-    <nav className="flex gap-4 mx-auto px-4 py-3">
+    <nav className="flex gap-4 mx-auto px-4 py-3 font-sans">
       <Link href="/products" className="hover:text-(--pink) transition">
         Каталог
       </Link>
