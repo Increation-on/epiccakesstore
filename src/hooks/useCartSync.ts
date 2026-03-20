@@ -36,28 +36,31 @@ export function useCartSync() {
     syncCart()
   }, [session?.user?.id, status, setItems])
   
-  // 2. Отправка изменений на сервер
-  useEffect(() => {
-    const saveCart = async () => {
-      if (status === 'authenticated' && session?.user?.id) {
-        console.log('🔄 Сохраняем корзину на сервер:', items)
-        
-        const res = await fetch('/api/cart', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items })
-        })
-        
-        if (!res.ok) {
-          console.error('❌ Ошибка сохранения корзины:', res.status)
-        } else {
-          console.log('✅ Корзина сохранена на сервер')
-        }
+// 2. Отправка изменений на сервер (с debounce)
+useEffect(() => {
+  const saveCart = async () => {
+    if (status === 'authenticated' && session?.user?.id) {
+      console.log('🔄 Сохраняем корзину на сервер:', items)
+      
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items })
+      })
+      
+      if (!res.ok) {
+        console.error('❌ Ошибка сохранения корзины:', res.status)
+      } else {
+        console.log('✅ Корзина сохранена на сервер')
       }
     }
-    
-    saveCart()
-  }, [items, session?.user?.id, status])
+  }
+  
+  // Добавляем debounce — ждём 500ms после последнего изменения
+  const timeoutId = setTimeout(saveCart, 500)
+  return () => clearTimeout(timeoutId)
+  
+}, [items, session?.user?.id, status])
 
   // 3. Очистка корзины при выходе (только если был авторизован)
 useEffect(() => {
