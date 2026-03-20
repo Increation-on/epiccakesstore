@@ -15,10 +15,10 @@ export const Button = ({
 }: ButtonProps) => {
   
   const variantClasses = {
-    primary: 'bg-blue-500 text-white hover:bg-blue-600',
-    secondary: 'bg-gray-500 text-white hover:bg-gray-600',
-    outline: 'border border-gray-300 hover:bg-gray-100 text-gray-700'
-  };
+  primary: 'bg-[var(--pink)] text-gray-800 hover:bg-[var(--pink-dark)]',
+  secondary: 'bg-gray-500 text-white hover:bg-gray-600',
+  outline: 'border border-[var(--border)] hover:bg-[var(--mint)] text-gray-700'
+};
 
   const sizeClasses = {
     sm: 'px-3 py-1 text-sm',
@@ -28,7 +28,7 @@ export const Button = ({
 
   return (
     <button
-      className={`rounded transition-colors ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`cursor-pointer rounded transition-colors ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     >
       {children}

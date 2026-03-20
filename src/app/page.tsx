@@ -1,8 +1,14 @@
-export default function Home() {
+// src/app/page.tsx
+import Hero from '@/components/features/home/Hero';
+import PopularProducts from '@/components/features/home/PopularProducts';
+import Advantages from '@/components/features/home/Advantages';
+
+export default function HomePage() {
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">EpicCakesStore</h1>
-      <p>Добро пожаловать!</p>
-    </div>
+    <main>
+      <Hero />
+      <PopularProducts />
+      <Advantages />
+    </main>
   );
 }
