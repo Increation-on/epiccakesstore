@@ -9,28 +9,25 @@ type NavbarProps = {
 
 export default function Navbar({ isAdmin, isLoggedIn }: NavbarProps) {
   return (
-    <nav className="flex gap-4 mx-auto px-4 py-3 font-sans">
-      <Link href="/products" className="hover:text-(--pink) transition">
+    <nav className="flex gap-4 mx-auto px-4 py-3">
+      <Link href="/products" className="text-gray-300 hover:text-(--pink) transition">
         Каталог
       </Link>
-      <Link href="/about" className="hover:text-(--pink) transition">
+      <Link href="/about" className="text-gray-300 hover:text-(--pink) transition">
         О нас
       </Link>
-      <Link href="/contacts" className="hover:text-(--pink) transition">
+      <Link href="/contacts" className="text-gray-300 hover:text-(--pink) transition">
         Контакты
       </Link>
 
       {isAdmin && (
-        <Link
-          href="/admin"
-          className="text-(--admin) hover:text-(--admin-dark) transition"
-        >
-          🔧 Админка
+        <Link href="/admin" className="text-purple-400 hover:text-purple-300 transition">
+          Админка
         </Link>
       )}
 
       {isLoggedIn && (
-        <Link href="/profile" className="hover:text-(--pink) transition">
+        <Link href="/profile" className="text-gray-300 hover:text-(--pink) transition">
           Профиль
         </Link>
       )}

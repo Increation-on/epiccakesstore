@@ -32,7 +32,7 @@ export async function ReviewList({ productId }: Props) {
 
   if (reviews.length === 0) {
     return (
-      <div className="text-gray-500 text-center py-8">
+      <div className="text-(--text-muted) text-center py-8 bg-(--bg) rounded-lg">
         Пока нет отзывов. Будьте первым!
       </div>
     )
@@ -40,16 +40,18 @@ export async function ReviewList({ productId }: Props) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Отзывы ({reviews.length})</h2>
+      <h2 className="text-2xl font-bold text-(--text) font-serif">
+        Отзывы ({reviews.length})
+      </h2>
       
       {reviews.map((review) => (
-        <div key={review.id} className="border rounded-lg p-4">
-          <div className="flex justify-between items-start mb-2">
+        <div key={review.id} className="border border-(--border) rounded-lg p-5 bg-white">
+          <div className="flex justify-between items-start mb-3">
             <div>
-              <span className="font-semibold">
+              <span className="font-semibold text-(--text)">
                 {review.user.name || 'Пользователь'}
               </span>
-              <span className="text-gray-500 text-sm ml-2">
+              <span className="text-(--text-muted) text-sm ml-2">
                 {formatDistanceToNow(new Date(review.createdAt), {
                   addSuffix: true,
                   locale: ru,
@@ -64,7 +66,9 @@ export async function ReviewList({ productId }: Props) {
               ))}
             </div>
           </div>
-          <p className="text-gray-700">{review.text}</p>
+          <p className="text-(--text-muted) leading-relaxed">
+            {review.text}
+          </p>
         </div>
       ))}
     </div>
