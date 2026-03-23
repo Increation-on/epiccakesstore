@@ -33,7 +33,7 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/products - создать товар
+// - создать товар
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -44,7 +44,6 @@ export async function POST(request: Request) {
 
     const data = await request.json()
     
-    // Валидация
     if (!data.name || !data.price) {
       return NextResponse.json(
         { error: 'Название и цена обязательны' },
@@ -52,11 +51,40 @@ export async function POST(request: Request) {
       )
     }
 
-    // Создаём slug, если не передан
-    const slug = data.slug || data.name.toLowerCase()
-      .replace(/[^\w\s-]/g, '') // убираем спецсимволы
-      .replace(/\s+/g, '-')      // пробелы на дефисы
-      .replace(/--+/g, '-')       // убираем двойные дефисы
+    // Функция генерации slug
+    const generateSlug = (name: string) => {
+      return name
+        .toLowerCase()
+        .replace(/[^\w\s-а-яё]/gi, '') // разрешаем кириллицу
+        .replace(/\s+/g, '-')
+        .replace(/--+/g, '-')
+        .replace(/^-+|-+$/g, '') // убираем дефисы в начале и конце
+    }
+
+    // Базовый slug
+    let slug = generateSlug(data.name)
+    
+    // Если slug пустой (например, название из спецсимволов) — делаем временный
+    if (!slug) {
+      slug = `product-${Date.now()}`
+    }
+
+    // Проверяем уникальность
+    let existingProduct = await prisma.product.findUnique({
+      where: { slug }
+    })
+    
+    let counter = 1
+    while (existingProduct) {
+      slug = `${generateSlug(data.name)}-${counter}`
+      if (!slug || slug === `-${counter}`) {
+        slug = `product-${Date.now()}-${counter}`
+      }
+      existingProduct = await prisma.product.findUnique({
+        where: { slug }
+      })
+      counter++
+    }
 
     const product = await prisma.product.create({
       data: {
@@ -66,7 +94,6 @@ export async function POST(request: Request) {
         price: parseFloat(data.price),
         images: data.images || '[]',
         inStock: data.inStock ?? true,
-        // Связь с категориями
         categories: {
           connect: data.categoryIds?.map((id: string) => ({ id })) || []
         }
