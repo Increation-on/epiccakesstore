@@ -159,8 +159,8 @@ export default function ProductsContent() {
                 Каталог товаров
             </h1>
 
-            <div className="flex gap-6">
-                <div className="w-64 shrink-0">
+            <div className="flex flex-col md:flex-row gap-6">
+                <div className="w-full md:w-64 shrink-0">
                     <div className='mb-6'>
                         <CategorySidebar
                             categories={categories}

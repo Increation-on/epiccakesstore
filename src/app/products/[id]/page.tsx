@@ -52,9 +52,9 @@ export default async function ProductPage({ params }: PageProps) {
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         {/* Фото */}
         {/* Фото */}
-        <div className="bg-(--mint) rounded-lg overflow-hidden max-h-[500px]">
+        <div className="bg-(--mint) rounded-lg overflow-hidden max-h-125">
           {images[0] ? (
-            <div className="relative aspect-square max-h-[500px]">
+            <div className="relative aspect-square max-h-125">
               <Image
                 src={images[0]}
                 alt={product.name}
@@ -63,7 +63,7 @@ export default async function ProductPage({ params }: PageProps) {
               />
             </div>
           ) : (
-            <div className="aspect-square flex items-center justify-center max-h-[500px]">
+            <div className="aspect-square flex items-center justify-center max-h-125">
               <span className="text-6xl text-(--text-muted)">🍰</span>
             </div>
           )}
@@ -150,9 +150,6 @@ export default async function ProductPage({ params }: PageProps) {
 
       {/* Отзывы */}
       <div className="mt-12">
-        <h2 className="text-2xl font-bold text-(--text) mb-6 font-serif">
-          Отзывы
-        </h2>
         <div className='mb-4'>
           <ReviewList productId={product.id} />
         </div>

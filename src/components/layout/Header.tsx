@@ -17,7 +17,7 @@ export default function Header() {
   const isLoggedIn = status === 'authenticated'
 
   return (
-    <header className="bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-800">
+    <header className="bg-neutral-900 shadow-sm sticky top-0 z-50 border-b border-gray-800">
       <div className="px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Лого */}
