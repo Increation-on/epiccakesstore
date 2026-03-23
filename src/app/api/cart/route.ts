@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   }
 }
 
-// POST - полностью заменить корзину
+// POST метод
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -41,8 +41,13 @@ export async function POST(req: Request) {
     }
 
     const { items } = await req.json()
-    if (!items || !Array.isArray(items)) {
-      return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
+    
+    // Если items пустой — удаляем всё
+    if (!items || items.length === 0) {
+      await prisma.cartItem.deleteMany({
+        where: { cart: { userId: session.user.id } }
+      })
+      return NextResponse.json({ success: true })
     }
 
     // Группируем дубликаты
@@ -57,37 +62,36 @@ export async function POST(req: Request) {
     }
     const groupedItems = Array.from(itemsMap.values())
 
-    await prisma.$transaction(async (tx) => {
-      let cart = await tx.cart.findUnique({
-        where: { userId: session.user.id }
-      })
-
-      if (!cart) {
-        cart = await tx.cart.create({
-          data: { userId: session.user.id }
-        })
-      }
-
-      // Используем upsert вместо deleteMany + createMany
-      for (const item of groupedItems) {
-        await tx.cartItem.upsert({
-          where: {
-            cartId_productId: {
-              cartId: cart.id,
-              productId: item.productId
-            }
-          },
-          update: {
-            quantity: item.quantity
-          },
-          create: {
-            cartId: cart.id,
-            productId: item.productId,
-            quantity: item.quantity
-          }
-        })
-      }
+    // Находим или создаём корзину
+    let cart = await prisma.cart.findUnique({
+      where: { userId: session.user.id }
     })
+
+    if (!cart) {
+      cart = await prisma.cart.create({
+        data: { userId: session.user.id }
+      })
+    }
+
+    // Обновляем или создаём каждый товар
+    for (const item of groupedItems) {
+      await prisma.cartItem.upsert({
+        where: {
+          cartId_productId: {
+            cartId: cart.id,
+            productId: item.productId
+          }
+        },
+        update: {
+          quantity: item.quantity
+        },
+        create: {
+          cartId: cart.id,
+          productId: item.productId,
+          quantity: item.quantity
+        }
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

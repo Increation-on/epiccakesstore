@@ -26,7 +26,7 @@ export default async function PopularProducts() {
           <div className="overflow-x-auto pb-4 scrollbar-hide">
             <div className="flex gap-6 px-4">
               {products.map((product) => (
-                <div key={product.id} className="w-[280px] flex-shrink-0">
+                <div key={product.id} className="w-70 shrink-0">
                   <ProductCard product={product} />
                 </div>
               ))}
