@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Product } from '@/types/domain/product.types'
 import { Category } from '@/types/domain/categoery.types'
+import { Button } from '@/components/ui/Button'
 import ProductForm from './_components/ProductEditForm'
 
 export default function AdminProductsPage() {
@@ -26,9 +27,6 @@ export default function AdminProductsPage() {
       
       const productsData = await productsRes.json()
       const categoriesData = await categoriesRes.json()
-      
-      console.log('✅ Товары загружены:', productsData.length)
-      console.log('✅ Категории загружены:', categoriesData.length)
       
       setProducts(productsData)
       setCategories(categoriesData)
@@ -72,118 +70,213 @@ export default function AdminProductsPage() {
     return <div className="p-6">Загрузка...</div>
   }
 
+  const getImageUrl = (product: Product) => {
+    if (!product.images) return null
+    try {
+      const parsed = typeof product.images === 'string' 
+        ? JSON.parse(product.images) 
+        : product.images
+      return Array.isArray(parsed) && parsed[0] ? parsed[0] : null
+    } catch {
+      return null
+    }
+  }
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">Управление товарами</h1>
-        <button
+        <Button
           onClick={() => setShowForm(!showForm)}
-          className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700"
+          className="whitespace-nowrap"
         >
           {showForm ? 'Отмена' : '+ Добавить товар'}
-        </button>
+        </Button>
       </div>
 
       {/* Форма добавления */}
       {showForm && (
-        <div className="bg-white p-6 rounded shadow mb-6">
+        <div className="bg-white p-4 md:p-6 rounded shadow mb-6">
           <h2 className="text-lg font-semibold mb-4">Новый товар</h2>
           <ProductForm 
             categories={categories}
             onSuccess={() => {
               setShowForm(false)
-              loadData() // перезагружаем список
+              loadData()
             }}
             onCancel={() => setShowForm(false)}
           />
         </div>
       )}
 
-      {/* Таблица товаров */}
-      <div className="bg-white rounded shadow overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Товар
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Категории
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Цена
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Наличие
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Действия
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {products.map((product) => (
-              <tr key={product.id}>
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    {product.images && (
-                      <img 
-                        src={Array.isArray(product.images) 
-                          ? product.images[0] 
-                          : JSON.parse(product.images)[0]
-                        } 
-                        alt={product.name}
-                        className="w-10 h-10 object-cover rounded mr-3"
-                      />
-                    )}
-                    <div>
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-gray-500">
-                        {product.description.substring(0, 50)}...
+      {/* Таблица — только на десктопе */}
+      <div className="hidden md:block bg-white rounded shadow overflow-x-auto">
+        <div className="min-w-160">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Товар
+                </th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Категории
+                </th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Цена
+                </th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Наличие
+                </th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Действия
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {products.map((product) => (
+                <tr key={product.id}>
+                  <td className="px-4 md:px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {getImageUrl(product) && (
+                        <img 
+                          src={getImageUrl(product)!}
+                          alt={product.name}
+                          className="w-8 h-8 md:w-10 md:h-10 object-cover rounded shrink-0"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-medium text-sm md:text-base wrap-break-word">
+                          {product.name}
+                        </div>
+                        <div className="text-xs md:text-sm text-gray-500 wrap-break-word line-clamp-1">
+                          {product.description?.substring(0, 50)}...
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1">
-                    {product.categories?.map(cat => (
-                      <span 
-                        key={cat.id}
-                        className="px-2 py-1 bg-gray-100 text-xs rounded"
-                      >
-                        {cat.name}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-6 py-4">{product.price} ₽</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs rounded ${
+                  </td>
+                  <td className="px-4 md:px-6 py-4">
+                    {product.categories && product.categories.length > 0 ? (
+                      <div className="overflow-x-auto max-w-37.5 md:max-w-none">
+                        <div className="flex gap-1 min-w-max">
+                          {product.categories.map(cat => (
+                            <span 
+                              key={cat.id}
+                              className="px-1.5 py-0.5 md:px-2 md:py-1 bg-gray-100 text-xs rounded whitespace-nowrap"
+                            >
+                              {cat.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 md:px-6 py-4 text-sm md:text-base whitespace-nowrap">
+                    {product.price} ₽
+                  </td>
+                  <td className="px-4 md:px-6 py-4">
+                    <span className={`px-2 py-1 text-xs rounded whitespace-nowrap ${
+                      product.inStock 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {product.inStock ? 'В наличии' : 'Нет'}
+                    </span>
+                  </td>
+                  <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => router.push(`/admin/products/${product.id}`)}
+                      className="text-blue-600 hover:text-blue-800 mr-2 md:mr-3 text-lg md:text-base"
+                      aria-label="Редактировать"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="text-red-600 hover:text-red-800 text-lg md:text-base"
+                      aria-label="Удалить"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Карточки — только на мобилке */}
+      <div className="md:hidden space-y-4">
+        {products.map((product) => (
+          <div key={product.id} className="bg-white rounded shadow p-4">
+            <div className="flex gap-3">
+              {getImageUrl(product) ? (
+                <img 
+                  src={getImageUrl(product)!}
+                  alt={product.name}
+                  className="w-16 h-16 object-cover rounded shrink-0"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gray-100 rounded shrink-0 flex items-center justify-center text-2xl">
+                  🍰
+                </div>
+              )}
+              
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 wrap-break-word">
+                  {product.name}
+                </div>
+                <div className="text-sm text-gray-500 mt-1 line-clamp-2">
+                  {product.description?.substring(0, 80)}...
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <span className="text-lg font-bold text-pink-600">
+                    {product.price} ₽
+                  </span>
+                  <span className={`px-2 py-0.5 text-xs rounded ${
                     product.inStock 
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-red-100 text-red-800'
                   }`}>
                     {product.inStock ? 'В наличии' : 'Нет'}
                   </span>
-                </td>
-                <td className="px-6 py-4">
-                  <button 
+                </div>
+                
+                {product.categories && product.categories.length > 0 && (
+                  <div className="overflow-x-auto mt-3">
+                    <div className="flex gap-1 min-w-max">
+                      {product.categories.map(cat => (
+                        <span 
+                          key={cat.id}
+                          className="px-2 py-0.5 bg-gray-100 text-xs rounded whitespace-nowrap"
+                        >
+                          {cat.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-3 mt-4 pt-3 border-t border-gray-100">
+                  <button
                     onClick={() => router.push(`/admin/products/${product.id}`)}
-                    className="text-blue-600 hover:text-blue-800 mr-3"
+                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
                   >
-                    ✏️
+                    ✏️ Редактировать
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(product.id)}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
                   >
-                    🗑️
+                    🗑️ Удалить
                   </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

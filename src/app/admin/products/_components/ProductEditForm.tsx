@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Category } from '@/types/domain/categoery.types'
 import { Product } from '@/types/domain/product.types'
+import { Button } from '@/components/ui/Button'
 
 type Props = {
   categories: Category[]
@@ -34,12 +35,8 @@ export default function ProductEditForm({
     categoryIds: [] as string[]
   })
 
-  // Заполняем форму при редактировании
   useEffect(() => {
     if (initialData) {
-      console.log('🔄 Заполняем форму данными:', initialData)
-      
-      // Парсим images (может быть строкой JSON или массивом)
       let imageUrl = ''
       if (initialData.images) {
         try {
@@ -107,8 +104,6 @@ export default function ProductEditForm({
       
       const method = isEditing ? 'PUT' : 'POST'
 
-      console.log(`📡 Отправка ${method} запроса на ${url}`, formData)
-
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -123,10 +118,8 @@ export default function ProductEditForm({
       const data = await res.json()
 
       if (res.ok) {
-        console.log('✅ Успешно сохранено:', data)
         onSuccess()
       } else {
-        console.error('❌ Ошибка сервера:', data)
         alert(data.error || `Ошибка при ${isEditing ? 'обновлении' : 'создании'} товара`)
       }
     } catch (error) {
@@ -138,7 +131,8 @@ export default function ProductEditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+      {/* Название */}
       <div>
         <label className="block text-sm font-medium mb-1">
           Название <span className="text-red-500">*</span>
@@ -148,36 +142,39 @@ export default function ProductEditForm({
           required
           value={formData.name}
           onChange={e => setFormData({...formData, name: e.target.value})}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-pink-200 focus:border-pink-400"
+          className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="Например: Шоколадный торт"
         />
       </div>
 
+      {/* Slug */}
       <div>
         <label className="block text-sm font-medium mb-1">Slug (если пусто - создастся из названия)</label>
         <input
           type="text"
           value={formData.slug}
           onChange={e => setFormData({...formData, slug: e.target.value})}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-pink-200 focus:border-pink-400"
+          className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="shokoladnyy-tort"
         />
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-(--text-muted) mt-1">
           Только латиница, дефисы и цифры
         </p>
       </div>
 
+      {/* Описание */}
       <div>
         <label className="block text-sm font-medium mb-1">Описание</label>
         <textarea
           value={formData.description}
           onChange={e => setFormData({...formData, description: e.target.value})}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-pink-200 focus:border-pink-400"
+          className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           rows={4}
           placeholder="Подробное описание товара..."
         />
       </div>
 
+      {/* Цена */}
       <div>
         <label className="block text-sm font-medium mb-1">
           Цена <span className="text-red-500">*</span>
@@ -189,19 +186,20 @@ export default function ProductEditForm({
           step="0.01"
           value={formData.price}
           onChange={e => setFormData({...formData, price: e.target.value})}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-pink-200 focus:border-pink-400"
+          className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="0.00"
         />
       </div>
 
+      {/* Изображение */}
       <div>
         <label className="block text-sm font-medium mb-1">Изображение</label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={formData.images}
             onChange={e => setFormData({...formData, images: e.target.value})}
-            className="flex-1 p-2 border rounded focus:ring-2 focus:ring-pink-200 focus:border-pink-400"
+            className="flex-1 p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
             placeholder="/uploads/image.jpg"
           />
           <div className="relative">
@@ -216,7 +214,7 @@ export default function ProductEditForm({
             <button
               type="button"
               disabled={uploading}
-              className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 disabled:opacity-50 whitespace-nowrap"
+              className="w-full sm:w-auto bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-50 whitespace-nowrap text-sm md:text-base cursor-pointer"
             >
               {uploading ? 'Загрузка...' : 'Выбрать файл'}
             </button>
@@ -228,7 +226,7 @@ export default function ProductEditForm({
             <img 
               src={formData.images} 
               alt="preview"
-              className="w-32 h-32 object-cover rounded border"
+              className="w-24 h-24 md:w-32 md:h-32 object-cover rounded border border-(--border)"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none'
               }}
@@ -237,16 +235,17 @@ export default function ProductEditForm({
         )}
       </div>
 
+      {/* Категории */}
       <div>
         <label className="block text-sm font-medium mb-1">Категории</label>
-        <div className="space-y-2 max-h-40 overflow-y-auto border rounded p-2">
+        <div className="space-y-2 max-h-40 overflow-y-auto border border-(--border) rounded-lg p-2 md:p-3 bg-white">
           {categories.length === 0 ? (
-            <p className="text-gray-500 text-sm">Нет категорий</p>
+            <p className="text-(--text-muted) text-sm">Нет категорий</p>
           ) : (
             categories.map(cat => {
               const categoryId = String(cat.id)
               return (
-                <label key={categoryId} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded">
+                <label key={categoryId} className="flex items-center gap-2 hover:bg-(--mint) p-1 rounded cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.categoryIds.includes(categoryId)}
@@ -256,9 +255,9 @@ export default function ProductEditForm({
                         : formData.categoryIds.filter(id => id !== categoryId)
                       setFormData({...formData, categoryIds: newIds})
                     }}
-                    className="rounded text-pink-600 focus:ring-pink-200"
+                    className="w-4 h-4 rounded text-(--pink) focus:ring-(--pink)"
                   />
-                  <span className="text-sm">{cat.name}</span>
+                  <span className="text-sm md:text-base text-(--text)">{cat.name}</span>
                 </label>
               )
             })
@@ -266,33 +265,36 @@ export default function ProductEditForm({
         </div>
       </div>
 
+      {/* В наличии */}
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
           id="inStock"
           checked={formData.inStock}
           onChange={e => setFormData({...formData, inStock: e.target.checked})}
-          className="rounded text-pink-600 focus:ring-pink-200"
+          className="w-4 h-4 rounded text-(--pink) focus:ring-(--pink)"
         />
-        <label htmlFor="inStock" className="text-sm">В наличии</label>
+        <label htmlFor="inStock" className="text-sm md:text-base text-(--text)">В наличии</label>
       </div>
 
-      <div className="flex gap-2 pt-4 border-t">
-        <button
+      {/* Кнопки */}
+      <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-(--border)">
+        <Button
           type="submit"
           disabled={loading || uploading}
-          className="bg-pink-600 text-white px-6 py-2 rounded hover:bg-pink-700 disabled:opacity-50 transition-colors"
+          className="w-full sm:w-auto"
         >
           {loading ? 'Сохранение...' : (isEditing ? 'Сохранить изменения' : 'Создать товар')}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="outline"
           onClick={onCancel}
-          className="bg-gray-300 px-6 py-2 rounded hover:bg-gray-400 transition-colors"
           disabled={loading}
+          className="w-full sm:w-auto"
         >
           Отмена
-        </button>
+        </Button>
       </div>
     </form>
   )
