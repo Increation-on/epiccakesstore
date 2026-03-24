@@ -1,31 +1,35 @@
-'use client'
-
+// src/app/layout.tsx
+import { Inter, Playfair_Display } from 'next/font/google';
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import { SessionProvider } from "next-auth/react";
-import { useCartSync } from '@/hooks/useCartSync';
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import SessionProviderWrapper from "@/components/providers/SessionProviderWrapper";
+import CartSyncWrapper from "@/components/providers/CartSyncWrapper";
 
-function CartSync() {
-  useCartSync()
-  return null
-}
+const inter = Inter({ 
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-inter',
+});
 
+const playfair = Playfair_Display({ 
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-playfair',
+});
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  
   return (
-    <html>
+    <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <body>
-        <SessionProvider refetchInterval={0}>
-          <Navbar/>
+        <SessionProviderWrapper>
+          <Header/>
           {children}
-          <CartSync />
-        </SessionProvider>
-
+          <CartSyncWrapper />
+          <Footer/>
+        </SessionProviderWrapper>
       </body>
     </html>
   );

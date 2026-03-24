@@ -1,4 +1,4 @@
-// src/components/features/PriceFilter.tsx
+// src/components/features/products/ProductFilter/PriceFilter.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,7 +15,6 @@ export default function PriceFilter({ minPrice, maxPrice, onApply }: PriceFilter
   const [min, setMin] = useState(minPrice?.toString() || '');
   const [max, setMax] = useState(maxPrice?.toString() || '');
 
-  // Сбрасываем локальное состояние при изменении пропсов
   useEffect(() => {
     setMin(minPrice?.toString() || '');
     setMax(maxPrice?.toString() || '');
@@ -40,8 +39,8 @@ export default function PriceFilter({ minPrice, maxPrice, onApply }: PriceFilter
   };
 
   return (
-    <div className="mb-6 p-4 border rounded-lg bg-gray-50 text-gray-700">
-      <h3 className="font-semibold mb-3">Цена</h3>
+    <div className="mb-6 p-4 border border-(--border) rounded-lg bg-(--bg)">
+      <h3 className="font-semibold mb-3 text-(--text)">Цена</h3>
       <div className="flex gap-2 items-center">
         <Input
           type="number"
@@ -51,7 +50,7 @@ export default function PriceFilter({ minPrice, maxPrice, onApply }: PriceFilter
           className="w-24"
           min={0}
         />
-        <span>—</span>
+        <span className="text-(--text-muted)">—</span>
         <Input
           type="number"
           placeholder="до"

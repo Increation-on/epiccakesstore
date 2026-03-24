@@ -1,50 +1,42 @@
-// src/components/Navbar.tsx
-"use client"
+'use client'
 
 import Link from 'next/link';
-import { AuthStatus } from '../auth/AuthStatus';
-import { CartIcon } from '../features/cart/CartIcon';
-import { useCartStore } from '@/store/cart.store'
-import { useSession } from 'next-auth/react';
 
-// Это для отладки (можно оставить)
-if (typeof window !== 'undefined') {
-  (window as any).cartStore = useCartStore;
+type NavbarProps = {
+  isAdmin: boolean;
+  isLoggedIn: boolean;
+  isMobile?: boolean;
+  onLinkClick?: () => void;
 }
 
-export default function Navbar() {
-  const { data: session, status } = useSession();
-  const isAdmin = session?.user?.role === 'admin';
+export default function Navbar({ isAdmin, isLoggedIn, isMobile = false, onLinkClick }: NavbarProps) {
+  const handleClick = () => {
+    if (onLinkClick) onLinkClick();
+  };
+
+  const linkClass = isMobile 
+    ? "block py-2 text-gray-300 hover:text-(--pink) transition"
+    : "text-gray-300 hover:text-(--pink) transition";
+
+  const wrapperClass = isMobile 
+    ? "flex flex-col gap-2"
+    : "flex items-center gap-6";
 
   return (
-    <nav className="bg-gray-100 p-4 mb-4">
-      <div className="container mx-auto flex gap-4 items-center">
-        <Link href="/" className="hover:text-blue-600 text-gray-700">
-          Главная
+    <div className={wrapperClass}>
+      <Link href="/products" className={linkClass} onClick={handleClick}>Каталог</Link>
+      <Link href="/about" className={linkClass} onClick={handleClick}>О нас</Link>
+      <Link href="/contacts" className={linkClass} onClick={handleClick}>Контакты</Link>
+      {isAdmin && (
+        <Link href="/admin" className={`${linkClass} text-purple-400 hover:text-purple-300`} onClick={handleClick}>
+          Админка
         </Link>
-        <Link href="/products" className="hover:text-blue-600 text-gray-700">
-          Каталог
-        </Link>
-        <Link href="/profile" className="hover:text-blue-600 text-gray-700">
+      )}
+      {isLoggedIn && (
+        <Link href="/profile" className={linkClass} onClick={handleClick}>
           Профиль
         </Link>
-        
-        {/* 👇 Ссылка на админку (только для админов) */}
-        {isAdmin && (
-          <Link 
-            href="/admin" 
-            className="text-purple-600 hover:text-purple-800 font-medium"
-          >
-            Админка
-          </Link>
-        )}
-        
-        <CartIcon />
-        
-        <div className="ml-auto">
-          <AuthStatus />
-        </div>
-      </div>
-    </nav>
+      )}
+    </div>
   );
 }

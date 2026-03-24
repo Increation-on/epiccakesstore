@@ -6,6 +6,7 @@ import ProductCard from '@/components/features/products/ProductCard';
 import { ReviewForm } from '@/components/features/reviews/ReviewForm';
 import { ReviewList } from '@/components/features/reviews/ReviewList';
 import { AddToCartButton } from '@/components/features/products/AddToCartButton';
+import Image from 'next/image';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -30,51 +31,49 @@ export default async function ProductPage({ params }: PageProps) {
     },
   })
 
-  console.log('🔥 product from DB:', {
-  id: product.id,
-  name: product.name,
-  averageRating: product.averageRating
-})
-
-  // Получаем ID первой категории товара (если есть)
   const categoryId = product.categories[0]?.id;
 
-  // Похожие товары из той же категории
   const similarProducts = categoryId ? await prisma.product.findMany({
     where: {
       categories: {
         some: { id: categoryId }
       },
-      NOT: { id: product.id } // исключаем текущий товар
+      NOT: { id: product.id }
     },
-    take: 3, // покажем 3 похожих товара
+    take: 3,
     include: { categories: true }
   }) : [];
 
   const images = JSON.parse(product.images as string || '[]');
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto px-4 py-8">
+      {/* Основная информация */}
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         {/* Фото */}
-        <div>
+        {/* Фото */}
+        <div className="bg-(--mint) rounded-lg overflow-hidden max-h-125">
           {images[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={images[0]}
-              alt={product.name}
-              className="w-full rounded-lg shadow-lg"
-            />
+            <div className="relative aspect-square max-h-125">
+              <Image
+                src={images[0]}
+                alt={product.name}
+                fill
+                className="object-contain"
+              />
+            </div>
           ) : (
-            <div className="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
-              <span className="text-gray-400">Нет фото</span>
+            <div className="aspect-square flex items-center justify-center max-h-125">
+              <span className="text-6xl text-(--text-muted)">🍰</span>
             </div>
           )}
         </div>
 
         {/* Информация */}
         <div>
-          <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-(--text) mb-4 font-serif">
+            {product.name}
+          </h1>
 
           {/* Рейтинг */}
           {reviewCount > 0 ? (
@@ -86,18 +85,19 @@ export default async function ProductPage({ params }: PageProps) {
                   </span>
                 ))}
               </div>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-(--text-muted)">
                 {product.averageRating?.toFixed(1) ?? '0.0'} · {reviewCount} {reviewCount === 1 ? 'отзыв' : 'отзывов'}
               </span>
             </div>
           ) : (
-            <div className="text-sm text-gray-400 mb-4">
+            <div className="text-sm text-(--text-muted) mb-4">
               Нет отзывов
             </div>
           )}
 
+          {/* Цена и наличие */}
           <div className="mb-4">
-            <span className="text-2xl font-bold text-blue-600">
+            <span className="text-3xl font-bold text-(--pink)">
               {product.price} ₽
             </span>
             {!product.inStock && (
@@ -107,40 +107,52 @@ export default async function ProductPage({ params }: PageProps) {
             )}
           </div>
 
-          <p className="text-gray-600 mb-6">{product.description}</p>
+          {/* Описание */}
+          <p className="text-(--text-muted) mb-6 leading-relaxed">
+            {product.description}
+          </p>
 
-          <div className="mb-6">
-            <span className="text-sm text-gray-500">Категория:</span>
-            <div className="flex gap-2 mt-1">
-              {product.categories.map(cat => (
-                <span
-                  key={cat.id}
-                  className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700"
-                >
-                  {cat.name}
-                </span>
-              ))}
+          {/* Категории */}
+          {product.categories.length > 0 && (
+            <div className="mb-6">
+              <span className="text-sm text-(--text-muted)">Категория:</span>
+              <div className="flex gap-2 mt-1">
+                {product.categories.map(cat => (
+                  <span
+                    key={cat.id}
+                    className="px-3 py-1 bg-(--mint) rounded-full text-sm text-(--text)"
+                  >
+                    {cat.name}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
+          {/* Кнопка добавления в корзину */}
           <AddToCartButton productId={product.id} inStock={product.inStock} />
         </div>
       </div>
 
       {/* Похожие товары */}
       {similarProducts.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold mb-6">Похожие товары</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-(--text) mb-6 font-serif">
+            Похожие товары
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {similarProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>
       )}
-      {/* 🔥 БЛОК ОТЗЫВОВ */}
+
+      {/* Отзывы */}
       <div className="mt-12">
-        <ReviewList productId={product.id} />
+        <div className='mb-4'>
+          <ReviewList productId={product.id} />
+        </div>
         <ReviewForm productId={product.id} />
       </div>
     </div>

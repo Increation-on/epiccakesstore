@@ -146,23 +146,29 @@ export default function ProductsContent() {
     };
 
     if (loading || !data) {
-        return <CatalogSkeleton />;  
+        return <CatalogSkeleton />;
     }
 
     if (error) return <div className="container mx-auto p-4 text-red-500">{error}</div>;
     if (!data) return null;
 
+    // 👇 Только JSX с обновлёнными стилями (вся логика выше осталась)
     return (
         <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-6">Каталог товаров</h1>
+            <h1 className="text-2xl font-bold mb-6 text-(--text) font-serif">
+                Каталог товаров
+            </h1>
 
-            <div className="flex gap-6">
-                <div className="w-64 shrink-0">
-                    <CategorySidebar
-                        categories={categories}
-                        selectedCategory={selectedCategory}
-                        onSelectCategory={setSelectedCategory}
-                    />
+            <div className="flex flex-col md:flex-row gap-6">
+                <div className="w-full md:w-64 shrink-0">
+                    <div className='mb-6'>
+                        <CategorySidebar
+                            categories={categories}
+                            selectedCategory={selectedCategory}
+                            onSelectCategory={setSelectedCategory}
+                        />
+                    </div>
+
 
                     <PriceFilter
                         minPrice={minPrice}
@@ -170,15 +176,15 @@ export default function ProductsContent() {
                         onApply={handlePriceApply}
                     />
 
-                    <div className="mt-4 p-4 border rounded-lg bg-gray-50 text-gray-700">
+                    <div className="mt-4 p-4 border border-(--border) rounded-lg bg-(--bg)">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={inStockOnly}
                                 onChange={(e) => setInStockOnly(e.target.checked)}
-                                className="w-4 h-4"
+                                className="w-4 h-4 accent-(--pink)"
                             />
-                            <span className="text-sm">Только в наличии</span>
+                            <span className="text-sm text-(--text-muted)">Только в наличии</span>
                         </label>
                     </div>
                 </div>
@@ -202,7 +208,7 @@ export default function ProductsContent() {
                     <ProductSort value={sort} onChange={setSort} />
 
                     {search && (
-                        <p className="mb-4 text-gray-600">
+                        <p className="mb-4 text-(--text-muted)">
                             Найдено товаров: {data.totalCount}
                         </p>
                     )}

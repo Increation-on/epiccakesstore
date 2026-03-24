@@ -1,11 +1,4 @@
-console.log('🔥 [auth] Starting auth route initialization')
-console.log('🔥 [auth] Environment check:', {
-  NODE_ENV: process.env.NODE_ENV,
-  HAS_DATABASE_URL: !!process.env.DATABASE_URL,
-  HAS_GOOGLE_ID: !!process.env.GOOGLE_CLIENT_ID,
-  HAS_GOOGLE_SECRET: !!process.env.GOOGLE_CLIENT_SECRET,
-  HAS_NEXTAUTH_SECRET: !!process.env.NEXTAUTH_SECRET
-})
+
 
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -15,9 +8,6 @@ import bcrypt from 'bcrypt'
 import { User as NextAuthUser, NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 
-console.log('🔥 [auth] Prisma imported:', !!prisma)
-console.log('🔥 [auth] GOOGLE_CLIENT_ID from process.env:', process.env.GOOGLE_CLIENT_ID ? '✅ exists' : '❌ missing')
-console.log('🔥 [auth] GOOGLE_CLIENT_SECRET from process.env:', process.env.GOOGLE_CLIENT_SECRET ? '✅ exists' : '❌ missing')
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -55,7 +45,8 @@ export const authOptions: NextAuthOptions = {
                     id: user.id,
                     email: user.email,
                     name: user.name,
-                    role: user.role
+                    role: user.role,
+                    createdAt: user.createdAt
                 } as NextAuthUser
             }
         }),
@@ -68,18 +59,28 @@ export const authOptions: NextAuthOptions = {
         strategy: 'jwt'
     },
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, account }) {
             if (user) {
                 token.role = user.role
                 token.id = user.id
+
+                // Всегда получаем createdAt из БД
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: user.id },
+                    select: { createdAt: true }
+                })
+                token.createdAt = dbUser?.createdAt
             }
             return token
         },
 
         async session({ session, token }) {
+            console.log('🔍 Session callback - token.createdAt:', token.createdAt)
             if (session?.user) {
                 session.user.role = token.role as 'user' | 'admin' | 'guest'
                 session.user.id = token.id as string
+                session.user.createdAt = token.createdAt as Date
+                console.log('🔍 Session callback - session.user.createdAt:', session.user.createdAt)
             }
             return session
         },

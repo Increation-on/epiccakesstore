@@ -1,4 +1,4 @@
-// src/components/features/CategorySidebar.tsx
+// src/components/features/products/ProductFilter/CategorySideBar.tsx
 'use client';
 
 import { Category } from "@/types/domain/categoery.types";
@@ -16,14 +16,16 @@ export default function CategorySidebar({
 }: CategorySidebarProps) {
   return (
     <div className="w-64 shrink-0">
-      <h2 className="font-semibold mb-3">Категории</h2>
-      <div className="space-y-2">
+      <h2 className="font-semibold mb-3 text-(--text) font-serif">
+        Категории
+      </h2>
+      <div className="space-y-1">
         <button
           onClick={() => onSelectCategory(null)}
-          className={`w-full text-left px-3 py-2 rounded transition-colors ${
+          className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
             selectedCategory === null 
-              ? 'bg-blue-500 text-white' 
-              : 'hover:bg-gray-100'
+              ? 'bg-(--pink) text-white' 
+              : 'text-(--text) hover:bg-(--mint)'
           }`}
         >
           Все товары
@@ -32,10 +34,10 @@ export default function CategorySidebar({
           <button
             key={category.id}
             onClick={() => onSelectCategory(category.id.toString())}
-            className={`w-full text-left px-3 py-2 rounded transition-colors ${
+            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
               selectedCategory === category.id 
-                ? 'bg-blue-500 text-white' 
-                : 'hover:bg-gray-100'
+                ? 'bg-(--pink) text-white' 
+                : 'text-(--text) hover:bg-(--mint)'
             }`}
           >
             {category.name}

@@ -6,15 +6,15 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
-      
+
       addItem: (productId, quantity = 1) => set((state) => {
         const existing = state.items.find(i => i.productId === productId);
-        
+
         if (existing) {
           return {
             items: state.items.map(i =>
-              i.productId === productId 
-                ? { ...i, quantity: i.quantity + quantity } 
+              i.productId === productId
+                ? { ...i, quantity: i.quantity + quantity }
                 : i
             )
           };
@@ -25,31 +25,44 @@ export const useCartStore = create<CartStore>()(
             quantity: quantity,
             addedAt: new Date().toISOString()
           };
-          
+
           return {
             items: [...state.items, newItem]
           };
         }
       }),
-      
+
       removeItem: (id) => set((state) => ({
         items: state.items.filter(i => i.id !== id)
       })),
-      
+
       updateQuantity: (id, quantity) => set((state) => ({
         items: state.items.map(i =>
           i.id === id ? { ...i, quantity } : i
         )
       })),
-      
-      clearCart: () => set({ items: [] }),
-      
+
+      clearCart: () => {
+        // Очищаем локально
+        set({ items: [] })
+        localStorage.removeItem('cart-storage')
+
+        // Фоновая очистка на сервере
+        fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: [] })
+        }).catch((error) => {
+          console.error('❌ Ошибка очистки корзины на сервере:', error)
+        })
+      },
+
       setItems: (newItems) => {
-  console.log('🟢 setItems вызван с:', newItems, 'время:', new Date().toISOString())
-  console.trace('🟢 Стек вызова setItems:')  // покажет кто вызвал
-  set({ items: newItems })
-},
-      
+        console.log('🟢 setItems вызван с:', newItems, 'время:', new Date().toISOString())
+        console.trace('🟢 Стек вызова setItems:')  // покажет кто вызвал
+        set({ items: newItems })
+      },
+
       get totalItems() {
         try {
           const state = get()

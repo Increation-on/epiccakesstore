@@ -2,49 +2,61 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { redirect } from "next/navigation"
+import { prisma } from "@/lib/prisma"
+import Link from "next/link"
+import { Button } from "@/components/ui/Button"
 
 export default async function AdminPage() {
-  // Получаем сессию на сервере (для дополнительной проверки)
   const session = await getServerSession(authOptions)
   
-  // Страховка: если вдруг middleware пропустил не-админа
   if (session?.user?.role !== 'admin') {
     redirect('/')
   }
 
+  // Получаем статистику
+  const [productsCount, ordersCount, categoriesCount] = await Promise.all([
+    prisma.product.count(),
+    prisma.order.count(),
+    prisma.category.count()
+  ])
+
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">
-        Панель администратора 🎉
+    <div className="p-4 md:p-6">
+      <h1 className="text-2xl md:text-3xl font-bold mb-2">
+        Панель администратора
       </h1>
-      
-      <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-        <p className="font-bold">✅ Middleware работает!</p>
-        <p>Ты админ и попал на защищённую страницу.</p>
-      </div>
+      <p className="text-(--text-muted) mb-8">
+        Здравствуйте, {session.user.name || session.user.email}!
+      </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-semibold mb-2">👤 Твои данные</h2>
-          <pre className="bg-gray-100 p-3 rounded text-sm">
-            {JSON.stringify(session?.user, null, 2)}
-          </pre>
+      {/* Статистика */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white p-4 rounded-lg shadow border border-(--border)">
+          <div className="text-2xl font-bold text-(--mint-dark)">{productsCount}</div>
+          <div className="text-sm text-(--text-muted)">Товаров</div>
         </div>
-
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-semibold mb-2">🔒 Проверка ролей</h2>
-          <ul className="space-y-2">
-            <li>✓ Неавторизованные → редирект на логин</li>
-            <li>✓ Обычные юзеры → редирект на главную</li>
-            <li>✓ Админы → видят эту страницу</li>
-          </ul>
+        <div className="bg-white p-4 rounded-lg shadow border border-(--border)">
+          <div className="text-2xl font-bold text-(--mint-dark)">{ordersCount}</div>
+          <div className="text-sm text-(--text-muted)">Заказов</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow border border-(--border)">
+          <div className="text-2xl font-bold text-(--mint-dark)">{categoriesCount}</div>
+          <div className="text-sm text-(--text-muted)">Категорий</div>
         </div>
       </div>
 
-      <div className="mt-6 p-4 bg-yellow-50 border border-yellow-300 rounded">
-        <p className="text-yellow-800">
-          ⚡️ Дальше будем добавлять: управление товарами, заказами, категориями
-        </p>
+      {/* Быстрые действия */}
+      <h2 className="text-lg font-semibold mb-4">Быстрые действия</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Link href="/admin/products">
+          <Button className="w-full">📦 Управление товарами</Button>
+        </Link>
+        <Link href="/admin/orders">
+          <Button className="w-full">📋 Управление заказами</Button>
+        </Link>
+        <Link href="/admin/categories">
+          <Button className="w-full">🏷️ Управление категориями</Button>
+        </Link>
       </div>
     </div>
   )

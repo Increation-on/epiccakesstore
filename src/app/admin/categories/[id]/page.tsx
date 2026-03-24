@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { Category } from '@/types/domain/categoery.types'
+import { Button } from '@/components/ui/Button'
+import CategoryEditForm from '../_components/CategoryEditForm'
 
 export default function EditCategoryPage() {
   const { data: session, status } = useSession()
@@ -14,28 +16,27 @@ export default function EditCategoryPage() {
   
   const [category, setCategory] = useState<Category | null>(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: ''
-  })
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const loadCategory = async () => {
       try {
         const res = await fetch(`/api/admin/categories/${categoryId}`)
+        
         if (!res.ok) {
-          router.push('/admin/categories')
+          if (res.status === 404) {
+            setError('Категория не найдена')
+          } else {
+            setError('Ошибка при загрузке категории')
+          }
           return
         }
+
         const data = await res.json()
         setCategory(data)
-        setFormData({
-          name: data.name,
-          slug: data.slug
-        })
       } catch (error) {
-        console.error('Error loading category:', error)
+        console.error('Ошибка загрузки:', error)
+        setError('Ошибка при загрузке данных')
       } finally {
         setLoading(false)
       }
@@ -44,7 +45,7 @@ export default function EditCategoryPage() {
     if (categoryId) {
       loadCategory()
     }
-  }, [categoryId, router])
+  }, [categoryId])
 
   // Защита
   useEffect(() => {
@@ -54,97 +55,67 @@ export default function EditCategoryPage() {
     }
   }, [session, status, router])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-
-    try {
-      const res = await fetch(`/api/admin/categories/${categoryId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-
-      if (res.ok) {
-        router.push('/admin/categories')
-      } else {
-        const error = await res.json()
-        alert(error.error || 'Ошибка при обновлении')
-      }
-    } catch (error) {
-      console.error('Error updating:', error)
-      alert('Ошибка при обновлении категории')
-    } finally {
-      setSaving(false)
-    }
+  if (status === 'loading' || loading) {
+    return <div className="p-4 md:p-6">Загрузка...</div>
   }
 
-  if (status === 'loading' || loading) {
-    return <div className="p-6">Загрузка...</div>
+  if (error) {
+    return (
+      <div className="p-4 md:p-6">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+        <Button
+          onClick={() => router.push('/admin/categories')}
+          className="mt-4"
+        >
+          ← Вернуться к списку
+        </Button>
+      </div>
+    )
   }
 
   if (!category) {
-    return <div className="p-6">Категория не найдена</div>
+    return (
+      <div className="p-4 md:p-6">
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+          Категория не найдена
+        </div>
+        <Button
+          onClick={() => router.push('/admin/categories')}
+          className="mt-4"
+        >
+          ← Вернуться к списку
+        </Button>
+      </div>
+    )
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="mb-6">
+    <div className="max-w-4xl mx-auto p-4 md:p-6">
+      <div className="mb-4 md:mb-6">
         <button
           onClick={() => router.push('/admin/categories')}
-          className="text-gray-600 hover:text-gray-800 flex items-center gap-1"
+          className="text-gray-600 hover:text-gray-800 flex items-center gap-1 text-sm md:text-base"
         >
           ← Назад к списку
         </button>
       </div>
 
-      <h1 className="text-2xl font-bold mb-6">Редактирование категории</h1>
+      <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">
+        Редактирование категории
+      </h1>
       
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Название <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            required
-            value={formData.name}
-            onChange={e => setFormData({...formData, name: e.target.value})}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-pink-200 focus:border-pink-400"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Slug</label>
-          <input
-            type="text"
-            value={formData.slug}
-            onChange={e => setFormData({...formData, slug: e.target.value})}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-pink-200 focus:border-pink-400"
-            placeholder="будет создан из названия"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Только латиница, дефисы и цифры
-          </p>
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-pink-600 text-white px-6 py-2 rounded hover:bg-pink-700 disabled:opacity-50"
-          >
-            {saving ? 'Сохранение...' : 'Сохранить'}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push('/admin/categories')}
-            className="bg-gray-300 px-6 py-2 rounded hover:bg-gray-400"
-          >
-            Отмена
-          </button>
-        </div>
-      </form>
+      <div className="bg-white p-4 md:p-6 rounded shadow">
+        <CategoryEditForm 
+          initialData={category}
+          onSuccess={() => {
+            router.push('/admin/categories')
+          }}
+          onCancel={() => router.push('/admin/categories')}
+          isEditing={true}
+        />
+      </div>
     </div>
   )
 }
