@@ -1,6 +1,12 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../api/auth/[...nextauth]/route'
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Личный кабинет | EpicCakesStore',
+  description: 'Ваши заказы, отзывы и настройки профиля.',
+}
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)

@@ -6,6 +6,12 @@ import { useEffect, useState } from 'react'
 import { useCartStore } from '@/store/cart.store'
 import { Button } from '@/components/ui/Button'
 import OrderSuccessSkeleton from '@/components/features/skeleton/OrderSuccessSkeleton'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Заказ оформлен | EpicCakesStore',
+  description: 'Спасибо за заказ! Мы свяжемся с вами для подтверждения.',
+}
 
 export default function OrderSuccessPage() {
   const params = useParams()

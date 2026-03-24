@@ -9,6 +9,12 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import Image from 'next/image'
 import CartSkeleton from '@/components/features/skeleton/CartSkeleton'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Корзина | EpicCakesStore',
+  description: 'Оформите заказ. Просмотрите выбранные товары.',
+}
 
 export default function CartPage() {
   const router = useRouter()

@@ -11,6 +11,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import CheckoutSkeleton from '@/components/features/skeleton/CheckoutSkeleton'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Оформление заказа | EpicCakesStore',
+  description: 'Заполните форму для оформления заказа.',
+}
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
