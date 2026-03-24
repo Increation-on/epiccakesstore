@@ -6,12 +6,12 @@ import Footer from "@/components/layout/Footer";
 import SessionProviderWrapper from "@/components/providers/SessionProviderWrapper";
 import CartSyncWrapper from "@/components/providers/CartSyncWrapper";
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
 });
 
-const playfair = Playfair_Display({ 
+const playfair = Playfair_Display({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-playfair',
 });
@@ -23,12 +23,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
+      <head>
+       <link rel="icon" href="/favicon.png" type="image/png" />
+      </head>
       <body>
         <SessionProviderWrapper>
-          <Header/>
+          <Header />
           {children}
           <CartSyncWrapper />
-          <Footer/>
+          <Footer />
         </SessionProviderWrapper>
       </body>
     </html>

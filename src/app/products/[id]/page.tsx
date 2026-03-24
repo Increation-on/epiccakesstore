@@ -1,16 +1,47 @@
 // app/products/[id]/page.tsx
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
 import ProductCard from '@/components/features/products/ProductCard';
 import { ReviewForm } from '@/components/features/reviews/ReviewForm';
 import { ReviewList } from '@/components/features/reviews/ReviewList';
 import { AddToCartButton } from '@/components/features/products/AddToCartButton';
 import Image from 'next/image';
+import type { Metadata } from 'next'
 
 type PageProps = {
-  params: Promise<{ id: string }>;
-};
+  params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: { categories: true }
+  })
+
+  if (!product) {
+    return {
+      title: 'Товар не найден | EpicCakes',
+      description: 'Запрашиваемый товар не существует.',
+    }
+  }
+
+  const imageUrl = product.images
+    ? (typeof product.images === 'string' ? JSON.parse(product.images)[0] : product.images[0])
+    : '/logo.jpeg'
+
+  return {
+    title: `${product.name} | EpicCakes`,
+    description: product.description || `Купить ${product.name} с доставкой. Натуральные ингредиенты.`,
+    openGraph: {
+      title: product.name,
+      description: product.description || `Купить ${product.name} с доставкой`,
+      images: [{ url: imageUrl, width: 800, height: 800, alt: product.name }],
+      type: 'website',
+    },
+  }
+}
 
 export default async function ProductPage({ params }: PageProps) {
   const { id } = await params;
