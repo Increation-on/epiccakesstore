@@ -25,6 +25,7 @@ export default function RootLayout({
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <head>
        <link rel="icon" href="/favicon.png" type="image/png" />
+       <link rel="preload" as="image" href="/images/cake-background_2.png" fetchPriority="high" />
       </head>
       <body>
         <SessionProviderWrapper>
