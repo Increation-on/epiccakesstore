@@ -1,12 +1,28 @@
-// src/components/features/home/Hero.tsx
+'use client'
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 
 export default function Hero() {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   return (
-    <section className="relative h-100 md:h-150 flex items-end">
-      {/* Картинка через next/image */}
+    <section className="relative h-100 md:h-150 flex items-end overflow-hidden">
+      {/* Блюр-плейсхолдер — грузится мгновенно */}
+      <Image
+        src="/images/hero-blur.jpg"
+        alt=""
+        fill
+        className={`object-cover transition-opacity duration-500 ${
+          isLoaded ? 'opacity-0' : 'opacity-100'
+        }`}
+        priority
+        style={{ objectPosition: 'center 30%' }}
+      />
+      
+      {/* Основное изображение */}
       <Image
         src="/images/cake-background_2.png"
         alt="EpicCakesStore — торты на заказ"
@@ -14,9 +30,12 @@ export default function Hero() {
         priority
         fetchPriority="high"
         sizes="100vw"
-        className="object-cover"
+        className={`object-cover transition-opacity duration-500 ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
         quality={85}
         style={{ objectPosition: 'center 30%' }}
+        onLoad={() => setIsLoaded(true)}
       />
       
       <div className="absolute inset-0 bg-black/15" />
