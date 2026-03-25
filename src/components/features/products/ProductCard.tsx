@@ -4,7 +4,7 @@ import { Product } from "@/types/domain/product.types";
 import { Card } from "../../ui/Card";
 import { Button } from "../../ui/Button";
 import { useCartStore } from "@/store/cart.store";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -26,27 +26,41 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     router.push(`/products/${product.id}`);
   };
 
-  const hasValidImage = product.images?.[0] &&
-    typeof product.images[0] === 'string' &&
-    product.images[0].startsWith('/') &&
+  // 🔥 Парсим images — может быть строка JSON или массив
+  const imageUrl = useMemo(() => {
+    if (!product.images) return null;
+    try {
+      const parsed = typeof product.images === 'string' 
+        ? JSON.parse(product.images) 
+        : product.images;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : null;
+    } catch {
+      return null;
+    }
+  }, [product.images]);
+
+  const isBlobUrl = imageUrl?.startsWith('https://');
+  const hasValidImage = imageUrl && 
+    (imageUrl.startsWith('/') || imageUrl.startsWith('https://')) &&
     !imgError;
 
   return (
     <Card className="group p-4 hover:shadow-lg transition">
       {/* Блок с изображением — кликабельный */}
-      <div 
+      <div
         className="bg-(--mint) h-48 mb-4 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer relative"
         onClick={handleCardClick}
       >
         {hasValidImage ? (
           <Image
-            src={product.images[0]}
+            src={imageUrl}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition group-hover:scale-105"
             onError={() => setImgError(true)}
             loading="lazy"
+            unoptimized={isBlobUrl}
           />
         ) : (
           <div className="text-4xl text-(--text-muted)">🍰</div>
@@ -54,7 +68,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </div>
 
       {/* Название — кликабельное */}
-      <h2 
+      <h2
         className="text-xl font-semibold text-(--text) font-serif line-clamp-1 cursor-pointer hover:text-(--pink) transition"
         onClick={handleCardClick}
       >
