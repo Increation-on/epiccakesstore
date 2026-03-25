@@ -24,7 +24,7 @@ export default function Hero() {
       
       {/* Основное изображение */}
       <Image
-        src="/images/cake-background_2.png"
+        src="/images/cake-background_2.webp"
         alt="EpicCakesStore — торты на заказ"
         fill
         priority
