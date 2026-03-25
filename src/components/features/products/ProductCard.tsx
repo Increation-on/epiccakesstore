@@ -28,13 +28,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   const hasValidImage = product.images?.[0] &&
     typeof product.images[0] === 'string' &&
-    product.images[0].startsWith('/') &&
+    (product.images[0].startsWith('/') || product.images[0].startsWith('https://')) &&
     !imgError;
 
   return (
     <Card className="group p-4 hover:shadow-lg transition">
       {/* Блок с изображением — кликабельный */}
-      <div 
+      <div
         className="bg-(--mint) h-48 mb-4 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer relative"
         onClick={handleCardClick}
       >
@@ -54,7 +54,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </div>
 
       {/* Название — кликабельное */}
-      <h2 
+      <h2
         className="text-xl font-semibold text-(--text) font-serif line-clamp-1 cursor-pointer hover:text-(--pink) transition"
         onClick={handleCardClick}
       >

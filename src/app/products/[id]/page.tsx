@@ -82,19 +82,18 @@ export default async function ProductPage({ params }: PageProps) {
       {/* Основная информация */}
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         {/* Фото */}
-        {/* Фото */}
-        <div className="bg-(--mint) rounded-lg overflow-hidden max-h-125">
+        <div className="bg-(--mint) rounded-lg overflow-hidden">
           {images[0] ? (
-            <div className="relative aspect-square max-h-125">
+            <div className="relative w-full h-100 md:h-125">
               <Image
                 src={images[0]}
                 alt={product.name}
                 fill
-                className="object-contain"
+                className="object-contain p-4"
               />
             </div>
           ) : (
-            <div className="aspect-square flex items-center justify-center max-h-125">
+            <div className="h-100 md:h-125 flex items-center justify-center">
               <span className="text-6xl text-(--text-muted)">🍰</span>
             </div>
           )}
