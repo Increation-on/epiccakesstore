@@ -26,6 +26,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     router.push(`/products/${product.id}`);
   };
 
+  const isBlobUrl = product.images?.[0]?.startsWith('https://');
+
   const hasValidImage = product.images?.[0] &&
     typeof product.images[0] === 'string' &&
     (product.images[0].startsWith('/') || product.images[0].startsWith('https://')) &&
@@ -47,6 +49,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             className="object-cover transition group-hover:scale-105"
             onError={() => setImgError(true)}
             loading="lazy"
+            unoptimized={isBlobUrl}
           />
         ) : (
           <div className="text-4xl text-(--text-muted)">🍰</div>

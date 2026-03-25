@@ -84,7 +84,7 @@ export default async function ProductPage({ params }: PageProps) {
         {/* Фото */}
         <div className="bg-(--mint) rounded-lg overflow-hidden">
           {images[0] ? (
-            <div className="relative w-full h-100 md:h-125">
+            <div className="relative w-full h-125 md:h-150">  {/* ← УВЕЛИЧИЛ ВЫСОТУ */}
               <Image
                 src={images[0]}
                 alt={product.name}
@@ -93,7 +93,7 @@ export default async function ProductPage({ params }: PageProps) {
               />
             </div>
           ) : (
-            <div className="h-100 md:h-125 flex items-center justify-center">
+            <div className="h-125 md:h-150 flex items-center justify-center">
               <span className="text-6xl text-(--text-muted)">🍰</span>
             </div>
           )}
