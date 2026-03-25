@@ -8,6 +8,7 @@ import { Product } from '@/types/domain/product.types'
 import { Category } from '@/types/domain/categoery.types'
 import { Button } from '@/components/ui/Button'
 import ProductForm from './_components/ProductEditForm'
+import Image from 'next/image'
 
 export default function AdminProductsPage() {
   const { data: session, status } = useSession()
@@ -24,10 +25,10 @@ export default function AdminProductsPage() {
         fetch('/api/admin/products'),
         fetch('/api/admin/categories')
       ])
-      
+
       const productsData = await productsRes.json()
       const categoriesData = await categoriesRes.json()
-      
+
       setProducts(productsData)
       setCategories(categoriesData)
     } catch (error) {
@@ -51,9 +52,9 @@ export default function AdminProductsPage() {
 
   const handleDelete = async (id: Product['id']) => {
     if (!confirm('Точно удалить?')) return
-    
+
     const productId = String(id)
-    
+
     try {
       const res = await fetch(`/api/admin/products/${productId}`, {
         method: 'DELETE'
@@ -73,8 +74,8 @@ export default function AdminProductsPage() {
   const getImageUrl = (product: Product) => {
     if (!product.images) return null
     try {
-      const parsed = typeof product.images === 'string' 
-        ? JSON.parse(product.images) 
+      const parsed = typeof product.images === 'string'
+        ? JSON.parse(product.images)
         : product.images
       return Array.isArray(parsed) && parsed[0] ? parsed[0] : null
     } catch {
@@ -98,7 +99,7 @@ export default function AdminProductsPage() {
       {showForm && (
         <div className="bg-white p-4 md:p-6 rounded shadow mb-6">
           <h2 className="text-lg font-semibold mb-4">Новый товар</h2>
-          <ProductForm 
+          <ProductForm
             categories={categories}
             onSuccess={() => {
               setShowForm(false)
@@ -138,11 +139,15 @@ export default function AdminProductsPage() {
                   <td className="px-4 md:px-6 py-4">
                     <div className="flex items-center gap-2">
                       {getImageUrl(product) && (
-                        <img 
-                          src={getImageUrl(product)!}
-                          alt={product.name}
-                          className="w-8 h-8 md:w-10 md:h-10 object-cover rounded shrink-0"
-                        />
+                        <div className="relative w-8 h-8 md:w-10 md:h-10 shrink-0">
+                          <Image
+                            src={getImageUrl(product)!}
+                            alt={product.name}
+                            fill
+                            className="object-cover rounded"
+                            sizes="40px"
+                          />
+                        </div>
                       )}
                       <div className="min-w-0">
                         <div className="font-medium text-sm md:text-base wrap-break-word">
@@ -159,7 +164,7 @@ export default function AdminProductsPage() {
                       <div className="overflow-x-auto max-w-37.5 md:max-w-none">
                         <div className="flex gap-1 min-w-max">
                           {product.categories.map(cat => (
-                            <span 
+                            <span
                               key={cat.id}
                               className="px-1.5 py-0.5 md:px-2 md:py-1 bg-gray-100 text-xs rounded whitespace-nowrap"
                             >
@@ -176,11 +181,10 @@ export default function AdminProductsPage() {
                     {product.price} ₽
                   </td>
                   <td className="px-4 md:px-6 py-4">
-                    <span className={`px-2 py-1 text-xs rounded whitespace-nowrap ${
-                      product.inStock 
-                        ? 'bg-green-100 text-green-800' 
+                    <span className={`px-2 py-1 text-xs rounded whitespace-nowrap ${product.inStock
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
-                    }`}>
+                      }`}>
                       {product.inStock ? 'В наличии' : 'Нет'}
                     </span>
                   </td>
@@ -213,17 +217,21 @@ export default function AdminProductsPage() {
           <div key={product.id} className="bg-white rounded shadow p-4">
             <div className="flex gap-3">
               {getImageUrl(product) ? (
-                <img 
-                  src={getImageUrl(product)!}
-                  alt={product.name}
-                  className="w-16 h-16 object-cover rounded shrink-0"
-                />
+                <div className="relative w-16 h-16 shrink-0">
+                  <Image
+                    src={getImageUrl(product)!}
+                    alt={product.name}
+                    fill
+                    className="object-cover rounded"
+                    sizes="64px"
+                  />
+                </div>
               ) : (
                 <div className="w-16 h-16 bg-gray-100 rounded shrink-0 flex items-center justify-center text-2xl">
                   🍰
                 </div>
               )}
-              
+
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-gray-900 wrap-break-word">
                   {product.name}
@@ -235,20 +243,19 @@ export default function AdminProductsPage() {
                   <span className="text-lg font-bold text-pink-600">
                     {product.price} ₽
                   </span>
-                  <span className={`px-2 py-0.5 text-xs rounded ${
-                    product.inStock 
-                      ? 'bg-green-100 text-green-800' 
+                  <span className={`px-2 py-0.5 text-xs rounded ${product.inStock
+                      ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
-                  }`}>
+                    }`}>
                     {product.inStock ? 'В наличии' : 'Нет'}
                   </span>
                 </div>
-                
+
                 {product.categories && product.categories.length > 0 && (
                   <div className="overflow-x-auto mt-3">
                     <div className="flex gap-1 min-w-max">
                       {product.categories.map(cat => (
-                        <span 
+                        <span
                           key={cat.id}
                           className="px-2 py-0.5 bg-gray-100 text-xs rounded whitespace-nowrap"
                         >
@@ -258,7 +265,7 @@ export default function AdminProductsPage() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="flex gap-3 mt-4 pt-3 border-t border-gray-100">
                   <button
                     onClick={() => router.push(`/admin/products/${product.id}`)}
