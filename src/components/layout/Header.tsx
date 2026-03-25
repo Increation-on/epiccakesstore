@@ -33,7 +33,7 @@ export default function Header() {
           {/* Правая часть */}
           <div className="flex items-center gap-2 shrink-0">
             <CartIcon />
-            
+
             {/* Десктопный профиль */}
             <div className="hidden md:flex items-center gap-2">
               {isLoggedIn ? (
@@ -57,9 +57,10 @@ export default function Header() {
             </div>
 
             {/* Бургер */}
-            <button 
+            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 text-gray-300 hover:text-(--pink)"
+              aria-label={isMenuOpen ? "Закрыть меню" : "Открыть меню"}
             >
               {isMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
             </button>
@@ -70,7 +71,7 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pt-4 border-t border-gray-800">
             <Navbar isAdmin={isAdmin} isLoggedIn={isLoggedIn} isMobile onLinkClick={() => setIsMenuOpen(false)} />
-            
+
             <div className="mt-4 pt-4 border-t border-gray-800">
               {isLoggedIn ? (
                 <div className="flex flex-col gap-3">
