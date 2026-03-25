@@ -4,18 +4,18 @@
 :root {
   --background: #FAFAFA;
   --foreground: #1F2937;
-  
+
   --mint: #D1FAE5;
-  --mint-dark:  #0cd4c5;
-  --pink: #F9A8D4;
-  --pink-dark: #F472B6;
-  
+  --mint-dark: #0cd4c5;
+--pink: #ec489a;       /* основной розовый (pink-600) */
+--pink-dark: #db2777;
+
   --text-muted: #6B7280;
   --border: #E5E7EB;
   --border-dark: #717275;
   --admin: #9333EA;
   --admin-dark: #7E22CE;
-  
+
   /* 👇 Шрифты */
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-playfair), Georgia, serif;
@@ -38,7 +38,12 @@ body {
   margin: 0;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-serif);
 }
 
@@ -46,7 +51,8 @@ button {
   cursor: pointer;
 }
 
-html, body {
+html,
+body {
   overflow-x: hidden;
   width: 100%;
 }
@@ -54,7 +60,16 @@ html, body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+img {
+  will-change: transform;
+}
+
+button {
+  will-change: transform;
 }

@@ -1,3 +1,5 @@
+//src/app/cart/page.tsx
+
 import { Suspense } from 'react'
 import CartContent from './CartContent'
 import CartSkeleton from '@/components/features/skeleton/CartSkeleton'

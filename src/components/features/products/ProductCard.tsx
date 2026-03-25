@@ -6,6 +6,7 @@ import { Button } from "../../ui/Button";
 import { useCartStore } from "@/store/cart.store";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type ProductCardProps = {
   product: Product;
@@ -34,15 +35,18 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     <Card className="group p-4 hover:shadow-lg transition">
       {/* Блок с изображением — кликабельный */}
       <div 
-        className="bg-(--mint) h-48 mb-4 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer"
+        className="bg-(--mint) h-48 mb-4 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer relative"
         onClick={handleCardClick}
       >
         {hasValidImage ? (
-          <img
+          <Image
             src={product.images[0]}
             alt={product.name}
-            className="w-full h-full object-cover transition group-hover:scale-105"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition group-hover:scale-105"
             onError={() => setImgError(true)}
+            loading="lazy"
           />
         ) : (
           <div className="text-4xl text-(--text-muted)">🍰</div>

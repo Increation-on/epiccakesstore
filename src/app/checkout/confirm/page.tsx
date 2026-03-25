@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { Product } from '@/types/domain/product.types'
 import Link from 'next/link'
-import { StripePayment } from '@/components/features/payment/StripePayment'
+import { LazyStripePayment } from '@/components/features/payment/LazyStripePayment'
 import { useSession } from 'next-auth/react'
 
 export default function ConfirmPage() {
@@ -416,7 +416,7 @@ useEffect(() => {
                     {showPayment && clientSecret && orderId ? (
                         <div className="border rounded-lg p-4 mt-4">
                             <h2 className="text-xl font-semibold mb-4">Оплата картой</h2>
-                            <StripePayment
+                            <LazyStripePayment
                                 amount={totalPrice}
                                 clientSecret={clientSecret}
                                 orderId={orderId}

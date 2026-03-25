@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 import { Inter, Playfair_Display } from 'next/font/google';
 import "./globals.css";
 import Header from "@/components/layout/Header";
@@ -9,11 +8,13 @@ import CartSyncWrapper from "@/components/providers/CartSyncWrapper";
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
+  weight: ['400', '500', '600', '700'],
 });
 
 const playfair = Playfair_Display({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-playfair',
+  weight: ['400', '600', '700'],
 });
 
 export default function RootLayout({
@@ -24,7 +25,15 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-       <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        {/* Preload правильного формата WebP */}
+        <link 
+          rel="preload" 
+          as="image" 
+          href="/images/cake-background_2.webp" 
+          fetchPriority="high"
+          type="image/webp"
+        />
       </head>
       <body>
         <SessionProviderWrapper>
