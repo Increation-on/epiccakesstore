@@ -4,7 +4,7 @@ import { Product } from "@/types/domain/product.types";
 import { Card } from "../../ui/Card";
 import { Button } from "../../ui/Button";
 import { useCartStore } from "@/store/cart.store";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -26,11 +26,22 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     router.push(`/products/${product.id}`);
   };
 
-  const isBlobUrl = product.images?.[0]?.startsWith('https://');
+  // 🔥 Парсим images — может быть строка JSON или массив
+  const imageUrl = useMemo(() => {
+    if (!product.images) return null;
+    try {
+      const parsed = typeof product.images === 'string' 
+        ? JSON.parse(product.images) 
+        : product.images;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : null;
+    } catch {
+      return null;
+    }
+  }, [product.images]);
 
-  const hasValidImage = product.images?.[0] &&
-    typeof product.images[0] === 'string' &&
-    (product.images[0].startsWith('/') || product.images[0].startsWith('https://')) &&
+  const isBlobUrl = imageUrl?.startsWith('https://');
+  const hasValidImage = imageUrl && 
+    (imageUrl.startsWith('/') || imageUrl.startsWith('https://')) &&
     !imgError;
 
   return (
@@ -42,7 +53,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       >
         {hasValidImage ? (
           <Image
-            src={product.images[0]}
+            src={imageUrl}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
