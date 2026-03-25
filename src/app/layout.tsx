@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+        <link rel="icon"  href="/favicon.ico?v=3" type="image/x-icon" />
         {/* Preload правильного формата WebP */}
         <link 
           rel="preload" 
