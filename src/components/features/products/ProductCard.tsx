@@ -46,6 +46,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition group-hover:scale-105"
             onError={() => setImgError(true)}
+            loading="lazy"
           />
         ) : (
           <div className="text-4xl text-(--text-muted)">🍰</div>

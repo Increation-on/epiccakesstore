@@ -8,11 +8,13 @@ import CartSyncWrapper from "@/components/providers/CartSyncWrapper";
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
+  weight: ['400', '500', '600', '700'],
 });
 
 const playfair = Playfair_Display({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-playfair',
+  weight: ['400', '600', '700'],
 });
 
 export default function RootLayout({
@@ -23,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
         {/* Preload правильного формата WebP */}
         <link 
           rel="preload" 
@@ -31,17 +33,6 @@ export default function RootLayout({
           href="/images/cake-background_2.webp" 
           fetchPriority="high"
           type="image/webp"
-        />
-        {/* Preconnect для Google Fonts */}
-        <link 
-          rel="preconnect" 
-          href="https://fonts.googleapis.com" 
-          crossOrigin="anonymous"
-        />
-        <link 
-          rel="preconnect" 
-          href="https://fonts.gstatic.com" 
-          crossOrigin="anonymous"
         />
       </head>
       <body>

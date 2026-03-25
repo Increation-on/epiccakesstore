@@ -65,3 +65,11 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+img {
+  will-change: transform;
+}
+
+button {
+  will-change: transform;
+}

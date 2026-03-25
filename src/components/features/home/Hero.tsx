@@ -30,6 +30,7 @@ export default function Hero() {
         priority
         fetchPriority="high"
         sizes="100vw"
+        loading="eager"
         className={`object-cover transition-opacity duration-500 ${
           isLoaded ? 'opacity-100' : 'opacity-0'
         }`}
