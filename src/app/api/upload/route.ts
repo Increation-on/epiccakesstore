@@ -4,6 +4,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import sharp from 'sharp'
 
 export async function POST(request: Request) {
   try {
@@ -31,20 +32,29 @@ export async function POST(request: Request) {
       )
     }
 
-    // Создаём уникальное имя файла
+    // Конвертируем в буфер
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+    
+    // Оптимизируем изображение через sharp
+    const optimizedBuffer = await sharp(buffer)
+      .webp({ quality: 80 })           // Конвертируем в WebP с качеством 80
+      .resize(800, 800, {              // Ресайзим до 800px
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .toBuffer()
     
     // Создаём папку, если её нет
     const uploadDir = path.join(process.cwd(), 'public/uploads')
     await mkdir(uploadDir, { recursive: true })
 
-    // Сохраняем файл
+    // Сохраняем файл с расширением .webp
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`
-    const filename = `${uniqueSuffix}-${file.name.replace(/\s/g, '_')}`
+    const filename = `${uniqueSuffix}.webp`
     const filepath = path.join(uploadDir, filename)
     
-    await writeFile(filepath, buffer)
+    await writeFile(filepath, optimizedBuffer)
 
     // Возвращаем URL для доступа к файлу
     const fileUrl = `/uploads/${filename}`
