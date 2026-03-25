@@ -12,6 +12,7 @@ export default function Hero() {
         alt="EpicCakesStore — торты на заказ"
         fill
         priority
+        fetchPriority="high"
         sizes="100vw"
         className="object-cover"
         quality={85}
