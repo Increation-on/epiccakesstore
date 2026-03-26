@@ -7,7 +7,7 @@ import { useCartStore } from "@/store/cart.store";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { toast } from '@/lib/toast';
+import { toast } from "@/lib/toast";
 
 type ProductCardProps = {
   product: Product;
@@ -17,6 +17,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const router = useRouter();
   const addItem = useCartStore(state => state.addItem);
   const [imgError, setImgError] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false); // ← добавить
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -25,10 +26,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   const handleCardClick = () => {
+    setIsNavigating(true); // ← показать лоадер
     router.push(`/products/${product.id}`);
   };
 
-  // 🔥 Парсим images — может быть строка JSON или массив
   const imageUrl = useMemo(() => {
     if (!product.images) return null;
     try {
@@ -47,7 +48,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     !imgError;
 
   return (
-    <Card className="group p-4 hover:shadow-lg transition">
+    <Card className="group p-4 hover:shadow-lg transition relative"> {/* ← добавить relative */}
+      {/* Затемнение и спиннер при навигации */}
+      {isNavigating && (
+        <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center z-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent" />
+        </div>
+      )}
+
       {/* Блок с изображением — кликабельный */}
       <div
         className="bg-(--mint) h-48 mb-4 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer relative"
