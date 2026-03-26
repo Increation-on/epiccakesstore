@@ -9,6 +9,7 @@ import { Category } from '@/types/domain/categoery.types'
 import { Button } from '@/components/ui/Button'
 import ProductForm from './_components/ProductEditForm'
 import Image from 'next/image'
+import { toast } from '@/lib/toast'  // ← добавить импорт
 
 export default function AdminProductsPage() {
   const { data: session, status } = useSession()
@@ -26,6 +27,10 @@ export default function AdminProductsPage() {
         fetch('/api/admin/categories')
       ])
 
+      if (!productsRes.ok || !categoriesRes.ok) {
+        throw new Error('Ошибка загрузки данных')
+      }
+
       const productsData = await productsRes.json()
       const categoriesData = await categoriesRes.json()
 
@@ -33,6 +38,7 @@ export default function AdminProductsPage() {
       setCategories(categoriesData)
     } catch (error) {
       console.error('❌ Ошибка загрузки:', error)
+      toast.error('Не удалось загрузить товары')
     } finally {
       setLoading(false)
     }
@@ -50,7 +56,7 @@ export default function AdminProductsPage() {
     }
   }, [session, status, router])
 
-  const handleDelete = async (id: Product['id']) => {
+  const handleDelete = async (id: Product['id'], name: string) => {
     if (!confirm('Точно удалить?')) return
 
     const productId = String(id)
@@ -59,11 +65,16 @@ export default function AdminProductsPage() {
       const res = await fetch(`/api/admin/products/${productId}`, {
         method: 'DELETE'
       })
+      
       if (res.ok) {
         setProducts(products.filter(p => p.id !== id))
+        toast.success(`Товар "${name}" удален`)  // ← добавить
+      } else {
+        toast.error(`Не удалось удалить товар "${name}"`)  // ← добавить
       }
     } catch (error) {
       console.error('Error deleting product:', error)
+      toast.error('Ошибка при удалении товара')  // ← добавить
     }
   }
 
@@ -197,7 +208,7 @@ export default function AdminProductsPage() {
                       ✏️
                     </button>
                     <button
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() => handleDelete(product.id, product.name)}
                       className="text-red-600 hover:text-red-800 text-lg md:text-base"
                       aria-label="Удалить"
                     >
@@ -274,7 +285,7 @@ export default function AdminProductsPage() {
                     ✏️ Редактировать
                   </button>
                   <button
-                    onClick={() => handleDelete(product.id)}
+                    onClick={() => handleDelete(product.id, product.name)}
                     className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
                   >
                     🗑️ Удалить
