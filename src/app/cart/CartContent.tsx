@@ -164,23 +164,50 @@ export default function CartContent() {
                   {/* Картинка */}
                   <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
                     {(() => {
-                      const imageUrl = product.images
-                        ? typeof product.images === 'string'
-                          ? product.images
-                          : product.images[0]
-                        : null
-                      if (imageUrl && imageUrl.startsWith('http')) {
+                      let imageUrl = null
+                      try {
+                        if (product.images) {
+                          if (typeof product.images === 'string') {
+                            // 🔥 Парсим JSON строку
+                            const parsed = JSON.parse(product.images)
+                            imageUrl = Array.isArray(parsed) ? parsed[0] : parsed
+                          } else if (Array.isArray(product.images)) {
+                            imageUrl = product.images[0]
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Error parsing image URL:', error)
+                        // Если не распарсилось, пробуем использовать как есть
+                        if (typeof product.images === 'string' && product.images.startsWith('http')) {
+                          imageUrl = product.images
+                        }
+                      }
+
+                      console.log('Cart image debug:', {
+                        productId: product.id,
+                        productName: product.name,
+                        imageUrl,
+                        isValid: imageUrl && (imageUrl.startsWith('/') || imageUrl.startsWith('http'))
+                      })
+
+                      if (imageUrl && (imageUrl.startsWith('/') || imageUrl.startsWith('http'))) {
                         return (
-                          <Image
-                            src={imageUrl}
-                            alt={product.name}
-                            width={80}
-                            height={80}
-                            className="object-cover rounded"
-                          />
+                          <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
+                            <Image
+                              src={imageUrl}
+                              alt={product.name}
+                              fill
+                              className="object-cover rounded"
+                              onError={() => console.error('Image failed to load:', imageUrl)}
+                            />
+                          </div>
                         )
                       }
-                      return <span className="text-3xl">🍰</span>
+                      return (
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
+                          <span className="text-3xl">🍰</span>
+                        </div>
+                      )
                     })()}
                   </div>
 
