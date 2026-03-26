@@ -7,6 +7,7 @@ import { ReviewList } from '@/components/features/reviews/ReviewList';
 import { AddToCartButton } from '@/components/features/products/AddToCartButton';
 import Image from 'next/image';
 import type { Metadata } from 'next'
+import ProductImageGallery from '@/components/features/products/ProductImageGallery';
 
 type PageProps = {
   params: Promise<{ id: string }>
@@ -81,23 +82,16 @@ export default async function ProductPage({ params }: PageProps) {
     <div className="container mx-auto px-4 py-8">
       {/* Основная информация */}
       <div className="grid md:grid-cols-2 gap-8 mb-12">
-        {/* Фото */}
-        <div className="bg-(--mint) rounded-lg overflow-hidden">
-          {images[0] ? (
-            <div className="relative w-full aspect-square md:aspect-4/3">
-              <Image
-                src={images[0]}
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-          ) : (
-            <div className="aspect-square md:aspect-4/3 flex items-center justify-center">
-              <span className="text-6xl text-(--text-muted)">🍰</span>
-            </div>
-          )}
-        </div>
+        {/* Фото — галерея */}
+        {images.length > 0 ? (
+
+          <ProductImageGallery images={images} productName={product.name} />
+        ) : (
+          <div className="aspect-square md:aspect-4/3 flex items-center justify-center">
+            <span className="text-6xl text-(--text-muted)">🍰</span>
+          </div>
+        )}
+
 
         {/* Информация */}
         <div>

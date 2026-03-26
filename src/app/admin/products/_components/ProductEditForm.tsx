@@ -1,11 +1,11 @@
-// app/admin/products/_components/ProductForm.tsx
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Category } from '@/types/domain/categoery.types'
 import { Product } from '@/types/domain/product.types'
 import { Button } from '@/components/ui/Button'
-import { toast } from '@/lib/toast'  // ← добавить импорт
+import { toast } from '@/lib/toast'
+import { ImageGallery } from '../../ImageGallery'
 
 type Props = {
   categories: Category[]
@@ -15,85 +15,51 @@ type Props = {
   isEditing?: boolean
 }
 
-export default function ProductEditForm({ 
-  categories, 
+export default function ProductEditForm({
+  categories,
   initialData,
-  onSuccess, 
+  onSuccess,
   onCancel,
-  isEditing = false 
+  isEditing = false
 }: Props) {
   const [loading, setLoading] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  
+  const [imageUrls, setImageUrls] = useState<string[]>([])
+
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
     description: '',
     price: '',
-    images: '',
     inStock: true,
     categoryIds: [] as string[]
   })
 
   useEffect(() => {
     if (initialData) {
-      let imageUrl = ''
+      // Парсим изображения в массив
+      let parsedImages: string[] = []
       if (initialData.images) {
         try {
-          const images = typeof initialData.images === 'string' 
-            ? JSON.parse(initialData.images) 
+          const images = typeof initialData.images === 'string'
+            ? JSON.parse(initialData.images)
             : initialData.images
-          imageUrl = Array.isArray(images) ? images[0] || '' : ''
+          parsedImages = Array.isArray(images) ? images : []
         } catch {
-          imageUrl = ''
+          parsedImages = []
         }
       }
-
+      setImageUrls(parsedImages)
+      
       setFormData({
         name: initialData.name,
         slug: initialData.slug,
         description: initialData.description || '',
         price: String(initialData.price),
-        images: imageUrl,
         inStock: initialData.inStock,
         categoryIds: initialData.categories?.map(cat => String(cat.id)) || []
       })
     }
   }, [initialData])
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      })
-
-      if (!res.ok) {
-        throw new Error('Ошибка загрузки')
-      }
-
-      const data = await res.json()
-      setFormData(prev => ({ ...prev, images: data.url }))
-      toast.success('Изображение загружено')  // ← добавить
-      
-    } catch (error) {
-      console.error('Error uploading:', error)
-      toast.error('Ошибка при загрузке изображения')  // ← заменить alert
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -103,7 +69,7 @@ export default function ProductEditForm({
       const url = isEditing && initialData?.id
         ? `/api/admin/products/${String(initialData.id)}`
         : '/api/admin/products'
-      
+
       const method = isEditing ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
@@ -112,7 +78,7 @@ export default function ProductEditForm({
         body: JSON.stringify({
           ...formData,
           price: parseFloat(formData.price),
-          images: formData.images ? JSON.stringify([formData.images]) : '[]',
+          images: JSON.stringify(imageUrls), // ← сохраняем все изображения
           categoryIds: formData.categoryIds
         })
       })
@@ -120,14 +86,14 @@ export default function ProductEditForm({
       const data = await res.json()
 
       if (res.ok) {
-        toast.success(isEditing ? 'Товар обновлен' : 'Товар создан')  // ← добавить
+        toast.success(isEditing ? 'Товар обновлен' : 'Товар создан')
         onSuccess()
       } else {
-        toast.error(data.error || `Ошибка при ${isEditing ? 'обновлении' : 'создании'} товара`)  // ← заменить alert
+        toast.error(data.error || `Ошибка при ${isEditing ? 'обновлении' : 'создании'} товара`)
       }
     } catch (error) {
       console.error('❌ Ошибка:', error)
-      toast.error(`Ошибка при ${isEditing ? 'обновлении' : 'создании'} товара`)  // ← заменить alert
+      toast.error(`Ошибка при ${isEditing ? 'обновлении' : 'создании'} товара`)
     } finally {
       setLoading(false)
     }
@@ -144,7 +110,7 @@ export default function ProductEditForm({
           type="text"
           required
           value={formData.name}
-          onChange={e => setFormData({...formData, name: e.target.value})}
+          onChange={e => setFormData({ ...formData, name: e.target.value })}
           className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="Например: Шоколадный торт"
         />
@@ -156,7 +122,7 @@ export default function ProductEditForm({
         <input
           type="text"
           value={formData.slug}
-          onChange={e => setFormData({...formData, slug: e.target.value})}
+          onChange={e => setFormData({ ...formData, slug: e.target.value })}
           className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="shokoladnyy-tort"
         />
@@ -170,7 +136,7 @@ export default function ProductEditForm({
         <label className="block text-sm font-medium mb-1">Описание</label>
         <textarea
           value={formData.description}
-          onChange={e => setFormData({...formData, description: e.target.value})}
+          onChange={e => setFormData({ ...formData, description: e.target.value })}
           className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           rows={4}
           placeholder="Подробное описание товара..."
@@ -188,56 +154,17 @@ export default function ProductEditForm({
           min="0"
           step="0.01"
           value={formData.price}
-          onChange={e => setFormData({...formData, price: e.target.value})}
+          onChange={e => setFormData({ ...formData, price: e.target.value })}
           className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="0.00"
         />
       </div>
 
-      {/* Изображение */}
-      <div>
-        <label className="block text-sm font-medium mb-1">Изображение</label>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            type="text"
-            value={formData.images}
-            onChange={e => setFormData({...formData, images: e.target.value})}
-            className="flex-1 p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
-            placeholder="/uploads/image.jpg"
-          />
-          <div className="relative">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="absolute inset-0 opacity-0 w-full cursor-pointer"
-              disabled={uploading}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="w-full sm:w-auto bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-50 whitespace-nowrap text-sm md:text-base cursor-pointer"
-            >
-              {uploading ? 'Загрузка...' : 'Выбрать файл'}
-            </button>
-          </div>
-        </div>
-        
-        {formData.images && (
-          <div className="mt-2">
-            <img 
-              src={formData.images} 
-              alt="preview"
-              className="w-24 h-24 md:w-32 md:h-32 object-cover rounded border border-(--border)"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none'
-              }}
-            />
-          </div>
-        )}
-      </div>
+      {/* Изображения */}
+      <ImageGallery
+        images={imageUrls}
+        onChange={setImageUrls} // ← напрямую обновляем массив
+      />
 
       {/* Категории */}
       <div>
@@ -257,7 +184,7 @@ export default function ProductEditForm({
                       const newIds = e.target.checked
                         ? [...formData.categoryIds, categoryId]
                         : formData.categoryIds.filter(id => id !== categoryId)
-                      setFormData({...formData, categoryIds: newIds})
+                      setFormData({ ...formData, categoryIds: newIds })
                     }}
                     className="w-4 h-4 rounded text-(--pink) focus:ring-(--pink)"
                   />
@@ -275,7 +202,7 @@ export default function ProductEditForm({
           type="checkbox"
           id="inStock"
           checked={formData.inStock}
-          onChange={e => setFormData({...formData, inStock: e.target.checked})}
+          onChange={e => setFormData({ ...formData, inStock: e.target.checked })}
           className="w-4 h-4 rounded text-(--pink) focus:ring-(--pink)"
         />
         <label htmlFor="inStock" className="text-sm md:text-base text-(--text)">В наличии</label>
@@ -285,7 +212,7 @@ export default function ProductEditForm({
       <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-(--border)">
         <Button
           type="submit"
-          disabled={loading || uploading}
+          disabled={loading}
           className="w-full sm:w-auto"
         >
           {loading ? 'Сохранение...' : (isEditing ? 'Сохранить изменения' : 'Создать товар')}
