@@ -8,7 +8,8 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import Image from 'next/image'
-import { toast } from '@/lib/toast'  // ← добавить импорт
+import { toast } from '@/lib/toast'
+import { Modal } from '@/components/ui/Modal'
 
 export default function CartContent() {
   const router = useRouter()
@@ -17,6 +18,19 @@ export default function CartContent() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
+
+  // Состояние для модалки подтверждения
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean
+    itemId: string | null
+    productName: string
+    type: 'single' | 'clear'
+  }>({
+    isOpen: false,
+    itemId: null,
+    productName: '',
+    type: 'single',
+  })
 
   const cartItems = Array.isArray(items) ? items : []
 
@@ -36,16 +50,16 @@ export default function CartContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: productIds })
         })
-        
+
         if (!res.ok) {
           throw new Error('Ошибка загрузки товаров')
         }
-        
+
         const data = await res.json()
         setProducts(Array.isArray(data) ? data : [])
       } catch (error) {
         console.error(error)
-        toast.error('Не удалось загрузить товары в корзине')  // ← добавить
+        toast.error('Не удалось загрузить товары в корзине')
         setProducts([])
       } finally {
         setLoading(false)
@@ -68,16 +82,43 @@ export default function CartContent() {
     }
   }
 
-  const handleRemoveItem = (itemId: string, productName: string) => {
-    removeItem(itemId)
-    toast.success(`${productName} удален из корзины`)  // ← добавить
+  // Функции для модалки
+  const openRemoveModal = (itemId: string, productName: string) => {
+    setModalState({
+      isOpen: true,
+      itemId,
+      productName,
+      type: 'single',
+    })
   }
 
-  const handleClearCart = () => {
-    if (confirm('Очистить всю корзину?')) {
+  const openClearModal = () => {
+    setModalState({
+      isOpen: true,
+      itemId: null,
+      productName: '',
+      type: 'clear',
+    })
+  }
+
+  const closeModal = () => {
+    setModalState({
+      isOpen: false,
+      itemId: null,
+      productName: '',
+      type: 'single',
+    })
+  }
+
+  const confirmAction = () => {
+    if (modalState.type === 'single' && modalState.itemId) {
+      removeItem(modalState.itemId)
+      toast.success(`${modalState.productName} удален из корзины`)
+    } else if (modalState.type === 'clear') {
       clearCart()
-      toast.success('Корзина очищена')  // ← добавить
+      toast.success('Корзина очищена')
     }
+    closeModal()
   }
 
   if (cartItems.length === 0) {
@@ -116,12 +157,17 @@ export default function CartContent() {
               if (!product) return null
 
               return (
-                <div key={item.id} className="flex flex-wrap sm:flex-nowrap gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)">
+                <div
+                  key={item.id}
+                  className="flex flex-wrap sm:flex-nowrap gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)"
+                >
                   {/* Картинка */}
                   <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
                     {(() => {
                       const imageUrl = product.images
-                        ? (typeof product.images === 'string' ? product.images : product.images[0])
+                        ? typeof product.images === 'string'
+                          ? product.images
+                          : product.images[0]
                         : null
                       if (imageUrl && imageUrl.startsWith('http')) {
                         return (
@@ -153,7 +199,7 @@ export default function CartContent() {
                         if (item.quantity > 1) {
                           updateQuantity(item.id, item.quantity - 1)
                         } else {
-                          if (confirm('Удалить товар из корзины?')) handleRemoveItem(item.id, product.name)
+                          openRemoveModal(item.id, product.name)
                         }
                       }}
                       className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
@@ -168,7 +214,7 @@ export default function CartContent() {
                       +
                     </button>
                     <button
-                      onClick={() => handleRemoveItem(item.id, product.name)}
+                      onClick={() => openRemoveModal(item.id, product.name)}
                       className="ml-2 text-gray-400 hover:text-red-500 transition"
                     >
                       🗑️
@@ -208,7 +254,7 @@ export default function CartContent() {
             </Button>
 
             <button
-              onClick={handleClearCart}
+              onClick={openClearModal}
               className="w-full mt-3 text-sm text-(--text-muted) hover:text-red-500 transition"
             >
               Очистить корзину
@@ -217,6 +263,28 @@ export default function CartContent() {
         </div>
       </div>
 
+      {/* Модалка подтверждения */}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        title={modalState.type === 'clear' ? 'Очистка корзины' : 'Удаление товара'}
+      >
+        <p className="text-(--text-muted) mb-6">
+          {modalState.type === 'clear'
+            ? 'Вы уверены, что хотите очистить всю корзину?'
+            : `Вы уверены, что хотите удалить "${modalState.productName}" из корзины?`}
+        </p>
+        <div className="flex gap-3 justify-end">
+          <Button variant="outline" onClick={closeModal}>
+            Отмена
+          </Button>
+          <Button onClick={confirmAction} className="bg-red-500 hover:bg-red-600">
+            Удалить
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Модалка авторизации */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md mx-4">
