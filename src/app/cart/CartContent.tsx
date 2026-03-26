@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import Image from 'next/image'
 import { toast } from '@/lib/toast'
 import { Modal } from '@/components/ui/Modal'
+import CartSkeleton from '@/components/features/skeleton/CartSkeleton'
 
 export default function CartContent() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function CartContent() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [isCartLoading, setIsCartLoading] = useState(true)
 
   // Состояние для модалки подтверждения
   const [modalState, setModalState] = useState<{
@@ -33,6 +35,13 @@ export default function CartContent() {
   })
 
   const cartItems = Array.isArray(items) ? items : []
+
+  // Когда корзина загрузилась
+  useEffect(() => {
+    if (items !== undefined) {
+      setIsCartLoading(false)
+    }
+  }, [items])
 
   useEffect(() => {
     async function loadProducts() {
@@ -121,6 +130,11 @@ export default function CartContent() {
     closeModal()
   }
 
+  // Пока загружается корзина — показываем скелетон
+  if (isCartLoading) {
+    return <CartSkeleton />
+  }
+
   if (cartItems.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
@@ -168,7 +182,6 @@ export default function CartContent() {
                       try {
                         if (product.images) {
                           if (typeof product.images === 'string') {
-                            // 🔥 Парсим JSON строку
                             const parsed = JSON.parse(product.images)
                             imageUrl = Array.isArray(parsed) ? parsed[0] : parsed
                           } else if (Array.isArray(product.images)) {
@@ -177,18 +190,10 @@ export default function CartContent() {
                         }
                       } catch (error) {
                         console.error('Error parsing image URL:', error)
-                        // Если не распарсилось, пробуем использовать как есть
                         if (typeof product.images === 'string' && product.images.startsWith('http')) {
                           imageUrl = product.images
                         }
                       }
-
-                      console.log('Cart image debug:', {
-                        productId: product.id,
-                        productName: product.name,
-                        imageUrl,
-                        isValid: imageUrl && (imageUrl.startsWith('/') || imageUrl.startsWith('http'))
-                      })
 
                       if (imageUrl && (imageUrl.startsWith('/') || imageUrl.startsWith('http'))) {
                         return (
