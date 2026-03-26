@@ -173,10 +173,13 @@ export default async function ProductPage({ params }: PageProps) {
 
           {/* Мобилка — горизонтальный скролл */}
           <div className="lg:hidden w-screen relative left-1/2 right-1/2 -mx-[50vw]">
-            <div className="overflow-x-auto pb-4 scrollbar-hide">
+            <div className="overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
               <div className="flex gap-6 px-4">
-                {similarProducts.map((product) => (
-                  <div key={product.id} className="w-70 shrink-0">
+                {similarProducts.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className={`w-70 shrink-0 snap-center ${index === 0 ? 'snap-start' : ''}`}
+                  >
                     <ProductCard product={product} />
                   </div>
                 ))}
