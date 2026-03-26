@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import { useState, useEffect, useCallback } from 'react';
 import { Product } from '@/types/domain/product.types';
@@ -6,8 +6,6 @@ import { Category } from '@/types/domain/categoery.types';
 import ProductCard from '@/components/features/products/ProductCard';
 import CategorySidebar from '@/components/features/products/ProductFilter/CategorySideBar';
 import Pagination from '@/components/ui/Pagination';
-import { Input } from '@/components/ui/Input';
-import { useDebounce } from 'use-debounce';
 import ProductSort from '@/components/features/products/ProductSort';
 import { SortOption } from '@/components/features/products/ProductSort';
 import PriceFilter from '@/components/features/products/ProductFilter/PriceFilter';
@@ -15,6 +13,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ClearFilters from '@/components/features/products/ProductFilter/ClearFilters';
 import EmptyState from '@/components/features/products/ProductFilter/EmptyProductsFilter';
 import CatalogSkeleton from '@/components/features/skeleton/CatalogSkeleton';
+import ProductSearchInput from './search/ProductsSearchInput';
 
 type ProductsResponse = {
     products: Product[];
@@ -28,8 +27,6 @@ export default function ProductsContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
-    const [search, setSearch] = useState('');
-    const [debouncedSearch] = useDebounce(search, 500);
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [sort, setSort] = useState<SortOption>('newest')
@@ -44,7 +41,6 @@ export default function ProductsContent() {
     useEffect(() => {
         const pageFromUrl = Number(searchParams.get('page')) || 1;
         const sortFromUrl = searchParams.get('sort') as SortOption || 'newest';
-        const searchFromUrl = searchParams.get('search') || '';
         const categoryFromUrl = searchParams.get('category');
         const minPriceFromUrl = searchParams.get('minPrice');
         const maxPriceFromUrl = searchParams.get('maxPrice');
@@ -52,7 +48,6 @@ export default function ProductsContent() {
 
         setPage(pageFromUrl);
         setSort(sortFromUrl);
-        setSearch(searchFromUrl);
         setSelectedCategory(categoryFromUrl);
         setMinPrice(minPriceFromUrl ? Number(minPriceFromUrl) : undefined);
         setMaxPrice(maxPriceFromUrl ? Number(maxPriceFromUrl) : undefined);
@@ -63,7 +58,6 @@ export default function ProductsContent() {
         const params = new URLSearchParams();
         if (page !== 1) params.set('page', String(page));
         if (sort !== 'newest') params.set('sort', sort);
-        if (search) params.set('search', search);
         if (selectedCategory) params.set('category', selectedCategory);
         if (minPrice) params.set('minPrice', String(minPrice));
         if (maxPrice) params.set('maxPrice', String(maxPrice));
@@ -72,7 +66,7 @@ export default function ProductsContent() {
         const queryString = params.toString();
         const url = queryString ? `${pathname}?${queryString}` : pathname;
         router.push(url, { scroll: false });
-    }, [page, sort, search, selectedCategory, minPrice, maxPrice, inStockOnly]);
+    }, [page, sort, selectedCategory, minPrice, maxPrice, inStockOnly]);
 
     useEffect(() => {
         async function fetchCategories() {
@@ -94,7 +88,6 @@ export default function ProductsContent() {
             const params = new URLSearchParams({
                 page: String(page),
                 sort,
-                ...(debouncedSearch && { search: debouncedSearch }),
                 ...(selectedCategory && { category: String(selectedCategory) }),
                 ...(minPrice && { minPrice: String(minPrice) }),
                 ...(maxPrice && { maxPrice: String(maxPrice) }),
@@ -111,7 +104,7 @@ export default function ProductsContent() {
         } finally {
             setLoading(false);
         }
-    }, [page, debouncedSearch, selectedCategory, sort, minPrice, maxPrice, inStockOnly]);
+    }, [page, selectedCategory, sort, minPrice, maxPrice, inStockOnly]);
 
     useEffect(() => {
         fetchProducts();
@@ -119,7 +112,7 @@ export default function ProductsContent() {
 
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, selectedCategory, sort, inStockOnly]);
+    }, [selectedCategory, sort, inStockOnly, minPrice, maxPrice]);
 
     const handlePriceApply = (min?: number, max?: number) => {
         setMinPrice(min);
@@ -127,7 +120,6 @@ export default function ProductsContent() {
     };
 
     const hasActiveFilters = Boolean(
-        search ||
         selectedCategory ||
         minPrice ||
         maxPrice ||
@@ -136,7 +128,6 @@ export default function ProductsContent() {
     );
 
     const handleClearFilters = () => {
-        setSearch('');
         setSelectedCategory(null);
         setMinPrice(undefined);
         setMaxPrice(undefined);
@@ -152,7 +143,6 @@ export default function ProductsContent() {
     if (error) return <div className="container mx-auto p-4 text-red-500">{error}</div>;
     if (!data) return null;
 
-    // 👇 Только JSX с обновлёнными стилями (вся логика выше осталась)
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-2xl font-bold mb-6 text-(--text) font-serif">
@@ -168,7 +158,6 @@ export default function ProductsContent() {
                             onSelectCategory={setSelectedCategory}
                         />
                     </div>
-
 
                     <PriceFilter
                         minPrice={minPrice}
@@ -190,14 +179,9 @@ export default function ProductsContent() {
                 </div>
 
                 <div className="flex-1">
+                    {/* 🔥 Поиск — только автокомплит, без фильтрации */}
                     <div className="mb-6">
-                        <Input
-                            type="text"
-                            placeholder="Поиск товаров..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full"
-                        />
+                        <ProductSearchInput />
                     </div>
 
                     <ClearFilters
@@ -206,12 +190,6 @@ export default function ProductsContent() {
                     />
 
                     <ProductSort value={sort} onChange={setSort} />
-
-                    {search && (
-                        <p className="mb-4 text-(--text-muted)">
-                            Найдено товаров: {data.totalCount}
-                        </p>
-                    )}
 
                     {data.products.length === 0 ? (
                         <EmptyState onClear={handleClearFilters} />

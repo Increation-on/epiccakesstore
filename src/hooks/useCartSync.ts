@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useCartStore } from '@/store/cart.store'
 import { useSession } from 'next-auth/react'
+import { toast } from '@/lib/toast'
 
 export function useCartSync() {
   const { data: session, status } = useSession()
@@ -13,22 +14,20 @@ export function useCartSync() {
     const syncCart = async () => {
       if (status === 'authenticated' && session?.user?.id) {
         try {
-          console.log('🔄 Загружаем корзину с сервера')
-          
           const res = await fetch('/api/cart')
           
           if (!res.ok) {
             console.error('❌ Ошибка загрузки корзины:', res.status)
+            toast.error('Не удалось загрузить корзину')
             return
           }
           
           const serverCart = await res.json()
-          console.log('📦 Серверная корзина:', serverCart)
-          
           setItems(serverCart)
           
         } catch (error) {
           console.error('❌ Ошибка:', error)
+          toast.error('Ошибка синхронизации корзины')
         }
       }
     }
@@ -36,61 +35,54 @@ export function useCartSync() {
     syncCart()
   }, [session?.user?.id, status, setItems])
   
-// 2. Отправка изменений на сервер (с debounce)
-useEffect(() => {
-  const saveCart = async () => {
-    if (status === 'authenticated' && session?.user?.id) {
-      console.log('🔄 Сохраняем корзину на сервер:', items)
-      
-      const res = await fetch('/api/cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items })
-      })
-      
-      if (!res.ok) {
-        console.error('❌ Ошибка сохранения корзины:', res.status)
-      } else {
-        console.log('✅ Корзина сохранена на сервер')
+  // 2. Отправка изменений на сервер (с debounce)
+  useEffect(() => {
+    const saveCart = async () => {
+      if (status === 'authenticated' && session?.user?.id && items.length > 0) {
+        try {
+          const res = await fetch('/api/cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          })
+          
+          if (!res.ok) {
+            console.error('❌ Ошибка сохранения корзины:', res.status)
+            toast.error('Не удалось сохранить корзину')
+          } else {
+            console.log('✅ Корзина сохранена на сервер')
+          }
+        } catch (error) {
+          console.error('❌ Ошибка:', error)
+          toast.error('Ошибка при сохранении корзины')
+        }
       }
     }
-  }
-  
-  // Добавляем debounce — ждём 500ms после последнего изменения
-  const timeoutId = setTimeout(saveCart, 500)
-  return () => clearTimeout(timeoutId)
-  
-}, [items, session?.user?.id, status])
-
-  // 3. Очистка корзины при выходе (только если был авторизован)
-useEffect(() => {
-  if (status === 'unauthenticated') {
-    // Проверяем, был ли пользователь только что авторизован
-    const wasAuthenticated = sessionStorage.getItem('wasAuthenticated')
     
-    if (wasAuthenticated) {
-      console.log('🔄 Пользователь вышел, очищаем корзину')
+    // Добавляем debounce — ждём 500ms после последнего изменения
+    const timeoutId = setTimeout(saveCart, 500)
+    return () => clearTimeout(timeoutId)
+    
+  }, [items, session?.user?.id, status])
+
+  // 3. Очистка корзины при выходе
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      const wasAuthenticated = sessionStorage.getItem('wasAuthenticated')
       
-      // Очищаем localStorage
-      localStorage.removeItem('cart-storage')
-      
-      // Очищаем стор
-      clearCart()
-      
-      // Очищаем sessionStorage
-      sessionStorage.removeItem('checkoutFormData')
-      sessionStorage.removeItem('paymentState')
-      sessionStorage.removeItem('pendingCart')
-      sessionStorage.removeItem('wasAuthenticated')
-    } else {
-      console.log('👤 Гость на сайте, сохраняем корзину в localStorage')
-      // Для гостей корзина уже загрузится из localStorage через persist
+      if (wasAuthenticated) {
+        console.log('🔄 Пользователь вышел, очищаем корзину')
+        localStorage.removeItem('cart-storage')
+        clearCart()
+        sessionStorage.removeItem('checkoutFormData')
+        sessionStorage.removeItem('paymentState')
+        sessionStorage.removeItem('pendingCart')
+        sessionStorage.removeItem('wasAuthenticated')
+      }
     }
-  }
-  
-  // Запоминаем, что пользователь был авторизован
-  if (status === 'authenticated') {
-    sessionStorage.setItem('wasAuthenticated', 'true')
-  }
-}, [status, clearCart])
+    
+    if (status === 'authenticated') {
+      sessionStorage.setItem('wasAuthenticated', 'true')
+    }
+  }, [status, clearCart])
 }

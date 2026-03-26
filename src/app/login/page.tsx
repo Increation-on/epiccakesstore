@@ -1,10 +1,12 @@
 'use client'
 
 import { signIn } from 'next-auth/react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
+import { useSearchParams } from 'next/navigation'
+import { toast } from '@/lib/toast'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -12,6 +14,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const searchParams = useSearchParams()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +36,12 @@ export default function LoginPage() {
       router.refresh()
     }
   }
+
+  useEffect(() => {
+    if (searchParams.get('registered') === 'true') {
+      toast.success('Регистрация прошла успешно! Теперь вы можете войти')
+    }
+  }, [searchParams])
 
   return (
     <div className="container mx-auto px-4 py-16 max-w-md">

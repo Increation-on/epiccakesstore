@@ -1,6 +1,6 @@
 // src/app/page.tsx
 import Hero from '@/components/features/home/Hero';
-import PopularProducts from '@/components/features/home/PopularProducts';
+import PopularProducts from '@/components/features/home/popularProducts/PopularProducts';
 import Advantages from '@/components/features/home/Advantages';
 import type { Metadata } from 'next'
 

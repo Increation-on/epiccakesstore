@@ -1,5 +1,3 @@
-////src/app/cart/CartContent.tsx
-
 'use client'
 
 import { useCartStore } from '@/store/cart.store'
@@ -10,6 +8,9 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import Image from 'next/image'
+import { toast } from '@/lib/toast'
+import { Modal } from '@/components/ui/Modal'
+import CartSkeleton from '@/components/features/skeleton/CartSkeleton'
 
 export default function CartContent() {
   const router = useRouter()
@@ -18,8 +19,29 @@ export default function CartContent() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [isCartLoading, setIsCartLoading] = useState(true)
+
+  // Состояние для модалки подтверждения
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean
+    itemId: string | null
+    productName: string
+    type: 'single' | 'clear'
+  }>({
+    isOpen: false,
+    itemId: null,
+    productName: '',
+    type: 'single',
+  })
 
   const cartItems = Array.isArray(items) ? items : []
+
+  // Когда корзина загрузилась
+  useEffect(() => {
+    if (items !== undefined) {
+      setIsCartLoading(false)
+    }
+  }, [items])
 
   useEffect(() => {
     async function loadProducts() {
@@ -37,10 +59,16 @@ export default function CartContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: productIds })
         })
+
+        if (!res.ok) {
+          throw new Error('Ошибка загрузки товаров')
+        }
+
         const data = await res.json()
         setProducts(Array.isArray(data) ? data : [])
       } catch (error) {
         console.error(error)
+        toast.error('Не удалось загрузить товары в корзине')
         setProducts([])
       } finally {
         setLoading(false)
@@ -63,8 +91,49 @@ export default function CartContent() {
     }
   }
 
-  // ❌ Убираем проверку loading, она уже есть в серверной обёртке
-  // ✅ Показываем контент, когда данные загружены
+  // Функции для модалки
+  const openRemoveModal = (itemId: string, productName: string) => {
+    setModalState({
+      isOpen: true,
+      itemId,
+      productName,
+      type: 'single',
+    })
+  }
+
+  const openClearModal = () => {
+    setModalState({
+      isOpen: true,
+      itemId: null,
+      productName: '',
+      type: 'clear',
+    })
+  }
+
+  const closeModal = () => {
+    setModalState({
+      isOpen: false,
+      itemId: null,
+      productName: '',
+      type: 'single',
+    })
+  }
+
+  const confirmAction = () => {
+    if (modalState.type === 'single' && modalState.itemId) {
+      removeItem(modalState.itemId)
+      toast.success(`${modalState.productName} удален из корзины`)
+    } else if (modalState.type === 'clear') {
+      clearCart()
+      toast.success('Корзина очищена')
+    }
+    closeModal()
+  }
+
+  // Пока загружается корзина — показываем скелетон
+  if (isCartLoading) {
+    return <CartSkeleton />
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -94,72 +163,100 @@ export default function CartContent() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Левая колонка — товары */}
         <div className="flex-1 min-w-0 space-y-4">
-          {cartItems.map(item => {
-            const product = products.find(p => p.id === item.productId)
-            if (!product) return null
+          {loading ? (
+            <div className="text-center py-8 text-(--text-muted)">Загрузка товаров...</div>
+          ) : (
+            cartItems.map(item => {
+              const product = products.find(p => p.id === item.productId)
+              if (!product) return null
 
-            return (
-              <div key={item.id} className="flex flex-wrap sm:flex-nowrap gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)">
-                {/* Картинка */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
-                  {(() => {
-                    const imageUrl = product.images
-                      ? (typeof product.images === 'string' ? product.images : product.images[0])
-                      : null
-                    if (imageUrl && imageUrl.startsWith('http')) {
-                      return (
-                        <Image
-                          src={imageUrl}
-                          alt={product.name}
-                          width={80}
-                          height={80}
-                          className="object-cover rounded"
-                        />
-                      )
-                    }
-                    return <span className="text-3xl">🍰</span>
-                  })()}
-                </div>
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-col gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)"
+                >
+                  {/* Верхняя часть: картинка слева, текст справа */}
+                  <div className="flex gap-4 items-center">
+                    {/* Картинка */}
+                    <div className="shrink-0">
+                      {(() => {
+                        let imageUrl = null
+                        try {
+                          if (product.images) {
+                            if (typeof product.images === 'string') {
+                              const parsed = JSON.parse(product.images)
+                              imageUrl = Array.isArray(parsed) ? parsed[0] : parsed
+                            } else if (Array.isArray(product.images)) {
+                              imageUrl = product.images[0]
+                            }
+                          }
+                        } catch (error) {
+                          if (typeof product.images === 'string' && product.images.startsWith('http')) {
+                            imageUrl = product.images
+                          }
+                        }
 
-                {/* Информация */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-(--text) mb-1 wrap-break-word">
-                    {product.name}
-                  </h3>
-                  <p className="text-(--pink) font-bold">{product.price} BYN</p>
-                </div>
+                        if (imageUrl && (imageUrl.startsWith('/') || imageUrl.startsWith('http'))) {
+                          return (
+                            <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
+                              <Image
+                                src={imageUrl}
+                                alt={product.name}
+                                fill
+                                className="object-cover rounded"
+                              />
+                            </div>
+                          )
+                        }
+                        return (
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
+                            <span className="text-3xl">🍰</span>
+                          </div>
+                        )
+                      })()}
+                    </div>
 
-                {/* Кнопки +/- */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => {
-                      if (item.quantity > 1) {
-                        updateQuantity(item.id, item.quantity - 1)
-                      } else {
-                        if (confirm('Удалить товар из корзины?')) removeItem(item.id)
-                      }
-                    }}
-                    className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
-                  >
-                    -
-                  </button>
-                  <span className="w-8 text-center font-medium">{item.quantity}</span>
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="ml-2 text-gray-400 hover:text-red-500 transition"
-                  >
-                    🗑️
-                  </button>
+                    {/* Текст: название и цена */}
+                    <div className="flex-1 min-w-0 flex justify-center flex-col">
+                      <h3 className="font-semibold text-(--text) line-clamp-2 wrap-break-word text-center sm:text-left">
+                        {product.name}
+                      </h3>
+                      <p className="text-(--pink) font-bold mt-1 text-center sm:text-left">{product.price} BYN</p>
+                    </div>
+                  </div>
+
+                  {/* Нижняя часть: кнопки */}
+                  <div className="flex items-center justify-end gap-2 border-t pt-3">
+                    <button
+                      onClick={() => {
+                        if (item.quantity > 1) {
+                          updateQuantity(item.id, item.quantity - 1)
+                        } else {
+                          openRemoveModal(item.id, product.name)
+                        }
+                      }}
+                      className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
+                    >
+                      -
+                    </button>
+                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => openRemoveModal(item.id, product.name)}
+                      className="ml-2 text-gray-400 hover:text-red-500 transition"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
 
         {/* Правая колонка — итог */}
@@ -190,7 +287,7 @@ export default function CartContent() {
             </Button>
 
             <button
-              onClick={clearCart}
+              onClick={openClearModal}
               className="w-full mt-3 text-sm text-(--text-muted) hover:text-red-500 transition"
             >
               Очистить корзину
@@ -199,6 +296,28 @@ export default function CartContent() {
         </div>
       </div>
 
+      {/* Модалка подтверждения */}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        title={modalState.type === 'clear' ? 'Очистка корзины' : 'Удаление товара'}
+      >
+        <p className="text-(--text-muted) mb-6">
+          {modalState.type === 'clear'
+            ? 'Вы уверены, что хотите очистить всю корзину?'
+            : `Вы уверены, что хотите удалить "${modalState.productName}" из корзины?`}
+        </p>
+        <div className="flex gap-3 justify-end">
+          <Button variant="outline" onClick={closeModal}>
+            Отмена
+          </Button>
+          <Button onClick={confirmAction} className="bg-red-500 hover:bg-red-600">
+            Удалить
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Модалка авторизации */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md mx-4">

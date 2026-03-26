@@ -7,8 +7,9 @@
 
   --mint: #D1FAE5;
   --mint-dark: #0cd4c5;
---pink: #ec489a;       /* основной розовый (pink-600) */
---pink-dark: #db2777;
+  --pink: #ec489a;
+  /* основной розовый (pink-600) */
+  --pink-dark: #db2777;
 
   --text-muted: #6B7280;
   --border: #E5E7EB;
@@ -72,4 +73,35 @@ img {
 
 button {
   will-change: transform;
+}
+
+/* Переопределяем позицию кнопки закрытия */
+
+[data-sonner-toast] {
+  direction: ltr !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+[data-sonner-toast] button {
+  position: static !important;
+  margin-left: 12px !important;  /* ← отступ слева */
+  margin-right: 0 !important;
+  order: 2 !important;
+  transform: none !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0.6;
+  color: var(--foreground) !important;
+  background: var(--background) !important;
+}
+
+[data-sonner-toast] button:hover {
+  opacity: 1;
+  transform: none !important;
+  background-color: var(--mint-dark) !important;
 }

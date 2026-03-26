@@ -4,6 +4,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SessionProviderWrapper from "@/components/providers/SessionProviderWrapper";
 import CartSyncWrapper from "@/components/providers/CartSyncWrapper";
+import { ToasterProvider } from '@/components/ui/ToasterProvider';
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -17,11 +20,12 @@ const playfair = Playfair_Display({
   weight: ['400', '600', '700'],
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions)
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <head>
@@ -36,13 +40,15 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <SessionProviderWrapper>
+        <SessionProviderWrapper session={session}>
           <Header />
           {children}
           <CartSyncWrapper />
           <Footer />
         </SessionProviderWrapper>
+        <ToasterProvider />
       </body>
+       
     </html>
   );
 }

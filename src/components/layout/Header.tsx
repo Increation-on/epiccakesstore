@@ -1,7 +1,6 @@
-// src/components/layout/Header.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import Logo from '@/components/ui/Logo'
@@ -11,10 +10,29 @@ import Navbar from './Navbar'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
 export default function Header() {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
   const isAdmin = session?.user?.role === 'admin'
-  const isLoggedIn = status === 'authenticated'
+  const isLoggedIn = !!session
+
+  // Закрываем меню при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isMenuOpen])
 
   return (
     <header className="bg-neutral-900 shadow-sm sticky top-0 z-50 border-b border-gray-800">
@@ -31,11 +49,10 @@ export default function Header() {
           </div>
 
           {/* Правая часть */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-6 shrink-0">
             <CartIcon />
 
-            {/* Десктопный профиль */}
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-6">
               {isLoggedIn ? (
                 <>
                   <Link href="/profile" className="flex items-center gap-1">
@@ -67,30 +84,58 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Мобильное меню */}
+        {/* 🔥 Мобильное меню — выпадающий блок под хедером, поверх контента */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t border-gray-800">
-            <Navbar isAdmin={isAdmin} isLoggedIn={isLoggedIn} isMobile onLinkClick={() => setIsMenuOpen(false)} />
+          <div className="relative md:hidden">
+            {/* Затемнение только под меню */}
+            <div
+              className="fixed inset-x-0 top-[calc(100%+1px)] bottom-0 bg-black/50 z-40"
+              onClick={() => setIsMenuOpen(false)}
+            />
 
-            <div className="mt-4 pt-4 border-t border-gray-800">
-              {isLoggedIn ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-(--mint) flex items-center justify-center text-(--text)">
-                      {session.user?.name?.[0]?.toUpperCase() || 'U'}
+            {/* Мобильное меню — на всю ширину экрана */}
+            <div
+              ref={menuRef}
+              className="absolute left-1/2 transform -translate-x-1/2 w-screen top-full mt-3.5 bg-neutral-900/95 backdrop-blur-sm border border-gray-800 rounded-b-lg shadow-xl z-50"
+              style={{ maxWidth: '100vw' }}
+            >
+              <div className="p-4">
+                <Navbar
+                  isAdmin={isAdmin}
+                  isLoggedIn={isLoggedIn}
+                  isMobile
+                  onLinkClick={() => setIsMenuOpen(false)}
+                />
+
+                <div className="mt-4 pt-4 border-t border-gray-800">
+                  {isLoggedIn ? (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-(--mint) flex items-center justify-center text-(--text)">
+                          {session.user?.name?.[0]?.toUpperCase() || 'U'}
+                        </div>
+                        <span className="text-gray-300">{session.user?.name || 'Профиль'}</span>
+                      </div>
+                      <Button
+                        variant='outline'
+                        onClick={() => { signOut(); setIsMenuOpen(false); }}
+                        className="w-full"
+                      >
+                        Выйти
+                      </Button>
                     </div>
-                    <span className="text-gray-300">{session.user?.name || 'Профиль'}</span>
-                  </div>
-                  <Button variant='ghost' onClick={() => { signOut(); setIsMenuOpen(false); }} className="w-full">
-                    Выйти
-                  </Button>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                        <Button variant="outline" className="w-full">Войти</Button>
+                      </Link>
+                      <Link href="/register" onClick={() => setIsMenuOpen(false)}>
+                        <Button className="w-full">Регистрация</Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <Link href="/login" onClick={() => setIsMenuOpen(false)}><Button variant="outline" className="w-full">Войти</Button></Link>
-                  <Link href="/register" onClick={() => setIsMenuOpen(false)}><Button className="w-full">Регистрация</Button></Link>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         )}

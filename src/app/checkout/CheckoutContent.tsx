@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/Button'
+import { toast } from '@/lib/toast'  // ← добавить импорт
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
@@ -55,10 +56,16 @@ export default function CheckoutContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: productIds })
         })
+        
+        if (!res.ok) {
+          throw new Error('Ошибка загрузки товаров')
+        }
+        
         const data = await res.json()
         setProducts(Array.isArray(data) ? data : [])
       } catch (error) {
         console.error(error)
+        toast.error('Не удалось загрузить товары. Обновите страницу')
         setProducts([])
       } finally {
         setLoading(false)
@@ -100,19 +107,25 @@ export default function CheckoutContent() {
       {/* Список товаров */}
       <div className="mb-6 border border-(--border) rounded-lg p-4 bg-(--bg)">
         <h2 className="font-semibold mb-2">Ваш заказ:</h2>
-        {cartItems.map(item => {
-          const product = products.find(p => p.id === item.productId)
-          return (
-            <div key={item.id} className="flex justify-between py-2 border-b last:border-0">
-              <span>{product?.name} x{item.quantity}</span>
-              <span>{product?.price} ₽</span>
+        {loading ? (
+          <div className="text-(--text-muted) py-4">Загрузка товаров...</div>
+        ) : (
+          <>
+            {cartItems.map(item => {
+              const product = products.find(p => p.id === item.productId)
+              return (
+                <div key={item.id} className="flex justify-between py-2 border-b last:border-0">
+                  <span>{product?.name || '...'} x{item.quantity}</span>
+                  <span>{product?.price || '...'} ₽</span>
+                </div>
+              )
+            })}
+            <div className="flex justify-between font-bold mt-2 pt-2 border-t">
+              <span>Итого:</span>
+              <span>{totalPrice} ₽</span>
             </div>
-          )
-        })}
-        <div className="flex justify-between font-bold mt-2 pt-2 border-t">
-          <span>Итого:</span>
-          <span>{totalPrice} ₽</span>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Форма с валидацией */}
@@ -196,7 +209,7 @@ export default function CheckoutContent() {
         <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <Button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || loading}
             size="lg"
             className="w-full sm:w-auto"
           >
