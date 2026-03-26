@@ -170,7 +170,22 @@ export default async function ProductPage({ params }: PageProps) {
           <h2 className="text-2xl font-bold text-(--text) mb-6 font-serif">
             Похожие товары
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {/* Мобилка — горизонтальный скролл */}
+          <div className="lg:hidden w-screen relative left-1/2 right-1/2 -mx-[50vw]">
+            <div className="overflow-x-auto pb-4 scrollbar-hide">
+              <div className="flex gap-6 px-4">
+                {similarProducts.map((product) => (
+                  <div key={product.id} className="w-70 shrink-0">
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Десктоп — обычная сетка */}
+          <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {similarProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
