@@ -11,15 +11,16 @@ export const Button = ({
   variant = 'primary',
   size = 'md',
   className = '', 
+  disabled,
   ...props 
 }: ButtonProps) => {
   
   const variantClasses = {
-  primary: 'bg-[var(--pink)] text-gray-800 hover:bg-[var(--pink-dark)]',
-  secondary: 'bg-gray-500 text-white hover:bg-gray-600',
-  outline: 'border border-[var(--border)] bg-[var(--mint)] text-gray-700 hover:bg-[var(--mint-dark)]',
-  ghost: 'text-gray-300 border border-[var(--border)] hover:bg-[var(--mint)] hover:text-gray-700'
-};
+    primary: 'bg-[var(--pink)] text-gray-800 hover:bg-[var(--pink-dark)]',
+    secondary: 'bg-gray-500 text-white hover:bg-gray-600',
+    outline: 'border border-[var(--border)] bg-[var(--mint)] text-gray-700 hover:bg-[var(--mint-dark)]',
+    ghost: 'text-gray-300 border border-[var(--border)] hover:bg-[var(--mint)] hover:text-gray-700'
+  };
 
   const sizeClasses = {
     sm: 'px-3 py-1 text-sm',
@@ -27,9 +28,14 @@ export const Button = ({
     lg: 'px-6 py-3 text-lg'
   };
 
+  const disabledClasses = disabled 
+  ? "opacity-50 cursor-not-allowed hover:bg-inherit hover:text-inherit hover:border-inherit pointer-events-none" 
+  : "";
+
   return (
     <button
-      className={`cursor-pointer rounded transition-colors ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`rounded transition-colors ${variantClasses[variant]} ${sizeClasses[size]} ${disabledClasses} ${className}`}
+      disabled={disabled}
       {...props}
     >
       {children}

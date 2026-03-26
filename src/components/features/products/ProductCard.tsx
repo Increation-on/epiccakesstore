@@ -17,16 +17,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const router = useRouter();
   const addItem = useCartStore(state => state.addItem);
   const [imgError, setImgError] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false); // ← добавить
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!product.inStock) return; // ← защита
     addItem(product.id, 1);
     toast.success(`${product.name} добавлен в корзину`);
   };
 
   const handleCardClick = () => {
-    setIsNavigating(true); // ← показать лоадер
+    setIsNavigating(true);
     router.push(`/products/${product.id}`);
   };
 
@@ -48,7 +49,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     !imgError;
 
   return (
-    <Card className="group p-4 hover:shadow-lg transition relative"> {/* ← добавить relative */}
+    <Card className="group p-4 hover:shadow-lg transition relative">
       {/* Затемнение и спиннер при навигации */}
       {isNavigating && (
         <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center z-10">
@@ -75,6 +76,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         ) : (
           <div className="text-4xl text-(--text-muted)">🍰</div>
         )}
+        
+        {/* 🔥 Бейдж "Нет в наличии" */}
+        {!product.inStock && (
+          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+            Нет в наличии
+          </div>
+        )}
       </div>
 
       {/* Название — кликабельное */}
@@ -95,13 +103,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         {product.price} ₽
       </p>
 
-      {/* Кнопка */}
+      {/* 🔥 Кнопка — отключается если нет в наличии */}
       <Button
         size="md"
         className="mt-4 w-full"
         onClick={handleAddToCart}
+        disabled={!product.inStock}
       >
-        В корзину
+        {product.inStock ? 'В корзину' : 'Нет в наличии'}
       </Button>
     </Card>
   );
