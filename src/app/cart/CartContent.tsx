@@ -173,59 +173,60 @@ export default function CartContent() {
               return (
                 <div
                   key={item.id}
-                  className="flex flex-wrap sm:flex-nowrap gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)"
+                  className="flex flex-col gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)"
                 >
-                  {/* Картинка */}
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
-                    {(() => {
-                      let imageUrl = null
-                      try {
-                        if (product.images) {
-                          if (typeof product.images === 'string') {
-                            const parsed = JSON.parse(product.images)
-                            imageUrl = Array.isArray(parsed) ? parsed[0] : parsed
-                          } else if (Array.isArray(product.images)) {
-                            imageUrl = product.images[0]
+                  {/* Верхняя часть: картинка слева, текст справа */}
+                  <div className="flex gap-4 items-center">
+                    {/* Картинка */}
+                    <div className="shrink-0">
+                      {(() => {
+                        let imageUrl = null
+                        try {
+                          if (product.images) {
+                            if (typeof product.images === 'string') {
+                              const parsed = JSON.parse(product.images)
+                              imageUrl = Array.isArray(parsed) ? parsed[0] : parsed
+                            } else if (Array.isArray(product.images)) {
+                              imageUrl = product.images[0]
+                            }
+                          }
+                        } catch (error) {
+                          if (typeof product.images === 'string' && product.images.startsWith('http')) {
+                            imageUrl = product.images
                           }
                         }
-                      } catch (error) {
-                        console.error('Error parsing image URL:', error)
-                        if (typeof product.images === 'string' && product.images.startsWith('http')) {
-                          imageUrl = product.images
-                        }
-                      }
 
-                      if (imageUrl && (imageUrl.startsWith('/') || imageUrl.startsWith('http'))) {
+                        if (imageUrl && (imageUrl.startsWith('/') || imageUrl.startsWith('http'))) {
+                          return (
+                            <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
+                              <Image
+                                src={imageUrl}
+                                alt={product.name}
+                                fill
+                                className="object-cover rounded"
+                              />
+                            </div>
+                          )
+                        }
                         return (
-                          <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
-                            <Image
-                              src={imageUrl}
-                              alt={product.name}
-                              fill
-                              className="object-cover rounded"
-                              onError={() => console.error('Image failed to load:', imageUrl)}
-                            />
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
+                            <span className="text-3xl">🍰</span>
                           </div>
                         )
-                      }
-                      return (
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
-                          <span className="text-3xl">🍰</span>
-                        </div>
-                      )
-                    })()}
+                      })()}
+                    </div>
+
+                    {/* Текст: название и цена */}
+                    <div className="flex-1 min-w-0 flex justify-center flex-col">
+                      <h3 className="font-semibold text-(--text) line-clamp-2 wrap-break-word text-center sm:text-left">
+                        {product.name}
+                      </h3>
+                      <p className="text-(--pink) font-bold mt-1 text-center sm:text-left">{product.price} BYN</p>
+                    </div>
                   </div>
 
-                  {/* Информация */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-(--text) mb-1 wrap-break-word">
-                      {product.name}
-                    </h3>
-                    <p className="text-(--pink) font-bold">{product.price} BYN</p>
-                  </div>
-
-                  {/* Кнопки +/- */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  {/* Нижняя часть: кнопки */}
+                  <div className="flex items-center justify-end gap-2 border-t pt-3">
                     <button
                       onClick={() => {
                         if (item.quantity > 1) {
