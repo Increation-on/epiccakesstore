@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SessionProviderWrapper from "@/components/providers/SessionProviderWrapper";
 import CartSyncWrapper from "@/components/providers/CartSyncWrapper";
+import { ToasterProvider } from '@/components/ui/ToasterProvider';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -42,7 +43,9 @@ export default function RootLayout({
           <CartSyncWrapper />
           <Footer />
         </SessionProviderWrapper>
+        <ToasterProvider />
       </body>
+       
     </html>
   );
 }

@@ -7,6 +7,7 @@ import { useCartStore } from "@/store/cart.store";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { toast } from '@/lib/toast';
 
 type ProductCardProps = {
   product: Product;
@@ -20,6 +21,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     addItem(product.id, 1);
+    toast.success(`${product.name} добавлен в корзину`);
   };
 
   const handleCardClick = () => {

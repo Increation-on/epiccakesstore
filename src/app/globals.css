@@ -7,8 +7,9 @@
 
   --mint: #D1FAE5;
   --mint-dark: #0cd4c5;
---pink: #ec489a;       /* основной розовый (pink-600) */
---pink-dark: #db2777;
+  --pink: #ec489a;
+  /* основной розовый (pink-600) */
+  --pink-dark: #db2777;
 
   --text-muted: #6B7280;
   --border: #E5E7EB;

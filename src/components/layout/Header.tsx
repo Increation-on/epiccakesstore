@@ -31,11 +31,11 @@ export default function Header() {
           </div>
 
           {/* Правая часть */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-6 shrink-0">
             <CartIcon />
 
             {/* Десктопный профиль */}
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-6">
               {isLoggedIn ? (
                 <>
                   <Link href="/profile" className="flex items-center gap-1">
