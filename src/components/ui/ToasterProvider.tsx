@@ -7,6 +7,7 @@ export function ToasterProvider() {
     <Toaster
       position="top-right"
       richColors
+      closeButton
       toastOptions={{
         style: {
           background: 'var(--background)',
@@ -14,6 +15,7 @@ export function ToasterProvider() {
           border: '1px solid var(--border)',
           borderRadius: '12px',
           fontFamily: 'var(--font-sans)',
+           direction: 'ltr'
         },
         className: 'my-toast',
       }}

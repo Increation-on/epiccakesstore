@@ -1,5 +1,3 @@
-////src/app/cart/CartContent.tsx
-
 'use client'
 
 import { useCartStore } from '@/store/cart.store'
@@ -10,6 +8,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import Image from 'next/image'
+import { toast } from '@/lib/toast'  // ← добавить импорт
 
 export default function CartContent() {
   const router = useRouter()
@@ -37,10 +36,16 @@ export default function CartContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: productIds })
         })
+        
+        if (!res.ok) {
+          throw new Error('Ошибка загрузки товаров')
+        }
+        
         const data = await res.json()
         setProducts(Array.isArray(data) ? data : [])
       } catch (error) {
         console.error(error)
+        toast.error('Не удалось загрузить товары в корзине')  // ← добавить
         setProducts([])
       } finally {
         setLoading(false)
@@ -63,8 +68,17 @@ export default function CartContent() {
     }
   }
 
-  // ❌ Убираем проверку loading, она уже есть в серверной обёртке
-  // ✅ Показываем контент, когда данные загружены
+  const handleRemoveItem = (itemId: string, productName: string) => {
+    removeItem(itemId)
+    toast.success(`${productName} удален из корзины`)  // ← добавить
+  }
+
+  const handleClearCart = () => {
+    if (confirm('Очистить всю корзину?')) {
+      clearCart()
+      toast.success('Корзина очищена')  // ← добавить
+    }
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -94,72 +108,76 @@ export default function CartContent() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Левая колонка — товары */}
         <div className="flex-1 min-w-0 space-y-4">
-          {cartItems.map(item => {
-            const product = products.find(p => p.id === item.productId)
-            if (!product) return null
+          {loading ? (
+            <div className="text-center py-8 text-(--text-muted)">Загрузка товаров...</div>
+          ) : (
+            cartItems.map(item => {
+              const product = products.find(p => p.id === item.productId)
+              if (!product) return null
 
-            return (
-              <div key={item.id} className="flex flex-wrap sm:flex-nowrap gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)">
-                {/* Картинка */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
-                  {(() => {
-                    const imageUrl = product.images
-                      ? (typeof product.images === 'string' ? product.images : product.images[0])
-                      : null
-                    if (imageUrl && imageUrl.startsWith('http')) {
-                      return (
-                        <Image
-                          src={imageUrl}
-                          alt={product.name}
-                          width={80}
-                          height={80}
-                          className="object-cover rounded"
-                        />
-                      )
-                    }
-                    return <span className="text-3xl">🍰</span>
-                  })()}
-                </div>
-
-                {/* Информация */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-(--text) mb-1 wrap-break-word">
-                    {product.name}
-                  </h3>
-                  <p className="text-(--pink) font-bold">{product.price} BYN</p>
-                </div>
-
-                {/* Кнопки +/- */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => {
-                      if (item.quantity > 1) {
-                        updateQuantity(item.id, item.quantity - 1)
-                      } else {
-                        if (confirm('Удалить товар из корзины?')) removeItem(item.id)
+              return (
+                <div key={item.id} className="flex flex-wrap sm:flex-nowrap gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)">
+                  {/* Картинка */}
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
+                    {(() => {
+                      const imageUrl = product.images
+                        ? (typeof product.images === 'string' ? product.images : product.images[0])
+                        : null
+                      if (imageUrl && imageUrl.startsWith('http')) {
+                        return (
+                          <Image
+                            src={imageUrl}
+                            alt={product.name}
+                            width={80}
+                            height={80}
+                            className="object-cover rounded"
+                          />
+                        )
                       }
-                    }}
-                    className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
-                  >
-                    -
-                  </button>
-                  <span className="w-8 text-center font-medium">{item.quantity}</span>
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="ml-2 text-gray-400 hover:text-red-500 transition"
-                  >
-                    🗑️
-                  </button>
+                      return <span className="text-3xl">🍰</span>
+                    })()}
+                  </div>
+
+                  {/* Информация */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-(--text) mb-1 wrap-break-word">
+                      {product.name}
+                    </h3>
+                    <p className="text-(--pink) font-bold">{product.price} BYN</p>
+                  </div>
+
+                  {/* Кнопки +/- */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => {
+                        if (item.quantity > 1) {
+                          updateQuantity(item.id, item.quantity - 1)
+                        } else {
+                          if (confirm('Удалить товар из корзины?')) handleRemoveItem(item.id, product.name)
+                        }
+                      }}
+                      className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
+                    >
+                      -
+                    </button>
+                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => handleRemoveItem(item.id, product.name)}
+                      className="ml-2 text-gray-400 hover:text-red-500 transition"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
 
         {/* Правая колонка — итог */}
@@ -190,7 +208,7 @@ export default function CartContent() {
             </Button>
 
             <button
-              onClick={clearCart}
+              onClick={handleClearCart}
               className="w-full mt-3 text-sm text-(--text-muted) hover:text-red-500 transition"
             >
               Очистить корзину

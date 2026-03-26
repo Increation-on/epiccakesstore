@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Category } from '@/types/domain/categoery.types'
 import { Product } from '@/types/domain/product.types'
 import { Button } from '@/components/ui/Button'
+import { toast } from '@/lib/toast'  // ← добавить импорт
 
 type Props = {
   categories: Category[]
@@ -81,10 +82,11 @@ export default function ProductEditForm({
 
       const data = await res.json()
       setFormData(prev => ({ ...prev, images: data.url }))
+      toast.success('Изображение загружено')  // ← добавить
       
     } catch (error) {
       console.error('Error uploading:', error)
-      alert('Ошибка при загрузке изображения')
+      toast.error('Ошибка при загрузке изображения')  // ← заменить alert
     } finally {
       setUploading(false)
       if (fileInputRef.current) {
@@ -118,13 +120,14 @@ export default function ProductEditForm({
       const data = await res.json()
 
       if (res.ok) {
+        toast.success(isEditing ? 'Товар обновлен' : 'Товар создан')  // ← добавить
         onSuccess()
       } else {
-        alert(data.error || `Ошибка при ${isEditing ? 'обновлении' : 'создании'} товара`)
+        toast.error(data.error || `Ошибка при ${isEditing ? 'обновлении' : 'создании'} товара`)  // ← заменить alert
       }
     } catch (error) {
       console.error('❌ Ошибка:', error)
-      alert(`Ошибка при ${isEditing ? 'обновлении' : 'создании'} товара`)
+      toast.error(`Ошибка при ${isEditing ? 'обновлении' : 'создании'} товара`)  // ← заменить alert
     } finally {
       setLoading(false)
     }

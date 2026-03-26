@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
+import { toast } from '@/lib/toast'
 
 interface Props {
   productId: string
@@ -55,6 +56,7 @@ export function ReviewForm({ productId }: Props) {
       setRating(5)
       router.refresh()
     } catch (err: any) {
+      toast.error(err.message || 'Не удалось отправить отзыв')
       setError(err.message)
     } finally {
       setLoading(false)

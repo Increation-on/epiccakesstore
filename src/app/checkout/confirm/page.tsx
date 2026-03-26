@@ -9,6 +9,7 @@ import { Product } from '@/types/domain/product.types'
 import Link from 'next/link'
 import { LazyStripePayment } from '@/components/features/payment/LazyStripePayment'
 import { useSession } from 'next-auth/react'
+import { toast } from '@/lib/toast'
 
 export default function ConfirmPage() {
     const router = useRouter()
@@ -236,11 +237,11 @@ useEffect(() => {
                 clearCart()
                 window.location.href = `/order/${result.orderId}/success`
             } else {
-                alert('❌ Ошибка при оформлении заказа: ' + (result.error || 'Неизвестная ошибка'))
+              toast.error(result.error || 'Ошибка при оформлении заказа')
             }
         } catch (error) {
             console.error('Ошибка:', error)
-            alert('❌ Ошибка при отправке заказа')
+             toast.error('Ошибка при отправке заказа')
         } finally {
             setSubmitting(false)
         }
@@ -257,10 +258,10 @@ useEffect(() => {
 
             const data = await res.json()
             console.log('✅ PaymentIntent создан:', data)
-            alert('PaymentIntent создан! Смотри консоль (F12)')
+            
         } catch (error) {
             console.error('Ошибка:', error)
-            alert('❌ Ошибка при создании PaymentIntent')
+            
         } finally {
             setLoadingPayment(false)
         }
@@ -317,7 +318,7 @@ useEffect(() => {
 
         } catch (error) {
             console.error('Ошибка:', error)
-            alert('❌ Ошибка при создании платежа')
+            toast.error('❌ Ошибка при создании платежа')
         } finally {
             setLoadingPayment(false)
         }
@@ -349,7 +350,7 @@ useEffect(() => {
         window.location.href = `/order/${orderId}/success`
     } catch (error) {
         console.error('Ошибка:', error)
-        alert('❌ Ошибка при подтверждении оплаты')
+        toast.error('Ошибка при подтверждении оплаты')
     }
 }
 
