@@ -1,4 +1,3 @@
-// src/components/layout/Header.tsx
 'use client'
 
 import { useState } from 'react'
@@ -11,10 +10,11 @@ import Navbar from './Navbar'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
 export default function Header() {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   const isAdmin = session?.user?.role === 'admin'
-  const isLoggedIn = status === 'authenticated'
+  const isLoggedIn = !!session
 
   return (
     <header className="bg-neutral-900 shadow-sm sticky top-0 z-50 border-b border-gray-800">
@@ -87,8 +87,12 @@ export default function Header() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <Link href="/login" onClick={() => setIsMenuOpen(false)}><Button variant="outline" className="w-full">Войти</Button></Link>
-                  <Link href="/register" onClick={() => setIsMenuOpen(false)}><Button className="w-full">Регистрация</Button></Link>
+                  <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">Войти</Button>
+                  </Link>
+                  <Link href="/register" onClick={() => setIsMenuOpen(false)}>
+                    <Button className="w-full">Регистрация</Button>
+                  </Link>
                 </div>
               )}
             </div>

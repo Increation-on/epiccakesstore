@@ -1,12 +1,21 @@
-// src/components/providers/SessionProviderWrapper.tsx
-'use client';
+'use client'
 
-import { SessionProvider } from 'next-auth/react';
+import { SessionProvider } from 'next-auth/react'
 
-export default function SessionProviderWrapper({
-  children,
-}: {
-  children: React.ReactNode;
+export default function SessionProviderWrapper({ 
+  children, 
+  session 
+}: { 
+  children: React.ReactNode
+  session: any 
 }) {
-  return <SessionProvider refetchInterval={0}>{children}</SessionProvider>;
+  return (
+    <SessionProvider 
+      session={session} 
+      refetchInterval={0}
+      refetchOnWindowFocus={false}
+    >
+      {children}
+    </SessionProvider>
+  )
 }
