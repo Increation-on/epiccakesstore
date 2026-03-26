@@ -27,6 +27,7 @@ export default function Navbar({ isAdmin, isLoggedIn, isMobile = false, onLinkCl
       <Link href="/products" className={linkClass} onClick={handleClick}>Каталог</Link>
       <Link href="/about" className={linkClass} onClick={handleClick}>О нас</Link>
       <Link href="/contacts" className={linkClass} onClick={handleClick}>Контакты</Link>
+      <Link href="/delivery" className={linkClass} onClick={handleClick}>Доставка</Link>
       {isAdmin && (
         <Link href="/admin" className={`${linkClass} text-purple-400 hover:text-purple-300`} onClick={handleClick}>
           Админка
