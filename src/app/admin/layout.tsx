@@ -8,7 +8,7 @@ export default function AdminLayout({
   children: ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 overflow-x-hidden">
       {/* Навигация админки - будет на всех страницах /admin/* */}
       <nav className="bg-white shadow-sm">
         <div className="container mx-auto px-4">
@@ -31,7 +31,6 @@ export default function AdminLayout({
               <Link href="/admin/reviews" className="text-sm md:text-base hover:text-pink-600 whitespace-nowrap">
                 Отзывы
               </Link>
-
             </div>
 
             {/* Ссылка "На сайт" справа */}
