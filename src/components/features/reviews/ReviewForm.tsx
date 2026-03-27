@@ -13,12 +13,13 @@ interface Props {
 export function ReviewForm({ productId }: Props) {
   const { data: session, status } = useSession()
   const router = useRouter()
-
+  
   const [rating, setRating] = useState(5)
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [moderationPending, setModerationPending] = useState(false)
   const [existingReview, setExistingReview] = useState<any>(null)
   const [checking, setChecking] = useState(true)
 
@@ -36,6 +37,7 @@ export function ReviewForm({ productId }: Props) {
           }
         }
       })
+      .catch(err => console.error('Error checking review:', err))
       .finally(() => setChecking(false))
   }, [productId])
 
@@ -44,6 +46,7 @@ export function ReviewForm({ productId }: Props) {
     setLoading(true)
     setError('')
     setSuccess(false)
+    setModerationPending(false)
 
     try {
       const res = await fetch(`/api/products/${productId}/reviews`, {
@@ -58,13 +61,23 @@ export function ReviewForm({ productId }: Props) {
         throw new Error(data.error || 'Ошибка при отправке')
       }
 
-      setSuccess(true)
+      // Если отзыв сразу одобрен
+      if (data.status === 'approved') {
+        setSuccess(true)
+        toast.success('Отзыв опубликован! Спасибо!')
+      } 
+      // Если отзыв отправлен на модерацию
+      else if (data.status === 'pending') {
+        setModerationPending(true)
+        toast.success('Отзыв отправлен на модерацию')
+      }
+
       setText('')
       setRating(5)
       router.refresh()
     } catch (err: any) {
-      toast.error(err.message || 'Не удалось отправить отзыв')
       setError(err.message)
+      toast.error(err.message || 'Не удалось отправить отзыв')
     } finally {
       setLoading(false)
     }
@@ -87,14 +100,14 @@ export function ReviewForm({ productId }: Props) {
     )
   }
 
-  // Если уже есть отзыв
+  // Если уже есть отзыв (не отклоненный)
   if (existingReview) {
     return (
       <div className="border border-green-200 rounded-lg p-5 bg-green-50">
         <p className="text-green-700 font-semibold mb-2">✅ Вы уже оставили отзыв</p>
         <div className="mt-2">
           <div className="flex text-yellow-400 mb-1">
-            {[1, 2, 3, 4, 5].map(star => (
+            {[1,2,3,4,5].map(star => (
               <span key={star}>{star <= existingReview.rating ? '★' : '☆'}</span>
             ))}
           </div>
@@ -107,11 +120,20 @@ export function ReviewForm({ productId }: Props) {
     )
   }
 
-  // Если успешно отправили
+  // Если успешно отправлен (сразу одобрен)
   if (success) {
     return (
       <div className="border border-green-200 rounded-lg p-5 bg-green-50 text-green-700">
-        ✅ Отзыв отправлен! Спасибо.
+        ✅ Отзыв опубликован! Спасибо.
+      </div>
+    )
+  }
+
+  // Если отправлен на модерацию
+  if (moderationPending) {
+    return (
+      <div className="border border-yellow-200 rounded-lg p-5 bg-yellow-50 text-yellow-700">
+        ⏳ Отзыв отправлен на модерацию. Он появится после проверки администратором.
       </div>
     )
   }
@@ -124,13 +146,14 @@ export function ReviewForm({ productId }: Props) {
       <div>
         <label className="block mb-2 text-(--text-muted) text-sm">Оценка</label>
         <div className="flex gap-2">
-          {[1, 2, 3, 4, 5].map(star => (
+          {[1,2,3,4,5].map(star => (
             <button
               key={star}
               type="button"
               onClick={() => setRating(star)}
-              className={`text-2xl transition hover:scale-110 ${star <= rating ? 'text-yellow-400' : 'text-gray-300'
-                }`}
+              className={`text-2xl transition hover:scale-110 ${
+                star <= rating ? 'text-yellow-400' : 'text-gray-300'
+              }`}
             >
               ★
             </button>

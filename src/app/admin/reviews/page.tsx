@@ -22,6 +22,8 @@ export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending')
+  const [moderationEnabled, setModerationEnabled] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   // Защита
   useEffect(() => {
@@ -30,6 +32,20 @@ export default function AdminReviewsPage() {
       router.push('/')
     }
   }, [session, status, router])
+
+  // Загрузка настроек
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await fetch('/api/admin/settings')
+        const data = await res.json()
+        setModerationEnabled(data.reviewModeration !== false)
+      } catch (error) {
+        console.error('Error loading settings:', error)
+      }
+    }
+    if (session) loadSettings()
+  }, [session])
 
   const loadReviews = async () => {
     setLoading(true)
@@ -67,37 +83,89 @@ export default function AdminReviewsPage() {
     }
   }
 
+  const toggleModeration = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: 'reviewModeration',
+          value: !moderationEnabled,
+        }),
+      })
+
+      if (res.ok) {
+        setModerationEnabled(!moderationEnabled)
+        toast.success(`Модерация ${!moderationEnabled ? 'включена' : 'отключена'}`)
+      } else {
+        toast.error('Ошибка сохранения')
+      }
+    } catch (error) {
+      toast.error('Ошибка сохранения')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (status === 'loading' || loading) {
     return <div className="p-6">Загрузка...</div>
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Модерация отзывов</h1>
+    <div>
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <h1 className="text-2xl font-bold">Модерация отзывов</h1>
+
+        {/* Переключатель модерации */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600">Модерация:</span>
+          <button
+            onClick={toggleModeration}
+            disabled={saving}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+              moderationEnabled ? 'bg-(--pink)' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                moderationEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+          <span className="text-sm text-gray-600">
+            {moderationEnabled ? 'включена' : 'выключена'}
+          </span>
+        </div>
+      </div>
 
       {/* Фильтры */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         <Button
           variant={filter === 'pending' ? 'primary' : 'outline'}
           onClick={() => setFilter('pending')}
+          size="sm"
         >
           На модерации
         </Button>
         <Button
           variant={filter === 'approved' ? 'primary' : 'outline'}
           onClick={() => setFilter('approved')}
+          size="sm"
         >
           Одобренные
         </Button>
         <Button
           variant={filter === 'rejected' ? 'primary' : 'outline'}
           onClick={() => setFilter('rejected')}
+          size="sm"
         >
           Отклоненные
         </Button>
         <Button
           variant={filter === 'all' ? 'primary' : 'outline'}
           onClick={() => setFilter('all')}
+          size="sm"
         >
           Все
         </Button>
@@ -110,12 +178,15 @@ export default function AdminReviewsPage() {
         ) : (
           reviews.map((review) => (
             <div key={review.id} className="border rounded-lg p-4 bg-white">
-              <div className="flex justify-between items-start mb-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-2">
                 <div>
                   <div className="font-semibold">{review.user.name}</div>
                   <div className="text-sm text-gray-500">{review.user.email}</div>
                   <div className="text-sm text-gray-500">
-                    Товар: <a href={`/products/${review.product.id}`} className="text-(--pink) hover:underline">{review.product.name}</a>
+                    Товар:{' '}
+                    <a href={`/products/${review.product.id}`} className="text-(--pink) hover:underline">
+                      {review.product.name}
+                    </a>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -132,7 +203,7 @@ export default function AdminReviewsPage() {
                 </div>
               </div>
               <div className="flex text-yellow-400 mb-2">
-                {[1,2,3,4,5].map(star => (
+                {[1, 2, 3, 4, 5].map((star) => (
                   <span key={star}>{star <= review.rating ? '★' : '☆'}</span>
                 ))}
               </div>

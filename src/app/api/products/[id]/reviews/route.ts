@@ -41,7 +41,6 @@ export async function GET(
     }
 }
 
-// POST /api/products/[id]/reviews
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -55,11 +54,9 @@ export async function POST(
             )
         }
 
-
-
         const { id } = await params
 
-
+        // Проверка покупки
         const hasPurchased = await prisma.order.findFirst({
             where: {
                 userId: session.user.id,
@@ -78,6 +75,7 @@ export async function POST(
                 { status: 403 }
             )
         }
+
         const { rating, text } = await req.json()
 
         // Валидация
@@ -105,21 +103,35 @@ export async function POST(
             },
         })
 
-        if (existing) {
+        // 🔥 Если есть и он НЕ отклонен — блокируем
+        if (existing && existing.status !== 'rejected') {
             return NextResponse.json(
                 { error: 'Вы уже оставляли отзыв на этот товар' },
                 { status: 400 }
             )
         }
 
-        // Создаём отзыв
+        // 🔥 Если есть отклоненный отзыв — удаляем его, чтобы можно было оставить новый
+        if (existing && existing.status === 'rejected') {
+            await prisma.review.delete({
+                where: { id: existing.id },
+            })
+        }
+
+        // Получаем настройку модерации
+        const setting = await prisma.setting.findUnique({
+            where: { key: 'reviewModeration' },
+        })
+        const moderationEnabled = setting?.value !== 'false' // по умолчанию true
+
+        // Создаём отзыв с правильным статусом
         const review = await prisma.review.create({
             data: {
                 rating,
                 text,
                 userId: session.user.id,
                 productId: id,
-                status: 'approved', // пока без модерации
+                status: moderationEnabled ? 'pending' : 'approved',
             },
             include: {
                 user: {
@@ -131,36 +143,27 @@ export async function POST(
             },
         })
 
-        // После успешного создания отзыва
-        try {
-            const allReviews = await prisma.review.findMany({
-                where: {
-                    productId: id,
-                    status: 'approved',
-                },
-            })
-            console.log('🔥 allReviews length:', allReviews.length)
-            console.log('🔥 allReviews data:', allReviews.map(r => ({ rating: r.rating, status: r.status })))
-            const avg = allReviews.length > 0
-                ? allReviews.reduce((acc, r) => acc + r.rating, 0) / allReviews.length
-                : 0
+        // Если модерация выключена — обновляем рейтинг сразу
+        if (!moderationEnabled) {
+            try {
+                const allReviews = await prisma.review.findMany({
+                    where: {
+                        productId: id,
+                        status: 'approved',
+                    },
+                })
+                const avg = allReviews.length > 0
+                    ? allReviews.reduce((acc, r) => acc + r.rating, 0) / allReviews.length
+                    : 0
 
-            await prisma.product.update({
-                where: { id },
-                data: { averageRating: avg },
-            })
-
-            const updated = await prisma.product.findUnique({
-                where: { id },
-                select: { averageRating: true }
-            })
-            console.log('🔥 после обновления:', updated)
-        } catch (error) {
-            console.error('❌ Ошибка при обновлении рейтинга:', error)
-
+                await prisma.product.update({
+                    where: { id },
+                    data: { averageRating: avg },
+                })
+            } catch (error) {
+                console.error('❌ Ошибка при обновлении рейтинга:', error)
+            }
         }
-
-
 
         return NextResponse.json(review, { status: 201 })
     } catch (error) {
