@@ -6,6 +6,8 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { Order } from '@/types/domain/order.types'
 import { Button } from '@/components/ui/Button'
+import { toast } from '@/lib/toast'
+import { Modal } from '@/components/ui/Modal'
 
 const statusColors = {
   PENDING_PAYMENT: 'bg-yellow-100 text-yellow-800',
@@ -34,6 +36,8 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const [showStatusModal, setShowStatusModal] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null)
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -57,31 +61,37 @@ export default function OrderDetailsPage() {
     }
   }, [orderId, router])
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChangeClick = (newStatus: string) => {
     if (!order) return
     if (newStatus === order.status) return
+    setPendingStatus(newStatus)
+    setShowStatusModal(true)
+  }
 
-    const confirmMessage = `Изменить статус заказа с "${statusLabels[order.status as keyof typeof statusLabels]}" на "${statusLabels[newStatus as keyof typeof statusLabels]}"?`
-    if (!confirm(confirmMessage)) return
+  const confirmStatusChange = async () => {
+    if (!order || !pendingStatus) return
 
     setUpdating(true)
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: pendingStatus })
       })
 
       if (res.ok) {
-        setOrder({ ...order, status: newStatus })
+        setOrder({ ...order, status: pendingStatus })
+        toast.success(`Статус изменен на "${statusLabels[pendingStatus as keyof typeof statusLabels]}"`)
       } else {
-        alert('Ошибка при обновлении статуса')
+        toast.error('Ошибка при обновлении статуса')
       }
     } catch (error) {
       console.error('Error updating status:', error)
-      alert('Ошибка при обновлении статуса')
+      toast.error('Ошибка при обновлении статуса')
     } finally {
       setUpdating(false)
+      setShowStatusModal(false)
+      setPendingStatus(null)
     }
   }
 
@@ -136,13 +146,12 @@ export default function OrderDetailsPage() {
             </p>
           </div>
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-2">
-            <span className={`px-3 py-1 text-sm rounded whitespace-nowrap ${statusColors[order.status as keyof typeof statusColors]
-              }`}>
+            <span className={`px-3 py-1 text-sm rounded whitespace-nowrap ${statusColors[order.status as keyof typeof statusColors]}`}>
               {statusLabels[order.status as keyof typeof statusLabels]}
             </span>
             <select
               value={order.status}
-              onChange={(e) => handleStatusChange(e.target.value)}
+              onChange={(e) => handleStatusChangeClick(e.target.value)}
               disabled={updating}
               className="border border-(--border) rounded-lg p-2 text-sm bg-white text-(--text) focus:ring-2 focus:ring-(--pink) focus:border-(--pink) w-full sm:w-auto"
             >
@@ -260,6 +269,37 @@ export default function OrderDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Модалка подтверждения смены статуса */}
+      <Modal
+        isOpen={showStatusModal}
+        onClose={() => {
+          setShowStatusModal(false)
+          setPendingStatus(null)
+        }}
+        title="Изменение статуса заказа"
+      >
+        <p className="text-(--text-muted) mb-6">
+          Вы уверены, что хотите изменить статус заказа с<br />
+          <span className="font-semibold">"{statusLabels[order?.status as keyof typeof statusLabels]}"</span><br />
+          на<br />
+          <span className="font-semibold">"{pendingStatus ? statusLabels[pendingStatus as keyof typeof statusLabels] : ''}"</span>?
+        </p>
+        <div className="flex gap-3 justify-end">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowStatusModal(false)
+              setPendingStatus(null)
+            }}
+          >
+            Отмена
+          </Button>
+          <Button onClick={confirmStatusChange} className="bg-(--pink) hover:bg-(--pink-dark)">
+            Подтвердить
+          </Button>
+        </div>
+      </Modal>
     </div>
   )
 }

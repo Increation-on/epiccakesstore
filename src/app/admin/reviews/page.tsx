@@ -25,7 +25,6 @@ export default function AdminReviewsPage() {
   const [moderationEnabled, setModerationEnabled] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  // Защита
   useEffect(() => {
     if (status === 'loading') return
     if (!session || session.user.role !== 'admin') {
@@ -33,7 +32,6 @@ export default function AdminReviewsPage() {
     }
   }, [session, status, router])
 
-  // Загрузка настроек
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -113,24 +111,21 @@ export default function AdminReviewsPage() {
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">Модерация отзывов</h1>
 
-        {/* Переключатель модерации */}
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-600">Модерация:</span>
           <button
             onClick={toggleModeration}
             disabled={saving}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-              moderationEnabled ? 'bg-(--pink)' : 'bg-gray-300'
-            }`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${moderationEnabled ? 'bg-(--pink)' : 'bg-gray-300'
+              }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                moderationEnabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${moderationEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
             />
           </button>
           <span className="text-sm text-gray-600">
@@ -139,36 +134,47 @@ export default function AdminReviewsPage() {
         </div>
       </div>
 
-      {/* Фильтры */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <Button
-          variant={filter === 'pending' ? 'primary' : 'outline'}
-          onClick={() => setFilter('pending')}
-          size="sm"
-        >
-          На модерации
-        </Button>
-        <Button
-          variant={filter === 'approved' ? 'primary' : 'outline'}
-          onClick={() => setFilter('approved')}
-          size="sm"
-        >
-          Одобренные
-        </Button>
-        <Button
-          variant={filter === 'rejected' ? 'primary' : 'outline'}
-          onClick={() => setFilter('rejected')}
-          size="sm"
-        >
-          Отклоненные
-        </Button>
-        <Button
-          variant={filter === 'all' ? 'primary' : 'outline'}
-          onClick={() => setFilter('all')}
-          size="sm"
-        >
-          Все
-        </Button>
+      {/* Фильтры — только горизонтальный скролл */}
+      {/* Фильтры — горизонтальный скролл с намеком */}
+      <div className="relative">
+        <div className="overflow-x-auto pb-2 mb-6 scrollbar-hide">
+          <div className="flex gap-2">
+            <Button
+              variant={filter === 'pending' ? 'primary' : 'outline'}
+              onClick={() => setFilter('pending')}
+              size="sm"
+              className="whitespace-nowrap"
+            >
+              На модерации
+            </Button>
+            <Button
+              variant={filter === 'approved' ? 'primary' : 'outline'}
+              onClick={() => setFilter('approved')}
+              size="sm"
+              className="whitespace-nowrap"
+            >
+              Одобренные
+            </Button>
+            <Button
+              variant={filter === 'rejected' ? 'primary' : 'outline'}
+              onClick={() => setFilter('rejected')}
+              size="sm"
+              className="whitespace-nowrap"
+            >
+              Отклоненные
+            </Button>
+            <Button
+              variant={filter === 'all' ? 'primary' : 'outline'}
+              onClick={() => setFilter('all')}
+              size="sm"
+              className="whitespace-nowrap"
+            >
+              Все
+            </Button>
+          </div>
+        </div>
+        {/* Градиент-намек на скролл */}
+<div className="pointer-events-none absolute right-0 top-0 w-10 h-7 bg-linear-to-l from-white to-transparent" />
       </div>
 
       {/* Список отзывов */}
@@ -207,7 +213,7 @@ export default function AdminReviewsPage() {
                   <span key={star}>{star <= review.rating ? '★' : '☆'}</span>
                 ))}
               </div>
-              <p className="text-gray-700">{review.text}</p>
+              <p className="text-gray-700 wrap-break-word">{review.text}</p>
               <div className="text-xs text-gray-400 mt-2">
                 {new Date(review.createdAt).toLocaleDateString()}
               </div>

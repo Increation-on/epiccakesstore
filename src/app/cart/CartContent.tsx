@@ -131,7 +131,7 @@ export default function CartContent() {
   }
 
   // Пока загружается корзина — показываем скелетон
-  if (isCartLoading) {
+  if (isCartLoading || loading) {
     return <CartSkeleton />
   }
 
@@ -163,9 +163,7 @@ export default function CartContent() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Левая колонка — товары */}
         <div className="flex-1 min-w-0 space-y-4">
-          {loading ? (
-            <div className="text-center py-8 text-(--text-muted)">Загрузка товаров...</div>
-          ) : (
+          {(
             cartItems.map(item => {
               const product = products.find(p => p.id === item.productId)
               if (!product) return null
@@ -178,7 +176,7 @@ export default function CartContent() {
                   {/* Верхняя часть: картинка слева, текст справа */}
                   <div className="flex gap-4 items-center">
                     {/* Картинка */}
-                    <div className="shrink-0">
+                    <div className="shrink-0 cursor-pointer" onClick={() => router.push(`/products/${product.id}`)}>
                       {(() => {
                         let imageUrl = null
                         try {
@@ -218,10 +216,10 @@ export default function CartContent() {
 
                     {/* Текст: название и цена */}
                     <div className="flex-1 min-w-0 flex justify-center flex-col">
-                      <h3 className="font-semibold text-(--text) line-clamp-2 wrap-break-word text-center sm:text-left">
+                      <h3 className="font-semibold text-(--text) line-clamp-2 wrap-break-word text-center ">
                         {product.name}
                       </h3>
-                      <p className="text-(--pink) font-bold mt-1 text-center sm:text-left">{product.price} BYN</p>
+                      <p className="text-(--pink) font-bold mt-1 text-center ">{product.price} BYN</p>
                     </div>
                   </div>
 
