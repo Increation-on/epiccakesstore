@@ -4,29 +4,32 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ review: null })
-    }
+  const session = await getServerSession(authOptions)
+  const { id: productId } = await params
 
-    const { id } = await params
-
-    const review = await prisma.review.findUnique({
-      where: {
-        userId_productId: {
-          userId: session.user.id,
-          productId: id,
-        },
-      },
-    })
-
-    return NextResponse.json({ review })
-  } catch (error) {
-    console.error('my-review error:', error)
+  // Если не авторизован — возвращаем null
+  if (!session?.user?.id) {
     return NextResponse.json({ review: null })
   }
+
+  const review = await prisma.review.findUnique({
+    where: {
+      userId_productId: {
+        userId: session.user.id,
+        productId: productId,
+      },
+    },
+    select: {
+      id: true,
+      rating: true,
+      text: true,
+      status: true,
+      createdAt: true,
+    },
+  })
+
+  return NextResponse.json({ review: review || null })
 }

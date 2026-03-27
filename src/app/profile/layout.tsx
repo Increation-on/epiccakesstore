@@ -31,6 +31,12 @@ export default async function ProfileLayout({
           >
             📦 Мои заказы
           </Link>
+           <Link 
+            href="/profile/reviews" 
+            className="text-(--text-muted) hover:text-(--pink) transition font-medium"
+          >
+            Мои отзывы
+          </Link>
         </div>
       </nav>
       

@@ -13,7 +13,7 @@ interface Props {
 export function ReviewForm({ productId }: Props) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  
+
   const [rating, setRating] = useState(5)
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
@@ -27,7 +27,14 @@ export function ReviewForm({ productId }: Props) {
     fetch(`/api/products/${productId}/my-review`)
       .then(res => res.json())
       .then(data => {
-        if (data.review) setExistingReview(data.review)
+        if (data.review) {
+          // Если отзыв отклонен — разрешаем оставить новый
+          if (data.review.status === 'rejected') {
+            setExistingReview(null)
+          } else {
+            setExistingReview(data.review)
+          }
+        }
       })
       .finally(() => setChecking(false))
   }, [productId])
@@ -87,7 +94,7 @@ export function ReviewForm({ productId }: Props) {
         <p className="text-green-700 font-semibold mb-2">✅ Вы уже оставили отзыв</p>
         <div className="mt-2">
           <div className="flex text-yellow-400 mb-1">
-            {[1,2,3,4,5].map(star => (
+            {[1, 2, 3, 4, 5].map(star => (
               <span key={star}>{star <= existingReview.rating ? '★' : '☆'}</span>
             ))}
           </div>
@@ -117,14 +124,13 @@ export function ReviewForm({ productId }: Props) {
       <div>
         <label className="block mb-2 text-(--text-muted) text-sm">Оценка</label>
         <div className="flex gap-2">
-          {[1,2,3,4,5].map(star => (
+          {[1, 2, 3, 4, 5].map(star => (
             <button
               key={star}
               type="button"
               onClick={() => setRating(star)}
-              className={`text-2xl transition hover:scale-110 ${
-                star <= rating ? 'text-yellow-400' : 'text-gray-300'
-              }`}
+              className={`text-2xl transition hover:scale-110 ${star <= rating ? 'text-yellow-400' : 'text-gray-300'
+                }`}
             >
               ★
             </button>
