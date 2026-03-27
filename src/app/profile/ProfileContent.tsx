@@ -17,51 +17,54 @@ export default function ProfileContent() {
     }
   }, [session, status, router])
 
-  // Если сессия ещё загружается — Suspense уже показывает скелетон
   if (status === 'loading') return null
-
   if (!session?.user) return null
 
   return (
-    <div className="max-w-2xl mx-auto p-4 md:p-6">
+    <div className="max-w-2xl mx-auto p-4 md:p-6 overflow-x-hidden">
       <h1 className="text-3xl font-bold text-(--text) mb-6 font-serif">
         👤 Мой профиль
       </h1>
 
       <div className="bg-white rounded-lg border border-(--border) p-6 shadow-sm">
         <div className="space-y-4">
-          <div className="flex items-center gap-4 pb-4 border-b border-(--border)">
-            <div className="w-16 h-16 rounded-full bg-(--mint) flex items-center justify-center text-2xl font-bold text-(--text)">
+          <div className="flex items-center gap-4 pb-4 border-b border-(--border) flex-wrap">
+            <div className="w-16 h-16 rounded-full bg-(--mint) flex items-center justify-center text-2xl font-bold text-(--text) shrink-0">
               {session.user.name?.[0] || session.user.email?.[0] || 'U'}
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-(--text)">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl font-semibold text-(--text) wrap-break-word">
                 {session.user.name || 'Пользователь'}
               </h2>
-              <p className="text-(--text-muted)">{session.user.email}</p>
+              <p className="text-(--text-muted) wrap-break-word">{session.user.email}</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="flex justify-between py-2 border-b border-(--border)">
-              <span className="text-(--text-muted)">Email</span>
-              <span className="font-medium text-(--text)">{session.user.email}</span>
+            <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-(--border) gap-1">
+              <span className="text-(--text-muted) shrink-0">Email</span>
+              <span className="font-medium text-(--text) wrap-break-word text-right sm:text-left">
+                {session.user.email}
+              </span>
             </div>
-            <div className="flex justify-between py-2 border-b border-(--border)">
-              <span className="text-(--text-muted)">Имя</span>
-              <span className="font-medium text-(--text)">{session.user.name || 'Не указано'}</span>
+            <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-(--border) gap-1">
+              <span className="text-(--text-muted) shrink-0">Имя</span>
+              <span className="font-medium text-(--text) wrap-break-word text-right sm:text-left">
+                {session.user.name || 'Не указано'}
+              </span>
             </div>
-            {session.user.role === 'admin' &&
-              <div className="flex justify-between py-2 border-b border-(--border)">
-                <span className="text-(--text-muted)">Роль</span>
-                <span className="font-medium text-(--text)">
+            {session.user.role === 'admin' && (
+              <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-(--border) gap-1">
+                <span className="text-(--text-muted) shrink-0">Роль</span>
+                <span className="font-medium text-(--text) wrap-break-word text-right sm:text-left">
                   Администратор
                 </span>
-              </div>}
+              </div>
+            )}
             {session.user.createdAt && (
-              <div className="flex justify-between py-2">
-                <span className="text-(--text-muted)">Аккаунт создан</span>
-                <span className="font-medium text-(--text)">
+              <div className="flex flex-col sm:flex-row sm:justify-between py-2 gap-1">
+                <span className="text-(--text-muted) shrink-0">Аккаунт создан</span>
+                <span className="font-medium text-(--text) wrap-break-word text-right sm:text-left">
                   {new Date(session.user.createdAt).toLocaleDateString('ru-RU')}
                 </span>
               </div>
