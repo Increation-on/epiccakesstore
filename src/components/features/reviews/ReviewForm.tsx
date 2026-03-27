@@ -19,6 +19,7 @@ export function ReviewForm({ productId }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [moderationPending, setModerationPending] = useState(false)
   const [existingReview, setExistingReview] = useState<any>(null)
   const [checking, setChecking] = useState(true)
 
@@ -27,8 +28,16 @@ export function ReviewForm({ productId }: Props) {
     fetch(`/api/products/${productId}/my-review`)
       .then(res => res.json())
       .then(data => {
-        if (data.review) setExistingReview(data.review)
+        if (data.review) {
+          // Если отзыв отклонен — разрешаем оставить новый
+          if (data.review.status === 'rejected') {
+            setExistingReview(null)
+          } else {
+            setExistingReview(data.review)
+          }
+        }
       })
+      .catch(err => console.error('Error checking review:', err))
       .finally(() => setChecking(false))
   }, [productId])
 
@@ -37,6 +46,7 @@ export function ReviewForm({ productId }: Props) {
     setLoading(true)
     setError('')
     setSuccess(false)
+    setModerationPending(false)
 
     try {
       const res = await fetch(`/api/products/${productId}/reviews`, {
@@ -51,13 +61,23 @@ export function ReviewForm({ productId }: Props) {
         throw new Error(data.error || 'Ошибка при отправке')
       }
 
-      setSuccess(true)
+      // Если отзыв сразу одобрен
+      if (data.status === 'approved') {
+        setSuccess(true)
+        toast.success('Отзыв опубликован! Спасибо!')
+      } 
+      // Если отзыв отправлен на модерацию
+      else if (data.status === 'pending') {
+        setModerationPending(true)
+        toast.success('Отзыв отправлен на модерацию')
+      }
+
       setText('')
       setRating(5)
       router.refresh()
     } catch (err: any) {
-      toast.error(err.message || 'Не удалось отправить отзыв')
       setError(err.message)
+      toast.error(err.message || 'Не удалось отправить отзыв')
     } finally {
       setLoading(false)
     }
@@ -80,7 +100,7 @@ export function ReviewForm({ productId }: Props) {
     )
   }
 
-  // Если уже есть отзыв
+  // Если уже есть отзыв (не отклоненный)
   if (existingReview) {
     return (
       <div className="border border-green-200 rounded-lg p-5 bg-green-50">
@@ -100,11 +120,20 @@ export function ReviewForm({ productId }: Props) {
     )
   }
 
-  // Если успешно отправили
+  // Если успешно отправлен (сразу одобрен)
   if (success) {
     return (
       <div className="border border-green-200 rounded-lg p-5 bg-green-50 text-green-700">
-        ✅ Отзыв отправлен! Спасибо.
+        ✅ Отзыв опубликован! Спасибо.
+      </div>
+    )
+  }
+
+  // Если отправлен на модерацию
+  if (moderationPending) {
+    return (
+      <div className="border border-yellow-200 rounded-lg p-5 bg-yellow-50 text-yellow-700">
+        ⏳ Отзыв отправлен на модерацию. Он появится после проверки администратором.
       </div>
     )
   }

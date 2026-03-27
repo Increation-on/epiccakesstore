@@ -27,7 +27,7 @@ export default function ProfileContent() {
       <h1 className="text-3xl font-bold text-(--text) mb-6 font-serif">
         👤 Мой профиль
       </h1>
-      
+
       <div className="bg-white rounded-lg border border-(--border) p-6 shadow-sm">
         <div className="space-y-4">
           <div className="flex items-center gap-4 pb-4 border-b border-(--border)">
@@ -41,7 +41,7 @@ export default function ProfileContent() {
               <p className="text-(--text-muted)">{session.user.email}</p>
             </div>
           </div>
-          
+
           <div className="space-y-3">
             <div className="flex justify-between py-2 border-b border-(--border)">
               <span className="text-(--text-muted)">Email</span>
@@ -51,12 +51,13 @@ export default function ProfileContent() {
               <span className="text-(--text-muted)">Имя</span>
               <span className="font-medium text-(--text)">{session.user.name || 'Не указано'}</span>
             </div>
-            <div className="flex justify-between py-2 border-b border-(--border)">
-              <span className="text-(--text-muted)">Роль</span>
-              <span className="font-medium text-(--text)">
-                {session.user.role === 'admin' ? 'Администратор' : 'Покупатель'}
-              </span>
-            </div>
+            {session.user.role === 'admin' &&
+              <div className="flex justify-between py-2 border-b border-(--border)">
+                <span className="text-(--text-muted)">Роль</span>
+                <span className="font-medium text-(--text)">
+                  Администратор
+                </span>
+              </div>}
             {session.user.createdAt && (
               <div className="flex justify-between py-2">
                 <span className="text-(--text-muted)">Аккаунт создан</span>
@@ -68,17 +69,13 @@ export default function ProfileContent() {
           </div>
         </div>
       </div>
-      
+
       <div className="mt-8">
         <Link href="/profile/orders">
           <Button className="w-full sm:w-auto">
             📦 Мои заказы
           </Button>
         </Link>
-      </div>
-      
-      <div className="mt-6 text-sm text-(--text-muted) text-center">
-        🔒 Это защищённая страница. Ты авторизован как {session.user.email}
       </div>
     </div>
   )
