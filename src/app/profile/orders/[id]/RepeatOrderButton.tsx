@@ -1,9 +1,10 @@
-// app/profile/orders/[id]/RepeatOrderButton.tsx
 'use client'
 
 import { useCartStore } from "@/store/cart.store"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { Button } from "@/components/ui/Button"
+import { toast } from "@/lib/toast"
 
 export function RepeatOrderButton({ items }: { items: { productId: string, quantity: number }[] }) {
   const router = useRouter()
@@ -13,11 +14,9 @@ export function RepeatOrderButton({ items }: { items: { productId: string, quant
   const handleRepeatOrder = async () => {
     setLoading(true)
     
-    // ВАЖНО: Очищаем сохраненные данные формы перед повторным заказом
     sessionStorage.removeItem('checkoutFormData')
     sessionStorage.removeItem('paymentState')
     
-    // Преобразуем товары в формат корзины
     const newItems = items.map(item => ({
       id: crypto.randomUUID(),
       productId: item.productId,
@@ -25,7 +24,6 @@ export function RepeatOrderButton({ items }: { items: { productId: string, quant
       addedAt: new Date().toISOString()
     }))
 
-    // Объединяем с текущими товарами в корзине
     const mergedItems = [...currentItems]
     
     newItems.forEach((newItem) => {
@@ -41,19 +39,20 @@ export function RepeatOrderButton({ items }: { items: { productId: string, quant
     })
 
     setItems(mergedItems)
+    toast.success('Товары добавлены в корзину')
     
     setTimeout(() => {
-      router.push('/cart') // сначала в корзину
+      router.push('/cart')
     }, 500)
   }
 
   return (
-    <button
+    <Button
       onClick={handleRepeatOrder}
       disabled={loading}
-      className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+      className="w-full"
     >
       {loading ? 'Добавляем...' : '🔄 Повторить заказ'}
-    </button>
+    </Button>
   )
 }
