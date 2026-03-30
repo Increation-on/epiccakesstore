@@ -5,7 +5,7 @@ import ProductCard from '@/components/features/products/ProductCard';
 import { ReviewForm } from '@/components/features/reviews/ReviewForm';
 import { ReviewList } from '@/components/features/reviews/ReviewList';
 import { AddToCartButton } from '@/components/features/products/AddToCartButton';
-import Image from 'next/image';
+import { ProductStockStatus } from '@/components/features/products/ProductStockStatus';
 import type { Metadata } from 'next'
 import ProductImageGallery from '@/components/features/products/ProductImageGallery';
 
@@ -120,15 +120,12 @@ export default async function ProductPage({ params }: PageProps) {
           )}
 
           {/* Цена и наличие */}
+          {/* Цена и наличие */}
           <div className="mb-4">
             <span className="text-3xl font-bold text-(--pink)">
               {product.price} ₽
             </span>
-            {!product.inStock && (
-              <span className="ml-4 px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
-                Нет в наличии
-              </span>
-            )}
+            <ProductStockStatus stock={product.stock} />
           </div>
 
           {/* Описание */}
@@ -154,7 +151,7 @@ export default async function ProductPage({ params }: PageProps) {
           )}
 
           {/* Кнопка добавления в корзину */}
-          <AddToCartButton productId={product.id} inStock={product.inStock} />
+          <AddToCartButton productId={product.id} stock={product.stock} />
         </div>
       </div>
 

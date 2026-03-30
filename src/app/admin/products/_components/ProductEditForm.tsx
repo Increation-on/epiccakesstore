@@ -31,6 +31,7 @@ export default function ProductEditForm({
     description: '',
     price: '',
     inStock: true,
+    stock: 0,
     categoryIds: [] as string[]
   })
 
@@ -49,13 +50,14 @@ export default function ProductEditForm({
         }
       }
       setImageUrls(parsedImages)
-      
+
       setFormData({
         name: initialData.name,
         slug: initialData.slug,
         description: initialData.description || '',
         price: String(initialData.price),
         inStock: initialData.inStock,
+        stock: initialData.stock ?? 0,
         categoryIds: initialData.categories?.map(cat => String(cat.id)) || []
       })
     }
@@ -78,7 +80,7 @@ export default function ProductEditForm({
         body: JSON.stringify({
           ...formData,
           price: parseFloat(formData.price),
-          images: JSON.stringify(imageUrls), // ← сохраняем все изображения
+          images: JSON.stringify(imageUrls),
           categoryIds: formData.categoryIds
         })
       })
@@ -111,7 +113,7 @@ export default function ProductEditForm({
           required
           value={formData.name}
           onChange={e => setFormData({ ...formData, name: e.target.value })}
-          className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="Например: Шоколадный торт"
         />
       </div>
@@ -123,7 +125,7 @@ export default function ProductEditForm({
           type="text"
           value={formData.slug}
           onChange={e => setFormData({ ...formData, slug: e.target.value })}
-          className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="shokoladnyy-tort"
         />
         <p className="text-xs text-(--text-muted) mt-1">
@@ -137,7 +139,7 @@ export default function ProductEditForm({
         <textarea
           value={formData.description}
           onChange={e => setFormData({ ...formData, description: e.target.value })}
-          className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           rows={4}
           placeholder="Подробное описание товара..."
         />
@@ -155,15 +157,42 @@ export default function ProductEditForm({
           step="0.01"
           value={formData.price}
           onChange={e => setFormData({ ...formData, price: e.target.value })}
-          className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="0.00"
+        />
+      </div>
+
+      {/* Количество на складе */}
+      <div>
+        <label htmlFor="stock" className="block text-sm font-medium mb-1">
+          Количество на складе
+        </label>
+        <input
+          type="number"
+          id="stock"
+          min="0"
+          step="1"
+          value={formData.stock === 0 ? '' : formData.stock}
+          onChange={e => {
+            const value = e.target.value
+            if (value === '') {
+              setFormData({ ...formData, stock: 0 })
+            } else {
+              const parsed = parseInt(value, 10)
+              if (!isNaN(parsed) && parsed >= 0) {
+                setFormData({ ...formData, stock: parsed })
+              }
+            }
+          }}
+          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          placeholder="0"
         />
       </div>
 
       {/* Изображения */}
       <ImageGallery
         images={imageUrls}
-        onChange={setImageUrls} // ← напрямую обновляем массив
+        onChange={setImageUrls}
       />
 
       {/* Категории */}

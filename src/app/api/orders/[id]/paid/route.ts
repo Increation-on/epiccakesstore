@@ -1,5 +1,3 @@
-//api/orders/[id]/paid/route.ts
-
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
@@ -10,51 +8,97 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // ✅ Сессия получается внутри обработчика
     const session = await getServerSession(authOptions)
-    console.log('🔥 session в paid route:', session)
-
     const { id } = await params
-    console.log('🔥 orderId:', id)
 
     if (!id) {
-      console.log('❌ orderId отсутствует')
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 })
     }
 
-    console.log('🔥 Ищем заказ с id:', id)
-    const existingOrder = await prisma.order.findUnique({
-      where: { id }
+    // Получаем заказ с товарами
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        orderItems: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                stock: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
     })
-    console.log('🔥 Найденный заказ:', existingOrder)
 
-    if (!existingOrder) {
-      console.log('❌ Заказ не найден')
+    if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    const order = await prisma.order.update({
-      where: { id },
-      data: { 
-        status: 'PAID',
-        updatedAt: new Date()
-      }
-    })
-    
-    console.log('✅ Заказ обновлён:', order)
+    // Проверяем, не обработан ли уже заказ
+    if (order.status === 'PAID') {
+      return NextResponse.json({ error: 'Order already paid' }, { status: 400 })
+    }
 
+    // Транзакция: проверяем наличие и уменьшаем stock
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // 1. Проверяем наличие всех товаров
+      for (const item of order.orderItems) {
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+          select: { stock: true, name: true }
+        })
+
+        if (!product || product.stock < item.quantity) {
+          throw new Error(
+            `Товар "${product?.name || item.productName}" доступен в количестве ${product?.stock || 0} шт`
+          )
+        }
+      }
+
+      // 2. Уменьшаем stock
+      for (const item of order.orderItems) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: { decrement: item.quantity }
+          }
+        })
+      }
+
+      // 3. Обновляем статус заказа
+      const updated = await tx.order.update({
+        where: { id },
+        data: {
+          status: 'PAID',
+          updatedAt: new Date()
+        }
+      })
+
+      return updated
+    })
+
+    // 4. После транзакции обновляем inStock для товаров, где stock стал 0
+    await prisma.product.updateMany({
+      where: { stock: 0 },
+      data: { inStock: false }
+    })
+
+    // 5. Очищаем корзину пользователя
     if (order.userId) {
-      console.log('🔥 Очищаем корзину для userId:', order.userId)
       await prisma.cart.deleteMany({
         where: { userId: order.userId }
       })
     }
-    
+
+    console.log('✅ Заказ оплачен, stock уменьшен')
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('❌ Ошибка обновления статуса:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }
