@@ -6,30 +6,33 @@ import { toast } from '@/lib/toast'
 
 interface Props {
   productId: string
-  inStock: boolean
+  stock: number 
 }
 
-export function AddToCartButton({ productId, inStock }: Props) {
+export function AddToCartButton({ productId, stock }: Props) {
   const addItem = useCartStore(state => state.addItem)
+  
+  const isOutOfStock = stock === 0
 
   const handleClick = () => {
+    if (isOutOfStock) return
     
     try {
-    addItem(productId, 1)
-    toast.success('Товар добавлен в корзину');
-  } catch (error) {
-    toast.error('Не удалось добавить товар');
-  }
+      addItem(productId, 1)
+      toast.success('Товар добавлен в корзину')
+    } catch (error) {
+      toast.error('Не удалось добавить товар')
+    }
   }
 
   return (
     <Button
       size="lg"
-      disabled={!inStock}
+      disabled={isOutOfStock}
       onClick={handleClick}
       className="w-full md:w-auto"
     >
-      {inStock ? 'Добавить в корзину' : 'Нет в наличии'}
+      {isOutOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
     </Button>
   )
 }
