@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    
+
     // Проверка прав (на всякий случай, хотя middleware защищает)
     if (session?.user?.role !== 'admin') {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
@@ -37,13 +37,13 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (session?.user?.role !== 'admin') {
       return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 })
     }
 
     const data = await request.json()
-    
+
     if (!data.name || !data.price) {
       return NextResponse.json(
         { error: 'Название и цена обязательны' },
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
 
     // Базовый slug
     let slug = generateSlug(data.name)
-    
+
     // Если slug пустой (например, название из спецсимволов) — делаем временный
     if (!slug) {
       slug = `product-${Date.now()}`
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     let existingProduct = await prisma.product.findUnique({
       where: { slug }
     })
-    
+
     let counter = 1
     while (existingProduct) {
       slug = `${generateSlug(data.name)}-${counter}`
@@ -94,6 +94,7 @@ export async function POST(request: Request) {
         price: parseFloat(data.price),
         images: data.images || '[]',
         inStock: data.inStock ?? true,
+        stock: data.stock ?? 0,
         categories: {
           connect: data.categoryIds?.map((id: string) => ({ id })) || []
         }

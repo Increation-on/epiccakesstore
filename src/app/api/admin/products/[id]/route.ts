@@ -99,6 +99,7 @@ export async function PUT(
         price: parseFloat(data.price),
         images: data.images || '[]',
         inStock: data.inStock ?? true,
+        stock: data.stock ?? 0,
         categories: {
           set: data.categoryIds?.map((id: string) => ({ id })) || []
         }

@@ -9,8 +9,9 @@ export type Product = WithId & Timestamp & {
   description: string;
   price: number;
   images: string | string[];           // JSON строка из БД
-  inStock: boolean;         // вместо stockQuantity
-  categories?: Category[];  // для include
+  inStock: boolean;         
+  categories?: Category[];
+  stock: number;
 };
 
 // ---------- ДЛЯ СОЗДАНИЯ ----------
