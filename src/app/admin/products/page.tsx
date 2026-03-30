@@ -1,4 +1,3 @@
-// app/admin/products/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -9,7 +8,7 @@ import { Category } from '@/types/domain/categoery.types'
 import { Button } from '@/components/ui/Button'
 import ProductForm from './_components/ProductEditForm'
 import Image from 'next/image'
-import { toast } from '@/lib/toast'  // ← добавить импорт
+import { toast } from '@/lib/toast'
 
 export default function AdminProductsPage() {
   const { data: session, status } = useSession()
@@ -65,16 +64,16 @@ export default function AdminProductsPage() {
       const res = await fetch(`/api/admin/products/${productId}`, {
         method: 'DELETE'
       })
-      
+
       if (res.ok) {
         setProducts(products.filter(p => p.id !== id))
-        toast.success(`Товар "${name}" удален`)  // ← добавить
+        toast.success(`Товар "${name}" удален`)
       } else {
-        toast.error(`Не удалось удалить товар "${name}"`)  // ← добавить
+        toast.error(`Не удалось удалить товар "${name}"`)
       }
     } catch (error) {
       console.error('Error deleting product:', error)
-      toast.error('Ошибка при удалении товара')  // ← добавить
+      toast.error('Ошибка при удалении товара')
     }
   }
 
@@ -137,7 +136,7 @@ export default function AdminProductsPage() {
                   Цена
                 </th>
                 <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Наличие
+                  Количество
                 </th>
                 <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Действия
@@ -192,11 +191,13 @@ export default function AdminProductsPage() {
                     {product.price} ₽
                   </td>
                   <td className="px-4 md:px-6 py-4">
-                    <span className={`px-2 py-1 text-xs rounded whitespace-nowrap ${product.inStock
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                    <span className={`whitespace-nowrap px-2 py-1 rounded text-sm ${(product.stock ?? 0) === 0
+                        ? 'bg-red-100 text-red-800'
+                        : (product.stock ?? 0) <= 5
+                          ? 'bg-orange-100 text-orange-800'
+                          : 'bg-gray-100 text-green-500'
                       }`}>
-                      {product.inStock ? 'В наличии' : 'Нет'}
+                      {product.stock ?? 0} шт
                     </span>
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
@@ -254,11 +255,13 @@ export default function AdminProductsPage() {
                   <span className="text-lg font-bold text-pink-600">
                     {product.price} ₽
                   </span>
-                  <span className={`px-2 py-0.5 text-xs rounded ${product.inStock
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                  <span className={`px-2 py-0.5 text-xs rounded ${(product.stock ?? 0) === 0
+                      ? 'bg-red-100 text-red-800'
+                      : (product.stock ?? 0) <= 5
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-gray-100 text-green-500'
                     }`}>
-                    {product.inStock ? 'В наличии' : 'Нет'}
+                    {product.stock ?? 0} шт
                   </span>
                 </div>
 
