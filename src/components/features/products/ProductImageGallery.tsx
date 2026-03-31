@@ -30,7 +30,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
             src={mainImage}
             alt={productName}
             fill
-            className="object-cover"
+            className="object-contain"  // 👈 меняем на object-contain
             priority
           />
         </div>
@@ -53,7 +53,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
                 src={url}
                 alt={`${productName} - фото ${index + 1}`}
                 fill
-                className="object-cover"
+                className="object-cover"  // для миниатюр оставляем object-cover
               />
             </button>
           ))}

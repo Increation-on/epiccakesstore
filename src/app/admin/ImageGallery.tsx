@@ -14,9 +14,65 @@ export function ImageGallery({ images, onChange }: ImageGalleryProps) {
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const validateAndUpload = async (file: File) => {
+    // 1. Проверка типа файла
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Поддерживаются только JPG, PNG, WebP')
+      return false
+    }
+
+    // 2. Проверка размера файла (2 MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Файл слишком большой. Максимум 2 МБ')
+      return false
+    }
+
+    // 3. Проверка размеров изображения
+    return new Promise<boolean>((resolve) => {
+      const img = typeof window !== 'undefined' ? new window.Image() : null
+      if (!img) return
+      const url = URL.createObjectURL(file)
+
+      img.onload = async () => {
+        URL.revokeObjectURL(url)
+
+        const isSquare = Math.abs(img.width - img.height) < 50
+        const isLargeEnough = img.width >= 800 && img.height >= 800
+
+        if (!isSquare || !isLargeEnough) {
+          const warnings = []
+          if (!isSquare) warnings.push('изображение не квадратное')
+          if (!isLargeEnough) warnings.push(`размер ${img.width}×${img.height} меньше рекомендуемого 800×800`)
+
+          const confirmUpload = window.confirm(
+            `⚠️ Предупреждение: ${warnings.join(', ')}.\n\nРекомендуем загружать квадратные изображения 800×800px.\n\nЗагрузить на свой страх и риск?`
+          )
+
+          resolve(confirmUpload)
+        } else {
+          resolve(true)
+        }
+      }
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url)
+        toast.error('Не удалось прочитать изображение')
+        resolve(false)
+      }
+
+      img.src = url
+    })
+  }
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    const isValid = await validateAndUpload(file)
+    if (!isValid) {
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
 
     setUploading(true)
     const formData = new FormData()
@@ -77,7 +133,7 @@ export function ImageGallery({ images, onChange }: ImageGalleryProps) {
               />
             </div>
 
-            {/* Кнопки управления — без изменений */}
+            {/* Кнопки управления */}
             <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
               <button
                 type="button"
@@ -111,7 +167,7 @@ export function ImageGallery({ images, onChange }: ImageGalleryProps) {
           </div>
         ))}
 
-        {/* 👇 Индикатор загрузки во время аплоада */}
+        {/* Индикатор загрузки во время аплоада */}
         {uploading && (
           <div className="aspect-square border-2 border-dashed border-(--pink) rounded-lg flex flex-col items-center justify-center gap-2 bg-(--mint)/20">
             <div className="w-8 h-8 border-4 border-(--pink) border-t-transparent rounded-full animate-spin"></div>
@@ -140,9 +196,19 @@ export function ImageGallery({ images, onChange }: ImageGalleryProps) {
         className="hidden"
       />
 
-      <p className="text-xs text-(--text-muted)">
-        Поддерживаются форматы PNG, JPG, WebP. Первое изображение будет основным.
-      </p>
+      {/* Рекомендации */}
+      <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm font-medium text-blue-800 mb-2">
+          📸 <strong>Технические рекомендации для изображений</strong>
+        </p>
+        <ul className="text-xs text-blue-700 space-y-1 list-disc pl-4">
+          <li><strong>Пропорции:</strong> <strong>квадратные (1:1)</strong> — иначе при загрузке будет предупреждение</li>
+          <li><strong>Размер:</strong> минимум <strong>800×800px</strong> — иначе будет предупреждение</li>
+          <li><strong>Вес:</strong> до <strong>5 МБ</strong> (при несоответствии загрузка будет отклонена)</li>
+          <li><strong>Формат:</strong> JPG, PNG, WebP</li>
+          <li>При несоответствии рекомендациям вы увидите предупреждение, но сможете загрузить на свой риск</li>
+        </ul>
+      </div>
     </div>
   )
 }
