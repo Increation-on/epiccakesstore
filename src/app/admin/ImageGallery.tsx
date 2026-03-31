@@ -49,21 +49,21 @@ export function ImageGallery({ images, onChange }: ImageGalleryProps) {
   const handleMoveUp = (index: number) => {
     if (index === 0) return
     const newImages = [...images]
-    ;[newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]]
+      ;[newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]]
     onChange(newImages)
   }
 
   const handleMoveDown = (index: number) => {
     if (index === images.length - 1) return
     const newImages = [...images]
-    ;[newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]]
+      ;[newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]]
     onChange(newImages)
   }
 
   return (
     <div className="space-y-4">
       <label className="block text-sm font-medium mb-1">Изображения</label>
-      
+
       {/* Сетка превью */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {images.map((url, index) => (
@@ -76,8 +76,8 @@ export function ImageGallery({ images, onChange }: ImageGalleryProps) {
                 className="object-cover"
               />
             </div>
-            
-            {/* Кнопки управления */}
+
+            {/* Кнопки управления — без изменений */}
             <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
               <button
                 type="button"
@@ -87,8 +87,7 @@ export function ImageGallery({ images, onChange }: ImageGalleryProps) {
                 🗑️
               </button>
             </div>
-            
-            {/* Кнопки перемещения */}
+
             <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition">
               {index > 0 && (
                 <button
@@ -111,21 +110,28 @@ export function ImageGallery({ images, onChange }: ImageGalleryProps) {
             </div>
           </div>
         ))}
-        
-        {/* Кнопка добавления */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="aspect-square border-2 border-dashed border-(--border) rounded-lg flex flex-col items-center justify-center gap-2 hover:border-(--pink) transition"
-        >
-          <span className="text-2xl">+</span>
-          <span className="text-xs text-(--text-muted)">
-            {uploading ? 'Загрузка...' : 'Добавить'}
-          </span>
-        </button>
+
+        {/* 👇 Индикатор загрузки во время аплоада */}
+        {uploading && (
+          <div className="aspect-square border-2 border-dashed border-(--pink) rounded-lg flex flex-col items-center justify-center gap-2 bg-(--mint)/20">
+            <div className="w-8 h-8 border-4 border-(--pink) border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs text-(--pink)">Загрузка...</span>
+          </div>
+        )}
+
+        {/* Кнопка добавления — показываем только если не загружаем */}
+        {!uploading && (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="aspect-square border-2 border-dashed border-(--border) rounded-lg flex flex-col items-center justify-center gap-2 hover:border-(--pink) transition"
+          >
+            <span className="text-2xl">+</span>
+            <span className="text-xs text-(--text-muted)">Добавить</span>
+          </button>
+        )}
       </div>
-      
+
       <input
         ref={fileInputRef}
         type="file"
@@ -133,7 +139,7 @@ export function ImageGallery({ images, onChange }: ImageGalleryProps) {
         onChange={handleUpload}
         className="hidden"
       />
-      
+
       <p className="text-xs text-(--text-muted)">
         Поддерживаются форматы PNG, JPG, WebP. Первое изображение будет основным.
       </p>

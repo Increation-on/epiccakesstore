@@ -105,3 +105,14 @@ button {
   transform: none !important;
   background-color: var(--mint-dark) !important;
 }
+
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

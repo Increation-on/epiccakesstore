@@ -192,13 +192,15 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="px-4 md:px-6 py-4">
                     <span className={`whitespace-nowrap px-2 py-1 rounded text-sm ${(product.stock ?? 0) === 0
-                        ? 'bg-red-100 text-red-800'
-                        : (product.stock ?? 0) <= 5
-                          ? 'bg-orange-100 text-orange-800'
-                          : 'bg-gray-100 text-green-500'
+                      ? 'bg-red-100 text-red-800'
+                      : (product.stock ?? 0) <= 5
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-gray-100 text-green-500'
                       }`}>
                       {product.stock ?? 0} шт
                     </span>
+                    <span className={`inline-block w-3 h-3 rounded-full ml-2 ${product.inStock ? 'bg-green-500' : 'bg-red-500'
+                      }`} title={product.inStock ? 'В наличии' : 'Отключен'} />
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                     <button
@@ -256,13 +258,15 @@ export default function AdminProductsPage() {
                     {product.price} ₽
                   </span>
                   <span className={`px-2 py-0.5 text-xs rounded ${(product.stock ?? 0) === 0
-                      ? 'bg-red-100 text-red-800'
-                      : (product.stock ?? 0) <= 5
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-gray-100 text-green-500'
+                    ? 'bg-red-100 text-red-800'
+                    : (product.stock ?? 0) <= 5
+                      ? 'bg-orange-100 text-orange-800'
+                      : 'bg-gray-100 text-green-500'
                     }`}>
                     {product.stock ?? 0} шт
                   </span>
+                  <span className={`inline-block w-3 h-3 rounded-full ml-1 ${product.inStock ? 'bg-green-500' : 'bg-red-500'
+                    }`} title={product.inStock ? 'В наличии' : 'Отключен'} />
                 </div>
 
                 {product.categories && product.categories.length > 0 && (

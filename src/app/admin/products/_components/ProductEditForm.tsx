@@ -113,7 +113,7 @@ export default function ProductEditForm({
           required
           value={formData.name}
           onChange={e => setFormData({ ...formData, name: e.target.value })}
-          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          className="w-full focus:outline-none p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="Например: Шоколадный торт"
         />
       </div>
@@ -125,7 +125,7 @@ export default function ProductEditForm({
           type="text"
           value={formData.slug}
           onChange={e => setFormData({ ...formData, slug: e.target.value })}
-          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          className="w-full focus:outline-none p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="shokoladnyy-tort"
         />
         <p className="text-xs text-(--text-muted) mt-1">
@@ -139,7 +139,7 @@ export default function ProductEditForm({
         <textarea
           value={formData.description}
           onChange={e => setFormData({ ...formData, description: e.target.value })}
-          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          className="w-full focus:outline-none p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           rows={4}
           placeholder="Подробное описание товара..."
         />
@@ -157,7 +157,7 @@ export default function ProductEditForm({
           step="0.01"
           value={formData.price}
           onChange={e => setFormData({ ...formData, price: e.target.value })}
-          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          className="w-full focus:outline-none p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="0.00"
         />
       </div>
@@ -176,15 +176,19 @@ export default function ProductEditForm({
           onChange={e => {
             const value = e.target.value
             if (value === '') {
-              setFormData({ ...formData, stock: 0 })
+              setFormData({ ...formData, stock: 0, inStock: false })
             } else {
               const parsed = parseInt(value, 10)
               if (!isNaN(parsed) && parsed >= 0) {
-                setFormData({ ...formData, stock: parsed })
+                setFormData({ 
+                  ...formData, 
+                  stock: parsed,
+                  inStock: parsed > 0
+                })
               }
             }
           }}
-          className="w-full focus:outline-none  p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
+          className="w-full focus:outline-none p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="0"
         />
       </div>
@@ -231,10 +235,17 @@ export default function ProductEditForm({
           type="checkbox"
           id="inStock"
           checked={formData.inStock}
-          onChange={e => setFormData({ ...formData, inStock: e.target.checked })}
+          onChange={e => {
+            setFormData({
+              ...formData,
+              inStock: e.target.checked
+            })
+          }}
           className="w-4 h-4 rounded text-(--pink) focus:ring-(--pink)"
         />
-        <label htmlFor="inStock" className="text-sm md:text-base text-(--text)">В наличии</label>
+        <label htmlFor="inStock" className="text-sm md:text-base text-(--text)">
+          В наличии
+        </label>
       </div>
 
       {/* Кнопки */}
