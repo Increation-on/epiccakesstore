@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import ProductForm from './_components/ProductEditForm'
 import Image from 'next/image'
 import { toast } from '@/lib/toast'
+import { Modal } from '@/components/ui/Modal'
 
 export default function AdminProductsPage() {
   const { data: session, status } = useSession()
@@ -17,6 +18,16 @@ export default function AdminProductsPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    productId: string | null
+    productName: string
+  }>({
+    isOpen: false,
+    productId: null,
+    productName: '',
+  })
 
   const loadData = async () => {
     setLoading(true)
@@ -55,26 +66,38 @@ export default function AdminProductsPage() {
     }
   }, [session, status, router])
 
-  const handleDelete = async (id: Product['id'], name: string) => {
-    if (!confirm('Точно удалить?')) return
+  const openDeleteModal = (id: Product['id'], name: string) => {
+    setDeleteModal({
+      isOpen: true,
+      productId: String(id),
+      productName: name,
+    })
+  }
 
-    const productId = String(id)
+  const confirmDelete = async () => {
+    if (!deleteModal.productId) return
 
     try {
-      const res = await fetch(`/api/admin/products/${productId}`, {
+      const res = await fetch(`/api/admin/products/${deleteModal.productId}`, {
         method: 'DELETE'
       })
 
       if (res.ok) {
-        setProducts(products.filter(p => p.id !== id))
-        toast.success(`Товар "${name}" удален`)
+        setProducts(products.filter(p => p.id !== deleteModal.productId))
+        toast.success(`Товар "${deleteModal.productName}" удален`)
       } else {
-        toast.error(`Не удалось удалить товар "${name}"`)
+        toast.error(`Не удалось удалить товар "${deleteModal.productName}"`)
       }
     } catch (error) {
       console.error('Error deleting product:', error)
       toast.error('Ошибка при удалении товара')
+    } finally {
+      setDeleteModal({ isOpen: false, productId: null, productName: '' })
     }
+  }
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, productId: null, productName: '' })
   }
 
   if (status === 'loading' || loading) {
@@ -192,13 +215,15 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="px-4 md:px-6 py-4">
                     <span className={`whitespace-nowrap px-2 py-1 rounded text-sm ${(product.stock ?? 0) === 0
-                        ? 'bg-red-100 text-red-800'
-                        : (product.stock ?? 0) <= 5
-                          ? 'bg-orange-100 text-orange-800'
-                          : 'bg-gray-100 text-green-500'
+                      ? 'bg-red-100 text-red-800'
+                      : (product.stock ?? 0) <= 5
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-gray-100 text-green-500'
                       }`}>
                       {product.stock ?? 0} шт
                     </span>
+                    <span className={`inline-block w-3 h-3 rounded-full ml-2 ${product.inStock ? 'bg-green-500' : 'bg-red-500'
+                      }`} title={product.inStock ? 'В наличии' : 'Отключен'} />
                   </td>
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                     <button
@@ -209,7 +234,7 @@ export default function AdminProductsPage() {
                       ✏️
                     </button>
                     <button
-                      onClick={() => handleDelete(product.id, product.name)}
+                      onClick={() => openDeleteModal(product.id, product.name)}
                       className="text-red-600 hover:text-red-800 text-lg md:text-base"
                       aria-label="Удалить"
                     >
@@ -256,13 +281,15 @@ export default function AdminProductsPage() {
                     {product.price} ₽
                   </span>
                   <span className={`px-2 py-0.5 text-xs rounded ${(product.stock ?? 0) === 0
-                      ? 'bg-red-100 text-red-800'
-                      : (product.stock ?? 0) <= 5
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-gray-100 text-green-500'
+                    ? 'bg-red-100 text-red-800'
+                    : (product.stock ?? 0) <= 5
+                      ? 'bg-orange-100 text-orange-800'
+                      : 'bg-gray-100 text-green-500'
                     }`}>
                     {product.stock ?? 0} шт
                   </span>
+                  <span className={`inline-block w-3 h-3 rounded-full ml-1 ${product.inStock ? 'bg-green-500' : 'bg-red-500'
+                    }`} title={product.inStock ? 'В наличии' : 'Отключен'} />
                 </div>
 
                 {product.categories && product.categories.length > 0 && (
@@ -288,7 +315,7 @@ export default function AdminProductsPage() {
                     ✏️ Редактировать
                   </button>
                   <button
-                    onClick={() => handleDelete(product.id, product.name)}
+                    onClick={() => openDeleteModal(product.id, product.name)}
                     className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
                   >
                     🗑️ Удалить
@@ -299,6 +326,24 @@ export default function AdminProductsPage() {
           </div>
         ))}
       </div>
+      <Modal
+        isOpen={deleteModal.isOpen}
+        onClose={closeDeleteModal}
+        title="Удаление товара"
+      >
+        <p className="text-(--text-muted) mb-6">
+          Вы уверены, что хотите удалить "{deleteModal.productName}"?
+          Это действие нельзя отменить.
+        </p>
+        <div className="flex gap-3 justify-end">
+          <Button variant="outline" onClick={closeDeleteModal}>
+            Отмена
+          </Button>
+          <Button onClick={confirmDelete} className="bg-red-500 hover:bg-red-600">
+            Удалить
+          </Button>
+        </div>
+      </Modal>
     </div>
   )
 }

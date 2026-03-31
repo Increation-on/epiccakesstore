@@ -58,32 +58,34 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       )}
 
       {/* Блок с изображением — кликабельный */}
-      <div
-        className="bg-(--mint) h-48 mb-4 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer relative"
-        onClick={handleCardClick}
-      >
-        {hasValidImage ? (
-          <Image
-            src={imageUrl}
-            alt={product.name}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition group-hover:scale-105"
-            onError={() => setImgError(true)}
-            loading="lazy"
-            unoptimized={isBlobUrl}
-          />
-        ) : (
-          <div className="text-4xl text-(--text-muted)">🍰</div>
-        )}
-        
-        {/* 🔥 Бейдж "Нет в наличии" */}
-        {!product.inStock && (
-          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-            Нет в наличии
-          </div>
-        )}
-      </div>
+<div
+  className="bg-(--mint) mb-4 rounded-lg overflow-hidden cursor-pointer relative aspect-square"
+  onClick={handleCardClick}
+>
+  {hasValidImage ? (
+    <Image
+      src={imageUrl}
+      alt={product.name}
+      fill
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      className="object-cover transition group-hover:scale-105"
+      onError={() => setImgError(true)}
+      loading="lazy"
+      unoptimized={isBlobUrl}
+    />
+  ) : (
+    <div className="w-full h-full flex items-center justify-center text-4xl text-(--text-muted)">
+      🍰
+    </div>
+  )}
+  
+  {/* Бейдж "Нет в наличии" */}
+  {!product.inStock && (
+    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
+      Нет в наличии
+    </div>
+  )}
+</div>
 
       {/* Название — кликабельное */}
       <h2
@@ -106,7 +108,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       {/* 🔥 Кнопка — отключается если нет в наличии */}
       <Button
         size="md"
-        className="mt-4 w-full"
+        className="mt-4 w-full text-white"
         onClick={handleAddToCart}
         disabled={!product.inStock}
       >

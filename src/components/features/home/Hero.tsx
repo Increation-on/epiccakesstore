@@ -49,7 +49,7 @@ export default function Hero() {
           Торты на заказ с доставкой. Только натуральные ингредиенты и любовь в каждом кусочке
         </p>
         <Link href="/products">
-          <Button size="lg">Смотреть каталог</Button>
+          <Button className='text-white' size="lg">Смотреть каталог</Button>
         </Link>
       </div>
     </section>

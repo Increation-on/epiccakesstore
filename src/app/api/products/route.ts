@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get('sort') || 'newest';
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice'); 
-    const limit = 12;
+    const limit = 9;
     const skip = (page - 1) * limit;
     const inStock = searchParams.get('inStock') === 'true';
 
