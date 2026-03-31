@@ -49,13 +49,13 @@ export default async function AdminPage() {
       <h2 className="text-lg font-semibold mb-4">Быстрые действия</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Link href="/admin/products">
-          <Button className="w-full">📦 Управление товарами</Button>
+          <Button className="w-full text-white">📦 Управление товарами</Button>
         </Link>
         <Link href="/admin/orders">
-          <Button className="w-full">📋 Управление заказами</Button>
+          <Button className="w-full text-white">📋 Управление заказами</Button>
         </Link>
         <Link href="/admin/categories">
-          <Button className="w-full">🏷️ Управление категориями</Button>
+          <Button className="w-full text-white">🏷️ Управление категориями</Button>
         </Link>
       </div>
     </div>
