@@ -12,8 +12,13 @@ export default function ProductImageGallery({ images, productName }: ProductImag
   const [mainImage, setMainImage] = useState<string>(images[0] || '')
   const touchStartX = useRef(0)
   const touchEndX = useRef(0)
+  const imagesRef = useRef(images)
 
   const currentIndex = images.indexOf(mainImage)
+
+useEffect(() => {
+    imagesRef.current = images
+  }, [images])
 
   // Обработка свайпа
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -27,13 +32,11 @@ export default function ProductImageGallery({ images, productName }: ProductImag
   const handleTouchEnd = () => {
     const threshold = 50
     if (touchStartX.current - touchEndX.current > threshold) {
-      // Свайп влево → следующее изображение
-      const nextIndex = Math.min(currentIndex + 1, images.length - 1)
-      if (nextIndex !== currentIndex) setMainImage(images[nextIndex])
+      const nextIndex = Math.min(currentIndex + 1, imagesRef.current.length - 1)
+      if (nextIndex !== currentIndex) setMainImage(imagesRef.current[nextIndex])
     } else if (touchEndX.current - touchStartX.current > threshold) {
-      // Свайп вправо ← предыдущее изображение
       const prevIndex = Math.max(currentIndex - 1, 0)
-      if (prevIndex !== currentIndex) setMainImage(images[prevIndex])
+      if (prevIndex !== currentIndex) setMainImage(imagesRef.current[prevIndex])
     }
     touchStartX.current = 0
     touchEndX.current = 0
@@ -44,16 +47,16 @@ export default function ProductImageGallery({ images, productName }: ProductImag
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
         const prevIndex = Math.max(currentIndex - 1, 0)
-        setMainImage(images[prevIndex])
+        setMainImage(imagesRef.current[prevIndex])
       }
       if (e.key === 'ArrowRight') {
-        const nextIndex = Math.min(currentIndex + 1, images.length - 1)
-        setMainImage(images[nextIndex])
+        const nextIndex = Math.min(currentIndex + 1, imagesRef.current.length - 1)
+        setMainImage(imagesRef.current[nextIndex])
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [currentIndex, images, setMainImage])
+  }, [currentIndex]) // 👈 только currentIndex
 
   // Навигационные кнопки
   const showNav = images.length > 1
@@ -181,8 +184,6 @@ export default function ProductImageGallery({ images, productName }: ProductImag
           ))}
         </div>
       )}
-
-
     </div>
   )
 }
