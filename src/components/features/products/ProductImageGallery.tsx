@@ -131,7 +131,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
               <button
                 onClick={goToPrev}
                 aria-label="Предыдущее изображение"
-                              className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 border-2 border-(--mint) bg-black/20 hover:bg-black/30 text-white rounded-full shadow-sm items-center justify-center transition"
+                className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 border-2 border-(--mint) bg-black/20 hover:bg-black/30 text-white rounded-full shadow-sm items-center justify-center transition"
 
               >
                 {'<'}
@@ -141,7 +141,7 @@ export default function ProductImageGallery({ images, productName }: ProductImag
               <button
                 onClick={goToNext}
                 aria-label="Следующее изображение"
-                             className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 border-2 border-(--mint) bg-black/20 hover:bg-black/30 text-white rounded-full shadow-sm items-center justify-center transition"
+                className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 border-2 border-(--mint) bg-black/20 hover:bg-black/30 text-white rounded-full shadow-sm items-center justify-center transition"
 
               >
                 {'>'}
@@ -160,15 +160,15 @@ export default function ProductImageGallery({ images, productName }: ProductImag
       )}
       {/* Миниатюры с плавной анимацией и масштабированием */}
       {showNav && (
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-1">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-1 mt-2 pt-1">
           {images.map((url, index) => (
             <button
               key={url}
               onClick={() => setMainImage(url)}
               aria-label={`Показать изображение ${index + 1}`}
-              className={`relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${mainImage === url
-                ? 'border-(--pink) scale-105'
-                : 'border-transparent hover:border-(--pink) hover:scale-102'
+              className={`relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-lg overflow-hidden transition-all duration-200 ${mainImage === url
+                  ? 'border-2 border-(--pink) scale-105'
+                  : 'border-2 border-transparent hover:border-(--mint-dark) hover:scale-102'
                 }`}
             >
               <Image

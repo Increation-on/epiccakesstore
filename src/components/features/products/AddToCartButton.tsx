@@ -30,7 +30,7 @@ export function AddToCartButton({ productId, stock }: Props) {
       size="lg"
       disabled={isOutOfStock}
       onClick={handleClick}
-      className="w-full md:w-auto"
+      className="w-full md:w-auto text-white"
     >
       {isOutOfStock ? 'Нет в наличии' : 'Добавить в корзину'}
     </Button>

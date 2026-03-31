@@ -108,7 +108,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       {/* 🔥 Кнопка — отключается если нет в наличии */}
       <Button
         size="md"
-        className="mt-4 w-full"
+        className="mt-4 w-full text-white"
         onClick={handleAddToCart}
         disabled={!product.inStock}
       >
