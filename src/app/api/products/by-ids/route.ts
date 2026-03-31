@@ -1,3 +1,4 @@
+//app/api/products/by-ids
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
@@ -20,7 +21,8 @@ export async function POST(request: Request) {
         name: true,
         price: true,
         images: true,
-        inStock: true
+        inStock: true,
+        stock: true
       }
     })
     

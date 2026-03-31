@@ -32,9 +32,23 @@ export const useCartStore = create<CartStore>()(
         }
       }),
 
-      removeItem: (id) => set((state) => ({
-        items: state.items.filter(i => i.id !== id)
-      })),
+      removeItem: (id) => {
+        // Обновляем локально
+        set((state) => ({
+          items: state.items.filter(i => i.id !== id)
+        }))
+
+        // Фоновая синхронизация с сервером
+        const { items } = get()
+        const updatedItems = items.filter(i => i.id !== id)
+        fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: updatedItems})
+        }).catch((error) => {
+          console.error('❌ Ошибка синхронизации удаления:', error)
+        })
+      },
 
       updateQuantity: (id, quantity) => set((state) => ({
         items: state.items.map(i =>

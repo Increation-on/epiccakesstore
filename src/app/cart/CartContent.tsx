@@ -11,6 +11,7 @@ import Image from 'next/image'
 import { toast } from '@/lib/toast'
 import { Modal } from '@/components/ui/Modal'
 import CartSkeleton from '@/components/features/skeleton/CartSkeleton'
+import { ProductStockStatus } from '@/components/features/products/ProductStockStatus'
 
 export default function CartContent() {
   const router = useRouter()
@@ -220,6 +221,9 @@ export default function CartContent() {
                         {product.name}
                       </h3>
                       <p className="text-(--pink) font-bold mt-1 text-center ">{product.price} BYN</p>
+                      <div className="mt-2 flex justify-center">
+                        <ProductStockStatus stock={product.stock} />
+                      </div>
                     </div>
                   </div>
 
@@ -237,13 +241,21 @@ export default function CartContent() {
                     >
                       -
                     </button>
+
                     <span className="w-8 text-center font-medium">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
-                    >
-                      +
-                    </button>
+
+                   <button
+  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+  disabled={item.quantity >= product.stock}
+  className={`w-8 h-8 rounded-full bg-(--mint) text-(--text) transition ${
+    item.quantity >= product.stock 
+      ? 'opacity-50 cursor-not-allowed!' 
+      : 'hover:bg-(--mint-dark)'
+  }`}
+>
+  +
+</button>
+
                     <button
                       onClick={() => openRemoveModal(item.id, product.name)}
                       className="ml-2 text-gray-400 hover:text-red-500 transition"
