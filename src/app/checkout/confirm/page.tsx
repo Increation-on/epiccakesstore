@@ -11,6 +11,8 @@ import { LazyStripePayment } from '@/components/features/payment/LazyStripePayme
 import { useSession } from 'next-auth/react'
 import { toast } from '@/lib/toast'
 import { ConfirmPageSkeleton } from '@/components/features/skeleton/ConfirmPageSkeleton'
+import { useCurrencyStore } from '@/store/currency.store'
+import { OrderSummary } from './_components/orderSummary'
 
 export default function ConfirmPage() {
   const router = useRouter()
@@ -28,6 +30,7 @@ export default function ConfirmPage() {
   const [formData, setFormData] = useState<any>(null)
 
   const cartItems = Array.isArray(items) ? items : []
+  const currency = useCurrencyStore((state) => state.currency)
 
   // Перенос корзины после входа/регистрации
   useEffect(() => {
@@ -36,8 +39,6 @@ export default function ConfirmPage() {
       const shouldTransfer = urlParams.get('cartTransfer') === 'true'
 
       if (session && shouldTransfer && status === 'authenticated') {
-        console.log('🔄 Переносим гостевую корзину в БД')
-
         const savedCart = localStorage.getItem('cart-storage')
         if (savedCart) {
           const guestCart = JSON.parse(savedCart)
@@ -349,22 +350,12 @@ export default function ConfirmPage() {
       </div>
 
       {/* Состав заказа */}
-      <div className="mb-6 border rounded-lg p-4 bg-gray-50">
-        <h2 className="font-semibold mb-3">Состав заказа</h2>
-        {cartItems.map(item => {
-          const product = products.find(p => p.id === item.productId)
-          return (
-            <div key={item.id} className="flex justify-between py-2 border-b last:border-0">
-              <span>{product?.name} x{item.quantity}</span>
-              <span>{product?.price} ₽</span>
-            </div>
-          )
-        })}
-        <div className="flex justify-between font-bold mt-2 pt-2 border-t">
-          <span>Итого:</span>
-          <span>{totalPrice} ₽</span>
-        </div>
-      </div>
+      <OrderSummary 
+        key={currency}
+        cartItems={cartItems} 
+        products={products} 
+        totalPrice={totalPrice} 
+      />
 
       {/* Кнопки или форма оплаты */}
       {showPayment && clientSecret && orderId ? (

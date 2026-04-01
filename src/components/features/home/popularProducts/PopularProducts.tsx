@@ -2,11 +2,21 @@ import { prisma } from '@/lib/prisma';
 import PopularProductsContent from './PopularProductsContent';
 
 async function getPopularProducts() {
-  const products = await prisma.product.findMany({
+  const productsRaw = await prisma.product.findMany({
+    where: {
+      isArchived: false
+    },
     take: 4,
     orderBy: { averageRating: 'desc' },
     include: { categories: true }
   });
+  
+  // Приводим archivedAt к строке
+  const products = productsRaw.map(p => ({
+    ...p,
+    archivedAt: p.archivedAt ? p.archivedAt.toISOString() : null,
+  }));
+  
   return products;
 }
 

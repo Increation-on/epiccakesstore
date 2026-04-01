@@ -8,6 +8,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "@/lib/toast";
+import { Price } from "@/components/ui/Price";
 
 type ProductCardProps = {
   product: Product;
@@ -102,7 +103,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
       {/* Цена */}
       <p className="text-2xl font-bold mt-4 text-(--pink)">
-        {product.price} ₽
+         <Price price={product.price} />
       </p>
 
       {/* 🔥 Кнопка — отключается если нет в наличии */}

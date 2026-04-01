@@ -1,4 +1,3 @@
-// app/products/[id]/page.tsx
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ProductCard from '@/components/features/products/ProductCard';
@@ -6,6 +5,7 @@ import { ReviewForm } from '@/components/features/reviews/ReviewForm';
 import { ReviewList } from '@/components/features/reviews/ReviewList';
 import { AddToCartButton } from '@/components/features/products/AddToCartButton';
 import { ProductStockStatus } from '@/components/features/products/ProductStockStatus';
+import { Price } from '@/components/ui/Price';
 import type { Metadata } from 'next'
 import ProductImageGallery from '@/components/features/products/ProductImageGallery';
 
@@ -16,7 +16,7 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
 
-  const product = await prisma.product.findFirst({
+  const productRaw = await prisma.product.findFirst({
     where: {
       id,
       isArchived: false
@@ -24,11 +24,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     include: { categories: true }
   })
 
-  if (!product) {
+  if (!productRaw) {
     return {
       title: 'Товар не найден | EpicCakes',
       description: 'Запрашиваемый товар не существует.',
     }
+  }
+
+  const product = {
+    ...productRaw,
+    archivedAt: productRaw.archivedAt ? productRaw.archivedAt.toISOString() : null,
   }
 
   const imageUrl = product.images
@@ -50,14 +55,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ProductPage({ params }: PageProps) {
   const { id } = await params;
 
-  const product = await prisma.product.findFirst({
+  const productRaw = await prisma.product.findFirst({
     where: { id, isArchived: false },
     include: { categories: true }
   });
 
-  if (!product) {
+  if (!productRaw) {
     notFound();
   }
+
+  const product = {
+    ...productRaw,
+    archivedAt: productRaw.archivedAt ? productRaw.archivedAt.toISOString() : null,
+  };
 
   const reviewCount = await prisma.review.count({
     where: {
@@ -68,7 +78,7 @@ export default async function ProductPage({ params }: PageProps) {
 
   const categoryId = product.categories[0]?.id;
 
-  const similarProducts = categoryId ? await prisma.product.findMany({
+  const similarProductsRaw = categoryId ? await prisma.product.findMany({
     where: {
       categories: {
         some: { id: categoryId }
@@ -79,6 +89,11 @@ export default async function ProductPage({ params }: PageProps) {
     take: 3,
     include: { categories: true }
   }) : [];
+
+  const similarProducts = similarProductsRaw.map(p => ({
+    ...p,
+    archivedAt: p.archivedAt ? p.archivedAt.toISOString() : null,
+  }));
 
   const images = JSON.parse(product.images as string || '[]');
 
@@ -124,10 +139,9 @@ export default async function ProductPage({ params }: PageProps) {
           )}
 
           {/* Цена и наличие */}
-          {/* Цена и наличие */}
           <div className="mb-4">
             <span className="text-3xl font-bold text-(--pink)">
-              {product.price} ₽
+              <Price price={product.price} />
             </span>
             <ProductStockStatus stock={product.stock} />
           </div>

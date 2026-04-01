@@ -1,7 +1,7 @@
 //src/app/cart/page.tsx
 
 import { Suspense } from 'react'
-import CartContent from './CartContent'
+import CartContent from '../../components/features/cart/CartContent'
 import CartSkeleton from '@/components/features/skeleton/CartSkeleton'
 import type { Metadata } from 'next'
 
