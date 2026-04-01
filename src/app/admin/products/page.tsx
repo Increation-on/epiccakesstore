@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation'
 import { Product } from '@/types/domain/product.types'
 import { Category } from '@/types/domain/categoery.types'
 import { Button } from '@/components/ui/Button'
-import ProductForm from './_components/ProductEditForm'
+import ProductEditForm from './_components/ProductEditForm'
 import Image from 'next/image'
 import { toast } from '@/lib/toast'
 import { Modal } from '@/components/ui/Modal'
+import { useProductsStore } from '@/store/products.store'
 
 export default function AdminProductsPage() {
   const { data: session, status } = useSession()
@@ -18,6 +19,13 @@ export default function AdminProductsPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const { clearCache } = useProductsStore()
+  
+  const handleSuccess = () => {
+    setShowForm(false)
+    loadData()  // обновляем список товаров в админке
+    clearCache() // 👈 очищаем кеш каталога
+  }
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean
@@ -85,6 +93,7 @@ export default function AdminProductsPage() {
       if (res.ok) {
         setProducts(products.filter(p => p.id !== deleteModal.productId))
         toast.success(`Товар "${deleteModal.productName}" удален`)
+        clearCache()
       } else {
         toast.error(`Не удалось удалить товар "${deleteModal.productName}"`)
       }
@@ -132,12 +141,9 @@ export default function AdminProductsPage() {
       {showForm && (
         <div className="bg-white p-4 md:p-6 rounded shadow mb-6">
           <h2 className="text-lg font-semibold mb-4">Новый товар</h2>
-          <ProductForm
+          <ProductEditForm
             categories={categories}
-            onSuccess={() => {
-              setShowForm(false)
-              loadData()
-            }}
+            onSuccess={handleSuccess}
             onCancel={() => setShowForm(false)}
           />
         </div>

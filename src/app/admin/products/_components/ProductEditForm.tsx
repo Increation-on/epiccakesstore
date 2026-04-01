@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { toast } from '@/lib/toast'
 import { ImageGallery } from '../../ImageGallery'
 
+
 type Props = {
   categories: Category[]
   initialData?: Product

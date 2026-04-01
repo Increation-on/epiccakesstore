@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Product } from '@/types/domain/product.types';
 import { Category } from '@/types/domain/categoery.types';
 import ProductCard from '@/components/features/products/ProductCard';
@@ -14,6 +14,7 @@ import ClearFilters from '@/components/features/products/ProductFilter/ClearFilt
 import EmptyState from '@/components/features/products/ProductFilter/EmptyProductsFilter';
 import CatalogSkeleton from '@/components/features/skeleton/CatalogSkeleton';
 import ProductSearchInput from './search/ProductsSearchInput';
+import { useProductsStore } from '@/store/products.store';
 
 type ProductsResponse = {
     products: Product[];
@@ -23,9 +24,6 @@ type ProductsResponse = {
 };
 
 export default function ProductsContent() {
-    const [data, setData] = useState<ProductsResponse | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -34,10 +32,14 @@ export default function ProductsContent() {
     const [maxPrice, setMaxPrice] = useState<number>();
     const [inStockOnly, setInStockOnly] = useState(false);
 
+    // Берем данные из стора
+    const { data, isLoading, error, fetchProducts, setData, clearCache } = useProductsStore();
+
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
+    // Читаем параметры из URL при монтировании
     useEffect(() => {
         const pageFromUrl = Number(searchParams.get('page')) || 1;
         const sortFromUrl = searchParams.get('sort') as SortOption || 'newest';
@@ -54,6 +56,7 @@ export default function ProductsContent() {
         setInStockOnly(inStockFromUrl);
     }, []);
 
+    // Обновляем URL при изменении параметров
     useEffect(() => {
         const params = new URLSearchParams();
         if (page !== 1) params.set('page', String(page));
@@ -68,6 +71,7 @@ export default function ProductsContent() {
         router.push(url, { scroll: false });
     }, [page, sort, selectedCategory, minPrice, maxPrice, inStockOnly]);
 
+    // Загрузка категорий
     useEffect(() => {
         async function fetchCategories() {
             try {
@@ -82,34 +86,21 @@ export default function ProductsContent() {
         fetchCategories();
     }, []);
 
-    const fetchProducts = useCallback(async () => {
-        setLoading(true);
-        try {
-            const params = new URLSearchParams({
-                page: String(page),
-                sort,
-                ...(selectedCategory && { category: String(selectedCategory) }),
-                ...(minPrice && { minPrice: String(minPrice) }),
-                ...(maxPrice && { maxPrice: String(maxPrice) }),
-                ...(inStockOnly && { inStock: 'true' })
-            });
-
-            const res = await fetch(`/api/products?${params}`);
-            if (!res.ok) throw new Error('Failed to fetch');
-            const data = await res.json();
-            setData(data);
-        } catch (err) {
-            setError('Ошибка при загрузке товаров');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    }, [page, selectedCategory, sort, minPrice, maxPrice, inStockOnly]);
-
+    // Загрузка товаров при изменении параметров
     useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
+        const params = new URLSearchParams({
+            page: String(page),
+            sort,
+            ...(selectedCategory && { category: String(selectedCategory) }),
+            ...(minPrice && { minPrice: String(minPrice) }),
+            ...(maxPrice && { maxPrice: String(maxPrice) }),
+            ...(inStockOnly && { inStock: 'true' })
+        });
 
+        fetchProducts(params);
+    }, [page, selectedCategory, sort, minPrice, maxPrice, inStockOnly, fetchProducts]);
+
+    // Сброс страницы при смене фильтров
     useEffect(() => {
         setPage(1);
     }, [selectedCategory, sort, inStockOnly, minPrice, maxPrice]);
@@ -134,9 +125,12 @@ export default function ProductsContent() {
         setInStockOnly(false);
         setSort('newest');
         setPage(1);
+        clearCache();
+        setData(null); // сбрасываем данные
     };
 
-    if (loading || !data) {
+    // Показываем скелетон только если нет данных и идет загрузка
+    if ((!data && isLoading) || (!data && !isLoading && !error)) {
         return <CatalogSkeleton />;
     }
 
@@ -179,7 +173,6 @@ export default function ProductsContent() {
                 </div>
 
                 <div className="flex-1">
-                    {/* 🔥 Поиск — только автокомплит, без фильтрации */}
                     <div className="mb-6">
                         <ProductSearchInput />
                     </div>
@@ -196,7 +189,7 @@ export default function ProductsContent() {
                     ) : (
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {data.products.map((product) => (
+                                {data.products.map((product: Product) => (
                                     <ProductCard key={product.id} product={product} />
                                 ))}
                             </div>
