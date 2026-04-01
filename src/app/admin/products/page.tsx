@@ -11,6 +11,7 @@ import Image from 'next/image'
 import { toast } from '@/lib/toast'
 import { Modal } from '@/components/ui/Modal'
 import { useProductsStore } from '@/store/products.store'
+import { Price } from '@/components/ui/Price'
 
 export default function AdminProductsPage() {
   const { data: session, status } = useSession()
@@ -217,7 +218,7 @@ export default function AdminProductsPage() {
                     )}
                   </td>
                   <td className="px-4 md:px-6 py-4 text-sm md:text-base whitespace-nowrap">
-                    {product.price} ₽
+                    <Price price={product.price} />
                   </td>
                   <td className="px-4 md:px-6 py-4">
                     <span className={`whitespace-nowrap px-2 py-1 rounded text-sm ${(product.stock ?? 0) === 0
@@ -284,7 +285,7 @@ export default function AdminProductsPage() {
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <span className="text-lg font-bold text-pink-600">
-                    {product.price} ₽
+                    <Price price={product.price} />
                   </span>
                   <span className={`px-2 py-0.5 text-xs rounded ${(product.stock ?? 0) === 0
                     ? 'bg-red-100 text-red-800'

@@ -12,6 +12,7 @@ import { toast } from '@/lib/toast'
 import { Modal } from '@/components/ui/Modal'
 import CartSkeleton from '@/components/features/skeleton/CartSkeleton'
 import { ProductStockStatus } from '@/components/features/products/ProductStockStatus'
+import { Price } from '@/components/ui/Price'
 
 export default function CartContent() {
   const router = useRouter()
@@ -265,7 +266,7 @@ export default function CartContent() {
                       <h3 className="font-semibold text-(--text) line-clamp-2 wrap-break-word text-center ">
                         {product.name}
                       </h3>
-                      <p className="text-(--pink) font-bold mt-1 text-center ">{product.price} BYN</p>
+                      <p className="text-(--pink) font-bold mt-1 text-center "><Price price={product.price} /></p>
                       {isArchived ? (
                         <span className="text-red-500 text-sm text-center mt-1">
                           ❌ Товар больше не доступен
@@ -330,7 +331,7 @@ export default function CartContent() {
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-(--text-muted)">
                 <span>Товары</span>
-                <span>{totalPrice} BYN</span>
+                <span><Price price={totalPrice}/></span>
               </div>
               <div className="flex justify-between text-(--text-muted)">
                 <span>Доставка</span>
@@ -339,7 +340,7 @@ export default function CartContent() {
               <div className="border-t pt-2 mt-2">
                 <div className="flex justify-between font-bold text-(--text)">
                   <span>Итого</span>
-                  <span className="text-xl text-(--pink)">{totalPrice} BYN</span>
+                  <span className="text-xl text-(--pink)"><Price price={totalPrice}/></span>
                 </div>
               </div>
             </div>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import Image from 'next/image'
 import { toast } from '@/lib/toast'
 import { Modal } from '@/components/ui/Modal'
+import { Price } from '@/components/ui/Price'
 
 export default function ArchivedProductsPage() {
   const { data: session, status } = useSession()
@@ -186,7 +187,7 @@ export default function ArchivedProductsPage() {
                 )}
                 <div className="flex-1">
                   <h3 className="font-semibold text-(--text)">{product.name}</h3>
-                  <p className="text-sm text-(--text-muted)">{product.price} ₽</p>
+                  <p className="text-sm text-(--text-muted)"><Price price={product.price} /></p>
                   <p className="text-xs text-gray-400 mt-1">
                     Архив: {product.archivedAt ? new Date(product.archivedAt).toLocaleDateString() : '—'}
                   </p>

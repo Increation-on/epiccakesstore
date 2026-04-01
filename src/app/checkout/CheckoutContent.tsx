@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/Button'
 import { toast } from '@/lib/toast'  // ← добавить импорт
+import { Price } from '@/components/ui/Price'
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
@@ -116,13 +117,13 @@ export default function CheckoutContent() {
               return (
                 <div key={item.id} className="flex justify-between py-2 border-b last:border-0">
                   <span>{product?.name || '...'} x{item.quantity}</span>
-                  <span>{product?.price || '...'} ₽</span>
+                  <span><Price price={product?.price || 0} /></span>
                 </div>
               )
             })}
             <div className="flex justify-between font-bold mt-2 pt-2 border-t">
               <span>Итого:</span>
-              <span>{totalPrice} ₽</span>
+              <span><Price price={totalPrice} /></span>
             </div>
           </>
         )}

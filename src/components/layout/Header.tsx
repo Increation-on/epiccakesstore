@@ -8,6 +8,7 @@ import { CartIcon } from '../features/cart/CartIcon'
 import { Button } from '../ui/Button'
 import Navbar from './Navbar'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { CurrencySwitcher } from '../features/currency/CurrencySwitcher'
 
 export default function Header() {
   const { data: session } = useSession()
@@ -50,6 +51,7 @@ export default function Header() {
 
           {/* Правая часть */}
           <div className="flex items-center gap-6 shrink-0">
+            <CurrencySwitcher/>
             <CartIcon />
 
             <div className="hidden md:flex items-center gap-6">
