@@ -22,7 +22,8 @@ export async function POST(request: Request) {
         price: true,
         images: true,
         inStock: true,
-        stock: true
+        stock: true,
+        isArchived: true 
       }
     })
     

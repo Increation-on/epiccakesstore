@@ -12,6 +12,8 @@ export type Product = WithId & Timestamp & {
   inStock: boolean;         
   categories?: Category[];
   stock: number;
+  isArchived: boolean      // 👈 добавляем
+  archivedAt: string | null
 };
 
 // ---------- ДЛЯ СОЗДАНИЯ ----------

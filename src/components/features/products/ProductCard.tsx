@@ -49,7 +49,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     !imgError;
 
   return (
-    <Card className="group p-4 hover:shadow-lg transition relative">
+  <Card className="group p-4 border-none rounded-[20px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.1)]! transition-all duration-250 relative">
       {/* Затемнение и спиннер при навигации */}
       {isNavigating && (
         <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center z-10">
