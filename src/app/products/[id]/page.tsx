@@ -16,8 +16,11 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
 
-  const product = await prisma.product.findUnique({
-    where: { id },
+  const product = await prisma.product.findFirst({
+    where: {
+      id,
+      isArchived: false
+    },
     include: { categories: true }
   })
 
@@ -47,8 +50,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ProductPage({ params }: PageProps) {
   const { id } = await params;
 
-  const product = await prisma.product.findUnique({
-    where: { id },
+  const product = await prisma.product.findFirst({
+    where: { id, isArchived: false },
     include: { categories: true }
   });
 
@@ -70,7 +73,8 @@ export default async function ProductPage({ params }: PageProps) {
       categories: {
         some: { id: categoryId }
       },
-      NOT: { id: product.id }
+      NOT: { id: product.id },
+      isArchived: false
     },
     take: 3,
     include: { categories: true }

@@ -11,7 +11,7 @@ export interface CartItem {
 export interface CartStore {
   items: CartItem[];
   
-  addItem: (productId: Product['id'], quantity?: number) => void;
+  addItem: (productId: Product['id'], quantity?: number) =>Promise<void>;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;

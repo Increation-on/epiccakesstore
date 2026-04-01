@@ -34,7 +34,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Собираем условия where
-    const where: any = {};
+    const where: any = {
+      isArchived: false
+    };
 
     if (searchQuery) {
       where.OR = [

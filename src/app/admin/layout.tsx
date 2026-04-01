@@ -31,6 +31,9 @@ export default function AdminLayout({
               <Link href="/admin/reviews" className="text-sm md:text-base hover:text-pink-600 whitespace-nowrap">
                 Отзывы
               </Link>
+              <Link href="/admin/products/archived" className="text-sm md:text-base hover:text-pink-600 whitespace-nowrap">
+                Архив товаров
+              </Link>
             </div>
 
             {/* Ссылка "На сайт" справа */}

@@ -1,67 +1,102 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CartStore, CartItem } from '@/types/domain/cart.types';
+import { toast } from '@/lib/toast';
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
 
-      addItem: (productId, quantity = 1) => set((state) => {
-        const existing = state.items.find(i => i.productId === productId);
-
-        if (existing) {
-          return {
-            items: state.items.map(i =>
-              i.productId === productId
-                ? { ...i, quantity: i.quantity + quantity }
-                : i
-            )
-          };
-        } else {
-          const newItem: CartItem = {
-            id: crypto.randomUUID(),
-            productId: productId,
-            quantity: quantity,
-            addedAt: new Date().toISOString()
-          };
-
-          return {
-            items: [...state.items, newItem]
-          };
+      addItem: async (productId, quantity = 1) => {
+        // Проверяем, не архивный ли товар
+        try {
+          const res = await fetch(`/api/products/${productId}/check`)
+          const { isArchived } = await res.json()
+          
+          if (isArchived) {
+            toast.error('Этот товар больше не доступен')
+            return
+          }
+        } catch (error) {
+          console.error('Error checking product:', error)
+          toast.error('Ошибка при проверке товара')
+          return
         }
-      }),
+        
+        // Добавляем товар в корзину
+        set((state) => {
+          const existing = state.items.find(i => i.productId === productId);
+
+          if (existing) {
+            return {
+              items: state.items.map(i =>
+                i.productId === productId
+                  ? { ...i, quantity: i.quantity + quantity }
+                  : i
+              )
+            };
+          } else {
+            const newItem: CartItem = {
+              id: crypto.randomUUID(),
+              productId: productId,
+              quantity: quantity,
+              addedAt: new Date().toISOString()
+            };
+
+            return {
+              items: [...state.items, newItem]
+            };
+          }
+        });
+        
+        // Синхронизация с сервером
+        const { items } = get()
+        fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items })
+        }).catch((error) => {
+          console.error('❌ Ошибка синхронизации корзины:', error)
+        })
+      },
 
       removeItem: (id) => {
-        // Обновляем локально
         set((state) => ({
           items: state.items.filter(i => i.id !== id)
         }))
 
-        // Фоновая синхронизация с сервером
         const { items } = get()
-        const updatedItems = items.filter(i => i.id !== id)
         fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: updatedItems})
+          body: JSON.stringify({ items })
         }).catch((error) => {
           console.error('❌ Ошибка синхронизации удаления:', error)
         })
       },
 
-      updateQuantity: (id, quantity) => set((state) => ({
-        items: state.items.map(i =>
-          i.id === id ? { ...i, quantity } : i
-        )
-      })),
+      updateQuantity: (id, quantity) => {
+        set((state) => ({
+          items: state.items.map(i =>
+            i.id === id ? { ...i, quantity } : i
+          )
+        }))
+
+        const { items } = get()
+        fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items })
+        }).catch((error) => {
+          console.error('❌ Ошибка синхронизации обновления:', error)
+        })
+      },
 
       clearCart: () => {
-        // Очищаем локально
         set({ items: [] })
         localStorage.removeItem('cart-storage')
 
-        // Фоновая очистка на сервере
         fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -72,8 +107,7 @@ export const useCartStore = create<CartStore>()(
       },
 
       setItems: (newItems) => {
-        console.log('🟢 setItems вызван с:', newItems, 'время:', new Date().toISOString())
-        console.trace('🟢 Стек вызова setItems:')  // покажет кто вызвал
+        console.log('🟢 setItems вызван с:', newItems)
         set({ items: newItems })
       },
 
@@ -105,8 +139,3 @@ export const useCartStore = create<CartStore>()(
     }
   )
 );
-
-// Для отладки в консоли
-if (typeof window !== 'undefined') {
-  (window as any).cartStore = useCartStore;
-}

@@ -119,10 +119,10 @@ export async function PUT(
   }
 }
 
-// DELETE /api/admin/products/[id] - удалить товар
+// - удалить товар
 export async function DELETE(
   request: Request,
-   { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -133,24 +133,18 @@ export async function DELETE(
 
     const { id } = await params
 
-    // Сначала удаляем связи с категориями
+    // Архивируем товар вместо удаления
     await prisma.product.update({
       where: { id },
-      data: {
-        categories: {
-          set: []
-        }
+      data: { 
+        isArchived: true,
+        archivedAt: new Date()
       }
-    })
-
-    // Теперь удаляем сам товар
-    await prisma.product.delete({
-      where: { id }
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting product:', error)
+    console.error('Error archiving product:', error)
     return NextResponse.json(
       { error: 'Внутренняя ошибка сервера' },
       { status: 500 }

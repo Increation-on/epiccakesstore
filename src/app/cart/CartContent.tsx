@@ -21,6 +21,8 @@ export default function CartContent() {
   const [loading, setLoading] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [isCartLoading, setIsCartLoading] = useState(true)
+  const [showArchiveModal, setShowArchiveModal] = useState(false)
+  const [archivedProducts, setArchivedProducts] = useState<any[]>([])
 
   // Состояние для модалки подтверждения
   const [modalState, setModalState] = useState<{
@@ -79,12 +81,52 @@ export default function CartContent() {
     loadProducts()
   }, [cartItems.length])
 
+  // Проверка архивных товаров при загрузке продуктов
+  useEffect(() => {
+    if (products.length > 0 && cartItems.length > 0) {
+      const archived = cartItems.filter(item => {
+        const product = products.find(p => p.id === item.productId)
+        return product?.isArchived === true
+      }).map(item => {
+        const product = products.find(p => p.id === item.productId)
+        return {
+          id: item.id,
+          productName: product?.name || 'Товар'
+        }
+      })
+      
+      if (archived.length > 0) {
+        setArchivedProducts(archived)
+        setShowArchiveModal(true)
+      }
+    }
+  }, [products, cartItems])
+
+  const handleRemoveArchived = () => {
+    archivedProducts.forEach(item => {
+      removeItem(item.id)
+    })
+    setShowArchiveModal(false)
+    toast.success('Недоступные товары удалены из корзины')
+  }
+
   const totalPrice = cartItems.reduce((sum, item) => {
     const product = products.find(p => p.id === item.productId)
     return sum + (product?.price || 0) * (item?.quantity || 0)
   }, 0)
 
   const handleCheckout = () => {
+    // Проверяем, нет ли архивных товаров перед переходом
+    const hasArchived = cartItems.some(item => {
+      const product = products.find(p => p.id === item.productId)
+      return product?.isArchived === true
+    })
+    
+    if (hasArchived) {
+      toast.error('Удалите недоступные товары из корзины')
+      return
+    }
+    
     if (!session) {
       setShowAuthModal(true)
     } else {
@@ -169,10 +211,13 @@ export default function CartContent() {
               const product = products.find(p => p.id === item.productId)
               if (!product) return null
 
+              // Если товар архивный — показываем его с пометкой
+              const isArchived = product.isArchived === true
+
               return (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-4 bg-white p-4 rounded-lg shadow-sm border border-(--border)"
+                  className={`flex flex-col gap-4 bg-white p-4 rounded-lg shadow-sm border ${isArchived ? 'border-red-300 bg-red-50' : 'border-(--border)'}`}
                 >
                   {/* Верхняя часть: картинка слева, текст справа */}
                   <div className="flex gap-4 items-center">
@@ -221,9 +266,15 @@ export default function CartContent() {
                         {product.name}
                       </h3>
                       <p className="text-(--pink) font-bold mt-1 text-center ">{product.price} BYN</p>
-                      <div className="mt-2 flex justify-center">
-                        <ProductStockStatus stock={product.stock} />
-                      </div>
+                      {isArchived ? (
+                        <span className="text-red-500 text-sm text-center mt-1">
+                          ❌ Товар больше не доступен
+                        </span>
+                      ) : (
+                        <div className="mt-2 flex justify-center">
+                          <ProductStockStatus stock={product.stock} />
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -237,24 +288,25 @@ export default function CartContent() {
                           openRemoveModal(item.id, product.name)
                         }
                       }}
-                      className="w-8 h-8 rounded-full bg-(--mint) text-(--text) hover:bg-(--mint-dark) transition"
+                      disabled={isArchived}
+                      className={`w-8 h-8 rounded-full bg-(--mint) text-(--text) transition ${isArchived ? 'opacity-50 cursor-not-allowed' : 'hover:bg-(--mint-dark)'}`}
                     >
                       -
                     </button>
 
                     <span className="w-8 text-center font-medium">{item.quantity}</span>
 
-                   <button
-  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-  disabled={item.quantity >= product.stock}
-  className={`w-8 h-8 rounded-full bg-(--mint) text-(--text) transition ${
-    item.quantity >= product.stock 
-      ? 'opacity-50 cursor-not-allowed!' 
-      : 'hover:bg-(--mint-dark)'
-  }`}
->
-  +
-</button>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      disabled={isArchived || item.quantity >= product.stock}
+                      className={`w-8 h-8 rounded-full bg-(--mint) text-(--text) transition ${
+                        isArchived || item.quantity >= product.stock 
+                          ? 'opacity-50 cursor-not-allowed' 
+                          : 'hover:bg-(--mint-dark)'
+                      }`}
+                    >
+                      +
+                    </button>
 
                     <button
                       onClick={() => openRemoveModal(item.id, product.name)}
@@ -323,6 +375,29 @@ export default function CartContent() {
           </Button>
           <Button onClick={confirmAction} className="bg-red-500 hover:bg-red-600">
             Удалить
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Модалка архивных товаров */}
+      <Modal
+        isOpen={showArchiveModal}
+        onClose={() => setShowArchiveModal(false)}
+        title="Товары больше не доступны"
+      >
+        <p className="text-(--text-muted) mb-4">
+          Следующие товары больше не доступны и будут удалены из вашей корзины:
+        </p>
+        <ul className="mb-6 space-y-1">
+          {archivedProducts.map(item => (
+            <li key={item.id} className="text-red-500">
+              • {item.productName}
+            </li>
+          ))}
+        </ul>
+        <div className="flex gap-3 justify-end">
+          <Button onClick={handleRemoveArchived}>
+            Убрать товары
           </Button>
         </div>
       </Modal>
