@@ -17,8 +17,7 @@ export default function SuccessContent() {
 
   useEffect(() => {
     async function confirmOrder() {
-      console.log('🟢 [Success] Страница успеха, orderId:', orderId)
-      
+
       // Устанавливаем флаг, что оплата обрабатывается
       sessionStorage.setItem('processing_payment', 'true')
       
@@ -26,26 +25,19 @@ export default function SuccessContent() {
       const paymentIntent = query.get('payment_intent')
       const redirectStatus = query.get('redirect_status')
       
-      console.log('🟢 [Success] paymentIntent:', paymentIntent)
-      console.log('🟢 [Success] redirect_status:', redirectStatus)
-      
       if (paymentIntent) {
         // Оплата картой
         try {
-          console.log('🟢 [Success] Вызываем API для обновления статуса...')
           const res = await fetch(`/api/orders/${orderId}/paid`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
           })
           
           const data = await res.json()
-          console.log('🟢 [Success] Ответ API:', { status: res.status, data })
           
           if (res.ok) {
-            console.log('🟢 [Success] Статус успешно обновлен на PAID')
             
             // ТОЛЬКО ПОСЛЕ УСПЕШНОГО API очищаем корзину
-            console.log('🟢 [Success] Очищаем корзину')
             clearCart()
             localStorage.removeItem('cart-storage')
             
@@ -76,8 +68,6 @@ export default function SuccessContent() {
         }
       } else {
         // Оплата наличными
-        console.log('🟢 [Success] Оплата наличными, очищаем корзину')
-        
         try {
           // Очищаем корзину
           clearCart()

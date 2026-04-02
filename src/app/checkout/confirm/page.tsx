@@ -15,12 +15,8 @@ import { ConfirmPageSkeleton } from '@/components/features/skeleton/ConfirmPageS
 import { useCurrencyStore } from '@/store/currency.store'
 import { OrderSummary } from './_components/orderSummary'
 
-// Добавь в начало файла, после импортов
-
 
 export default function ConfirmPage() {
-
- 
 
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -146,22 +142,16 @@ export default function ConfirmPage() {
   }, [items])
 
   // Загрузка товаров и данных формы
-  // Загрузка товаров и данных формы
 useEffect(() => {
-
-  
   async function loadProducts() {
    
-    
-    if (cartItems.length === 0) {
-      
+    if (cartItems.length === 0) {   
       setProducts([])
       setLoading(false)
       return
     }
 
     const productIds = cartItems.map(item => item.productId)
-    
 
     try {
       const res = await fetch('/api/products/by-ids', {
@@ -185,7 +175,6 @@ useEffect(() => {
   
   const savedData = sessionStorage.getItem('checkoutFormData')
   
-  
   if (savedData) {
     try {
       const parsed = JSON.parse(savedData)
@@ -202,7 +191,6 @@ useEffect(() => {
   }
   
   setLoadingFormData(false)
-
 
   loadProducts()
 }, [cartItems.length, router])
@@ -317,43 +305,6 @@ const handleStartPayment = async () => {
   }
 }
 
-  const handlePaymentSuccess = async () => {
-  console.log('🟢 [Client] handlePaymentSuccess START, orderId:', orderId)
-  
-  if (!orderId) {
-    console.error('🔴 [Client] Нет orderId!')
-    return
-  }
-
-  try {
-    console.log(`🟢 [Client] Отправляем POST запрос на /api/orders/${orderId}/paid`)
-    const res = await fetch(`/api/orders/${orderId}/paid`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    })
-
-    console.log('🟢 [Client] Ответ получен, статус:', res.status)
-    
-    const responseData = await res.json()
-    console.log('🟢 [Client] Данные ответа:', responseData)
-
-    if (!res.ok) {
-      console.error('🔴 [Client] Ошибка API:', responseData.error)
-      throw new Error(responseData.error || 'Ошибка при обновлении статуса')
-    }
-
-    console.log('🟢 [Client] Успех! Очищаем данные...')
-    sessionStorage.removeItem('checkoutFormData')
-    sessionStorage.removeItem('paymentState')
-    clearCart()
-    
-    console.log('🟢 [Client] Редирект на страницу успеха')
-    window.location.href = `/order/${orderId}/success`
-  } catch (error) {
-    console.error('🔴 [Client] Ошибка в handlePaymentSuccess:', error)
-    toast.error('Ошибка при подтверждении оплаты')
-  }
-}
 
   // Защита от неавторизованных
   if (status === 'unauthenticated') {
@@ -361,11 +312,8 @@ const handleStartPayment = async () => {
     return null
   }
 
-   
-
   // Показываем скелетон пока загружаются данные
-  if (!cartLoaded || loading || loadingFormData) {
-    
+  if (!cartLoaded || loading || loadingFormData) {    
     return <ConfirmPageSkeleton />
   }
 
@@ -381,8 +329,6 @@ const handleStartPayment = async () => {
       </div>
     )
   }
-
-
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">

@@ -88,25 +88,20 @@ export default function CheckoutContent() {
   }, 0)
 
   const onSubmit = async (data: CheckoutFormData) => {
-  console.log('🔵🔵🔵 [Checkout] ОБЫЧНЫЙ ЛОГ: начинаем сохранение', data)
 
   setSubmitting(true)
   
   try {
-    console.log('🔵🔵🔵 [Checkout] Сохраняем в sessionStorage')
   
     sessionStorage.setItem('checkoutFormData', JSON.stringify(data))
     
     // Проверяем, что сохранилось
     const saved = sessionStorage.getItem('checkoutFormData')
-    console.log('🔵🔵🔵 [Checkout] Проверка сохранения:', saved ? '✅ Успешно' : '❌ Ошибка')
    
     if (saved) {
       const parsed = JSON.parse(saved)
-      console.log('🔵🔵🔵 [Checkout] Сохраненные данные:', parsed)
     }
     
-    console.log('🔵🔵🔵 [Checkout] Делаем редирект')
     router.push('/checkout/confirm')
   } catch (error) {
     console.error('🔴🔴🔴 [Checkout] Ошибка:', error)
