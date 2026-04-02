@@ -19,7 +19,7 @@ const StripePayment = dynamic(
 export function LazyStripePayment(props: {
   amount: number
   clientSecret: string
-  onSuccess: () => void
+  // onSuccess: () => void
   orderId: string
 }) {
   return (

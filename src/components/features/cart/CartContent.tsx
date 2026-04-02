@@ -131,7 +131,7 @@ export default function CartContent() {
     if (!session) {
       setShowAuthModal(true)
     } else {
-      router.push('/checkout/confirm')
+      router.push('/checkout')
     }
   }
 

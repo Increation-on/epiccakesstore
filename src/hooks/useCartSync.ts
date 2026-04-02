@@ -12,6 +12,12 @@ export function useCartSync() {
   // 1. Загрузка с сервера при входе
   useEffect(() => {
     const syncCart = async () => {
+      // НЕ загружаем корзину, если оплата в процессе
+      if (sessionStorage.getItem('processing_payment')) {
+        console.log('🔵 useCartSync: пропускаем загрузку, оплата в процессе')
+        return
+      }
+      
       if (status === 'authenticated' && session?.user?.id) {
         try {
           const res = await fetch('/api/cart')
@@ -38,6 +44,12 @@ export function useCartSync() {
   // 2. Отправка изменений на сервер (с debounce)
   useEffect(() => {
     const saveCart = async () => {
+      // НЕ сохраняем корзину, если оплата в процессе
+      if (sessionStorage.getItem('processing_payment')) {
+        console.log('🔵 useCartSync: пропускаем сохранение, оплата в процессе')
+        return
+      }
+      
       if (status === 'authenticated' && session?.user?.id && items.length > 0) {
         try {
           const res = await fetch('/api/cart', {

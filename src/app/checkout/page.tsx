@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import CheckoutContent from './CheckoutContent'
+import CheckoutContent from './_components/CheckoutContent'
 import CheckoutSkeleton from '@/components/features/skeleton/CheckoutSkeleton'
 import type { Metadata } from 'next'
 

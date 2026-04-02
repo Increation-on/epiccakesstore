@@ -1,3 +1,4 @@
+//app/checkout/confirm/page.tsx
 'use client'
 
 export const dynamic = 'force-dynamic'
@@ -14,7 +15,13 @@ import { ConfirmPageSkeleton } from '@/components/features/skeleton/ConfirmPageS
 import { useCurrencyStore } from '@/store/currency.store'
 import { OrderSummary } from './_components/orderSummary'
 
+// Добавь в начало файла, после импортов
+
+
 export default function ConfirmPage() {
+
+ 
+
   const router = useRouter()
   const { data: session, status } = useSession()
   const { items, setItems, clearCart } = useCartStore()
@@ -139,43 +146,66 @@ export default function ConfirmPage() {
   }, [items])
 
   // Загрузка товаров и данных формы
-  useEffect(() => {
-    async function loadProducts() {
-      if (cartItems.length === 0) {
-        setProducts([])
-        setLoading(false)
-        return
-      }
+  // Загрузка товаров и данных формы
+useEffect(() => {
 
-      const productIds = cartItems.map(item => item.productId)
-
-      try {
-        const res = await fetch('/api/products/by-ids', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: productIds })
-        })
-        const data = await res.json()
-        setProducts(Array.isArray(data) ? data : [])
-      } catch (error) {
-        console.error(error)
-        setProducts([])
-      } finally {
-        setLoading(false)
-      }
+  
+  async function loadProducts() {
+   
+    
+    if (cartItems.length === 0) {
+      
+      setProducts([])
+      setLoading(false)
+      return
     }
 
-    // Получаем данные формы
-    const savedData = sessionStorage.getItem('checkoutFormData')
-    if (savedData) {
-      setFormData(JSON.parse(savedData))
-    } else {
+    const productIds = cartItems.map(item => item.productId)
+    
+
+    try {
+      const res = await fetch('/api/products/by-ids', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: productIds })
+      })
+      const data = await res.json()
+     
+      setProducts(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.error('🔴 [Confirm] Ошибка загрузки товаров:', error)
+      setProducts([])
+    } finally {
+      setLoading(false)
+    
+    }
+  }
+
+  // Получаем данные формы
+  
+  const savedData = sessionStorage.getItem('checkoutFormData')
+  
+  
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData)
+    
+      setFormData(parsed)
+    } catch (error) {
+      console.error('🔴 [Confirm] Ошибка парсинга formData:', error)
+    
       router.push('/checkout')
     }
-    setLoadingFormData(false)
+  } else {
+  
+    router.push('/checkout')
+  }
+  
+  setLoadingFormData(false)
 
-    loadProducts()
-  }, [cartItems.length, router])
+
+  loadProducts()
+}, [cartItems.length, router])
 
   const totalPrice = cartItems.reduce((sum, item) => {
     const product = products.find(p => p.id === item.productId)
@@ -226,89 +256,104 @@ export default function ConfirmPage() {
     }
   }
 
-  const handleStartPayment = async () => {
-    setLoadingPayment(true)
-    try {
-      const orderData = {
-        ...formData,
-        items: cartItems.map(item => {
-          const product = products.find(p => p.id === item.productId)
-          return {
-            productId: item.productId,
-            name: product?.name,
-            quantity: item.quantity,
-            price: product?.price
-          }
-        }),
-        total: totalPrice,
-        status: 'PENDING_PAYMENT',
-        userId: session?.user?.id
-      }
-
-      const orderRes = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
-      })
-
-      const orderResult = await orderRes.json()
-      const newOrderId = orderResult.orderId
-      setOrderId(newOrderId)
-
-      const paymentRes = await fetch('/api/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: totalPrice,
-          orderId: newOrderId
-        })
-      })
-
-      const paymentData = await paymentRes.json()
-      setClientSecret(paymentData.clientSecret)
-      setShowPayment(true)
-
-      sessionStorage.setItem('paymentState', JSON.stringify({
-        showPayment: true,
-        clientSecret: paymentData.clientSecret,
-        orderId: newOrderId,
-        timestamp: Date.now()
-      }))
-
-    } catch (error) {
-      console.error('Ошибка:', error)
-      toast.error('Ошибка при создании платежа')
-    } finally {
-      setLoadingPayment(false)
+const handleStartPayment = async () => {
+  setLoadingPayment(true)
+  try {
+    // НЕ очищаем корзину здесь!
+    
+    // Создаем заказ
+    const orderData = {
+      ...formData,
+      items: cartItems.map(item => {
+        const product = products.find(p => p.id === item.productId)
+        return {
+          productId: item.productId,
+          name: product?.name,
+          quantity: item.quantity,
+          price: product?.price
+        }
+      }),
+      total: totalPrice,
+      status: 'PENDING_PAYMENT',
+      userId: session?.user?.id
     }
+
+    const orderRes = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData)
+    })
+
+    const orderResult = await orderRes.json()
+    const newOrderId = orderResult.orderId
+    setOrderId(newOrderId)
+
+    // Создаем Payment Intent
+    const paymentRes = await fetch('/api/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: totalPrice,
+        orderId: newOrderId
+      })
+    })
+
+    const paymentData = await paymentRes.json()
+    setClientSecret(paymentData.clientSecret)
+    setShowPayment(true)
+
+    sessionStorage.setItem('paymentState', JSON.stringify({
+      showPayment: true,
+      clientSecret: paymentData.clientSecret,
+      orderId: newOrderId,
+      timestamp: Date.now()
+    }))
+
+  } catch (error) {
+    console.error('Ошибка:', error)
+    toast.error('Ошибка при создании платежа')
+  } finally {
+    setLoadingPayment(false)
   }
+}
 
   const handlePaymentSuccess = async () => {
-    if (!orderId) {
-      console.error('Нет orderId')
-      return
-    }
-
-    try {
-      const res = await fetch(`/api/orders/${orderId}/paid`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Ошибка при обновлении статуса')
-      }
-
-      sessionStorage.removeItem('checkoutFormData')
-      sessionStorage.removeItem('paymentState')
-      clearCart()
-      window.location.href = `/order/${orderId}/success`
-    } catch (error) {
-      console.error('Ошибка:', error)
-      toast.error('Ошибка при подтверждении оплаты')
-    }
+  console.log('🟢 [Client] handlePaymentSuccess START, orderId:', orderId)
+  
+  if (!orderId) {
+    console.error('🔴 [Client] Нет orderId!')
+    return
   }
+
+  try {
+    console.log(`🟢 [Client] Отправляем POST запрос на /api/orders/${orderId}/paid`)
+    const res = await fetch(`/api/orders/${orderId}/paid`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    console.log('🟢 [Client] Ответ получен, статус:', res.status)
+    
+    const responseData = await res.json()
+    console.log('🟢 [Client] Данные ответа:', responseData)
+
+    if (!res.ok) {
+      console.error('🔴 [Client] Ошибка API:', responseData.error)
+      throw new Error(responseData.error || 'Ошибка при обновлении статуса')
+    }
+
+    console.log('🟢 [Client] Успех! Очищаем данные...')
+    sessionStorage.removeItem('checkoutFormData')
+    sessionStorage.removeItem('paymentState')
+    clearCart()
+    
+    console.log('🟢 [Client] Редирект на страницу успеха')
+    window.location.href = `/order/${orderId}/success`
+  } catch (error) {
+    console.error('🔴 [Client] Ошибка в handlePaymentSuccess:', error)
+    toast.error('Ошибка при подтверждении оплаты')
+  }
+}
 
   // Защита от неавторизованных
   if (status === 'unauthenticated') {
@@ -316,13 +361,17 @@ export default function ConfirmPage() {
     return null
   }
 
+   
+
   // Показываем скелетон пока загружаются данные
   if (!cartLoaded || loading || loadingFormData) {
+    
     return <ConfirmPageSkeleton />
   }
 
   // Если после загрузки нет данных — ошибка
   if (cartItems.length === 0 || !formData) {
+  
     return (
       <div className="container mx-auto p-4 text-center">
         <h1 className="text-2xl font-bold mb-4">Нет данных для подтверждения</h1>
@@ -332,6 +381,8 @@ export default function ConfirmPage() {
       </div>
     )
   }
+
+
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
@@ -365,7 +416,7 @@ export default function ConfirmPage() {
             amount={totalPrice}
             clientSecret={clientSecret}
             orderId={orderId}
-            onSuccess={handlePaymentSuccess}
+            // onSuccess={handlePaymentSuccess}
           />
           <button
             onClick={() => setShowPayment(false)}
