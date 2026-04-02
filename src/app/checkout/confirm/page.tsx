@@ -405,7 +405,8 @@ const handleStartPayment = async () => {
         key={currency}
         cartItems={cartItems} 
         products={products} 
-        totalPrice={totalPrice} 
+        totalPrice={totalPrice}
+         isLoading={loading || products.length === 0}
       />
 
       {/* Кнопки или форма оплаты */}
