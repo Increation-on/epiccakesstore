@@ -20,7 +20,10 @@ export async function GET() {
       },
       orderBy: {
         createdAt: 'desc'
-      }
+      },
+      where: {
+        isArchived: false 
+      },
     })
 
     return NextResponse.json(products)
@@ -33,7 +36,7 @@ export async function GET() {
   }
 }
 
-// - создать товар
+// POST - создать товар
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -51,45 +54,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Функция генерации slug
-    const generateSlug = (name: string) => {
-      return name
-        .toLowerCase()
-        .replace(/[^\w\s-а-яё]/gi, '') // разрешаем кириллицу
-        .replace(/\s+/g, '-')
-        .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, '') // убираем дефисы в начале и конце
-    }
-
-    // Базовый slug
-    let slug = generateSlug(data.name)
-
-    // Если slug пустой (например, название из спецсимволов) — делаем временный
-    if (!slug) {
-      slug = `product-${Date.now()}`
-    }
-
-    // Проверяем уникальность
-    let existingProduct = await prisma.product.findUnique({
-      where: { slug }
-    })
-
-    let counter = 1
-    while (existingProduct) {
-      slug = `${generateSlug(data.name)}-${counter}`
-      if (!slug || slug === `-${counter}`) {
-        slug = `product-${Date.now()}-${counter}`
-      }
-      existingProduct = await prisma.product.findUnique({
-        where: { slug }
-      })
-      counter++
-    }
-
     const product = await prisma.product.create({
       data: {
         name: data.name,
-        slug: slug,
         description: data.description || '',
         price: parseFloat(data.price),
         images: data.images || '[]',

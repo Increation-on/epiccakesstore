@@ -417,7 +417,6 @@ const handleStartPayment = async () => {
             amount={totalPrice}
             clientSecret={clientSecret}
             orderId={orderId}
-            // onSuccess={handlePaymentSuccess}
           />
           <button
             onClick={() => setShowPayment(false)}

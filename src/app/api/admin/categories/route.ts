@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
-import slugify from 'slugify'
 
 export async function GET() {
   try {
@@ -56,17 +55,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Создаём slug через библиотеку
-    const slug = data.slug || slugify(data.name, { 
-      lower: true,      // в нижний регистр
-      strict: true,     // убрать спецсимволы
-      locale: 'ru'      // поддержка русского
-    })
-
     const category = await prisma.category.create({
       data: {
-        name: data.name,
-        slug: slug
+        name: data.name
       }
     })
 

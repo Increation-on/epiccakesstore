@@ -58,7 +58,6 @@ model CartItem {
 model Product {
   id          String   @id @default(cuid())
   name        String
-  slug        String   @unique
   description String
   price       Float
   images      String
@@ -86,10 +85,8 @@ model Product {
 model Category {
   id        String   @id @default(cuid())
   name      String
-  slug      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   products Product[]
 }
 
