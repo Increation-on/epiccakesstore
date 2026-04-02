@@ -65,36 +65,11 @@ export async function PUT(
       )
     }
 
-    // Создаём slug, если не передан
-    let slug = data.slug
-    if (!slug) {
-      slug = data.name.toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/--+/g, '-')
-    }
-
-    // 🔥 Проверяем уникальность slug (исключая текущий товар)
-    const existingProduct = await prisma.product.findFirst({
-      where: {
-        slug: slug,
-        NOT: { id: id }
-      }
-    })
-
-    if (existingProduct) {
-      return NextResponse.json(
-        { error: 'Товар с таким URL (slug) уже существует' },
-        { status: 400 }
-      )
-    }
-
     // Обновляем товар
     const product = await prisma.product.update({
       where: { id },
       data: {
         name: data.name,
-        slug: slug,
         description: data.description || '',
         price: parseFloat(data.price),
         images: data.images || '[]',
@@ -119,7 +94,7 @@ export async function PUT(
   }
 }
 
-// - удалить товар
+// DELETE - удалить товар (архивировать)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

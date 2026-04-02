@@ -20,6 +20,16 @@ const playfair = Playfair_Display({
   weight: ['400', '600', '700'],
 });
 
+
+export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+  title: 'EpicCakesStore',
+  description: 'Лучшие торты на заказ',
+  icons: {
+    icon: '/favicon.ico?v=3',
+  },
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +39,6 @@ export default async function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <link rel="icon"  href="/favicon.ico?v=3" type="image/x-icon" />
         {/* Preload правильного формата WebP */}
         <link 
           rel="preload" 
@@ -48,7 +57,6 @@ export default async function RootLayout({
         </SessionProviderWrapper>
         <ToasterProvider />
       </body>
-       
     </html>
   );
 }

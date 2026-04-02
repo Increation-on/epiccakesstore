@@ -7,10 +7,10 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions)    
     const { id } = await params
-
     if (!id) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 })
     }
@@ -36,7 +36,6 @@ export async function POST(
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
-
     // Проверяем, не обработан ли уже заказ
     if (order.status === 'PAID') {
       return NextResponse.json({ error: 'Order already paid' }, { status: 400 })
@@ -79,24 +78,20 @@ export async function POST(
 
       return updated
     })
-
     // 4. После транзакции обновляем inStock для товаров, где stock стал 0
-    await prisma.product.updateMany({
+    const updateResult = await prisma.product.updateMany({
       where: { stock: 0 },
       data: { inStock: false }
     })
-
     // 5. Очищаем корзину пользователя
     if (order.userId) {
       await prisma.cart.deleteMany({
         where: { userId: order.userId }
       })
     }
-
-    console.log('✅ Заказ оплачен, stock уменьшен')
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('❌ Ошибка обновления статуса:', error)
+    console.error('🔴 [API paid] Ошибка:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

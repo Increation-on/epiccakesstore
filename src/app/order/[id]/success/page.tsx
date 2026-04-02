@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
-import SuccessContent from './SuccessContent'
 import OrderSuccessSkeleton from '@/components/features/skeleton/OrderSuccessSkeleton'
 import type { Metadata } from 'next'
+import SuccessContent from './SuccessContent'
 
 export const metadata: Metadata = {
   title: 'Заказ оформлен | EpicCakesStore',

@@ -5,9 +5,6 @@ import { useSession, signIn, signOut } from "next-auth/react"
 export const AuthStatus = () => {
     const { data: session, status } = useSession()
 
-    console.log('Auth Status:', status)
-    console.log('Session:', session)
-
     if (status === 'loading') {
         return <div className="p-4 text gray-500">Loading...</div>
     }

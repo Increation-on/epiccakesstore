@@ -1,3 +1,4 @@
+//app/admin/products/_components/ProductEditForm.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -28,7 +29,6 @@ export default function ProductEditForm({
 
   const [formData, setFormData] = useState({
     name: '',
-    slug: '',
     description: '',
     price: '',
     inStock: true,
@@ -54,7 +54,6 @@ export default function ProductEditForm({
 
       setFormData({
         name: initialData.name,
-        slug: initialData.slug,
         description: initialData.description || '',
         price: String(initialData.price),
         inStock: initialData.inStock,
@@ -119,21 +118,6 @@ export default function ProductEditForm({
         />
       </div>
 
-      {/* Slug */}
-      <div>
-        <label className="block text-sm font-medium mb-1">Slug (если пусто - создастся из названия)</label>
-        <input
-          type="text"
-          value={formData.slug}
-          onChange={e => setFormData({ ...formData, slug: e.target.value })}
-          className="w-full focus:outline-none p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
-          placeholder="shokoladnyy-tort"
-        />
-        <p className="text-xs text-(--text-muted) mt-1">
-          Только латиница, дефисы и цифры
-        </p>
-      </div>
-
       {/* Описание */}
       <div>
         <label className="block text-sm font-medium mb-1">Описание</label>
@@ -149,7 +133,7 @@ export default function ProductEditForm({
       {/* Цена */}
       <div>
         <label className="block text-sm font-medium mb-1">
-          Цена <span className="text-red-500">*</span>
+          {`Цена (BYN)`} <span className="text-red-500">*</span>
         </label>
         <input
           type="number"

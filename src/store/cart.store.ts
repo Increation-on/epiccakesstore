@@ -107,7 +107,6 @@ export const useCartStore = create<CartStore>()(
       },
 
       setItems: (newItems) => {
-        console.log('🟢 setItems вызван с:', newItems)
         set({ items: newItems })
       },
 
@@ -127,12 +126,9 @@ export const useCartStore = create<CartStore>()(
         items: state.items
       }),
       onRehydrateStorage: (state) => {
-        console.log('🔄 Загружаем из localStorage...')
         return (restoredState, error) => {
           if (error) {
             console.error('❌ Ошибка загрузки:', error)
-          } else {
-            console.log('✅ Загружено:', restoredState)
           }
         }
       }

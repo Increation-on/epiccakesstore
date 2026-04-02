@@ -75,12 +75,10 @@ export const authOptions: NextAuthOptions = {
         },
 
         async session({ session, token }) {
-            console.log('🔍 Session callback - token.createdAt:', token.createdAt)
             if (session?.user) {
                 session.user.role = token.role as 'user' | 'admin' | 'guest'
                 session.user.id = token.id as string
                 session.user.createdAt = token.createdAt as Date
-                console.log('🔍 Session callback - session.user.createdAt:', session.user.createdAt)
             }
             return session
         },

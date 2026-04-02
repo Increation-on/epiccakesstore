@@ -1,3 +1,4 @@
+//app/checkout/_components/CheckoutContetnt.tsx
 'use client'
 
 import { useCartStore } from '@/store/cart.store'
@@ -9,8 +10,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/Button'
-import { toast } from '@/lib/toast'  // ← добавить импорт
+import { toast } from '@/lib/toast'  
 import { Price } from '@/components/ui/Price'
+
+
+
+
+
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
@@ -82,10 +88,27 @@ export default function CheckoutContent() {
   }, 0)
 
   const onSubmit = async (data: CheckoutFormData) => {
-    setSubmitting(true)
+
+  setSubmitting(true)
+  
+  try {
+  
     sessionStorage.setItem('checkoutFormData', JSON.stringify(data))
+    
+    // Проверяем, что сохранилось
+    const saved = sessionStorage.getItem('checkoutFormData')
+   
+    if (saved) {
+      const parsed = JSON.parse(saved)
+    }
+    
     router.push('/checkout/confirm')
+  } catch (error) {
+    console.error('🔴🔴🔴 [Checkout] Ошибка:', error)
+    toast.error('Ошибка при сохранении данных')
+    setSubmitting(false)
   }
+}
 
   // Если корзина пуста после загрузки — показываем сообщение
   if (cartItems.length === 0 && !loading) {

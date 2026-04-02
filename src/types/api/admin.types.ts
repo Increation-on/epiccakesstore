@@ -5,7 +5,6 @@ export type AdminProductsResponse = Product[]
 
 export type CreateProductRequest = {
   name: string
-  slug?: string
   description: string
   price: number
   images: string | string[]

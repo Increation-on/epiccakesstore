@@ -1,4 +1,3 @@
-// app/admin/categories/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -105,9 +104,6 @@ export default function AdminCategoriesPage() {
                                     Название
                                 </th>
                                 <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Slug
-                                </th>
-                                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                                     Товаров
                                 </th>
                                 <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -120,9 +116,6 @@ export default function AdminCategoriesPage() {
                                 <tr key={category.id}>
                                     <td className="px-4 md:px-6 py-4 font-medium text-sm md:text-base">
                                         {category.name}
-                                    </td>
-                                    <td className="px-4 md:px-6 py-4 text-gray-600 text-sm md:text-base">
-                                        {category.slug}
                                     </td>
                                     <td className="px-4 md:px-6 py-4">
                                         <span className={`px-2 py-1 text-xs rounded ${category.productCount > 0
@@ -178,9 +171,6 @@ export default function AdminCategoriesPage() {
                                 }`}>
                                 {category.productCount} товаров
                             </span>
-                        </div>
-                        <div className="text-sm text-gray-500 mb-3">
-                            slug: {category.slug}
                         </div>
                         <div className="flex gap-3 pt-3 border-t border-gray-100">
                             <button

@@ -1,7 +1,7 @@
 // src/components/features/skeleton/ProductCardSkeleton.tsx
 const ProductCardSkeleton = () => {
   return (
-    <div className="border rounded-lg p-4 shadow-sm animate-pulse">
+    <div className="rounded-lg p-4 shadow-sm animate-pulse">
       {/* Изображение */}
       <div className="bg-gray-200 h-40 sm:h-48 mb-4 rounded"></div>
       

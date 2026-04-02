@@ -5,15 +5,14 @@ import { Category } from './categoery.types';
 // ---------- БАЗОВЫЙ ТИП (соответствует Prisma) ----------
 export type Product = WithId & Timestamp & {
   name: string;
-  slug: string;
   description: string;
   price: number;
   images: string | string[];           // JSON строка из БД
   inStock: boolean;         
   categories?: Category[];
   stock: number;
-  isArchived: boolean      // 👈 добавляем
-  archivedAt: string | null
+  isArchived: boolean;      // 👈 добавляем
+  archivedAt: string | null;
 };
 
 // ---------- ДЛЯ СОЗДАНИЯ ----------

@@ -1,4 +1,4 @@
-// app/admin/categories/_components/CategoryEditForm.tsx
+//app/admin/categories/_components/CategoryEditForm.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -20,15 +20,13 @@ export default function CategoryEditForm({
 }: Props) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    name: '',
-    slug: ''
+    name: ''
   })
 
   useEffect(() => {
     if (initialData) {
       setFormData({
-        name: initialData.name,
-        slug: initialData.slug || ''
+        name: initialData.name
       })
     }
   }, [initialData])
@@ -78,20 +76,6 @@ export default function CategoryEditForm({
           className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
           placeholder="Например: Торты"
         />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Slug</label>
-        <input
-          type="text"
-          value={formData.slug}
-          onChange={e => setFormData({ ...formData, slug: e.target.value })}
-          className="w-full p-2 md:p-3 border border-(--border) rounded-lg focus:ring-2 focus:ring-(--pink) focus:border-(--pink) text-sm md:text-base bg-white"
-          placeholder="torty"
-        />
-        <p className="text-xs text-(--text-muted) mt-1">
-          Если не указан, создастся из названия
-        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 pt-2">
