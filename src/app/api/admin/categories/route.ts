@@ -14,8 +14,8 @@ export async function GET() {
 
     const categories = await prisma.category.findMany({
       include: {
-        _count: {
-          select: { products: true }
+        products: {
+          where: { isArchived: false }  // 👈 ДОБАВИТЬ ФИЛЬТР
         }
       },
       orderBy: {
@@ -25,7 +25,7 @@ export async function GET() {
 
     const categoriesWithCount = categories.map(cat => ({
       ...cat,
-      productCount: cat._count.products
+      productCount: cat.products.length  // теперь считаются только активные товары
     }))
 
     return NextResponse.json(categoriesWithCount)

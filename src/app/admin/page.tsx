@@ -15,7 +15,9 @@ export default async function AdminPage() {
 
   // Получаем статистику
   const [productsCount, ordersCount, categoriesCount] = await Promise.all([
-    prisma.product.count(),
+    prisma.product.count({
+      where: { isArchived: false }
+    }),
     prisma.order.count(),
     prisma.category.count()
   ])
