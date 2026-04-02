@@ -56,7 +56,7 @@ useEffect(() => {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [currentIndex]) // 👈 только currentIndex
+  }, [currentIndex])
 
   // Навигационные кнопки
   const showNav = images.length > 1
@@ -106,12 +106,12 @@ useEffect(() => {
                 fill
                 className="object-contain"
                 priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"  // 👈 ДОБАВЛЕНО
               />
             </div>
           </div>
 
-
-          {/* Умная подсказка свайпа: > если можно вперёд, < если на последнем (и не первом) */}
+          {/* Умная подсказка свайпа */}
           {showNav && (
             <>
               {currentIndex < images.length - 1 ? (
@@ -135,7 +135,6 @@ useEffect(() => {
                 onClick={goToPrev}
                 aria-label="Предыдущее изображение"
                 className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 border-2 border-(--mint) bg-black/20 hover:bg-black/30 text-white rounded-full shadow-sm items-center justify-center transition"
-
               >
                 {'<'}
               </button>
@@ -145,7 +144,6 @@ useEffect(() => {
                 onClick={goToNext}
                 aria-label="Следующее изображение"
                 className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 border-2 border-(--mint) bg-black/20 hover:bg-black/30 text-white rounded-full shadow-sm items-center justify-center transition"
-
               >
                 {'>'}
               </button>
@@ -153,6 +151,7 @@ useEffect(() => {
           </>
         )}
       </div>
+
       {/* Индикатор позиции (только мобильная версия) */}
       {showNav && (
         <div className="flex justify-center mt-1">
@@ -161,7 +160,8 @@ useEffect(() => {
           </span>
         </div>
       )}
-      {/* Миниатюры с плавной анимацией и масштабированием */}
+
+      {/* Миниатюры */}
       {showNav && (
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-1 mt-2 pt-1">
           {images.map((url, index) => (
@@ -179,6 +179,7 @@ useEffect(() => {
                 alt={`${productName} — миниатюра ${index + 1}`}
                 fill
                 className="object-cover"
+                sizes="80px"  // 👈 ДОБАВЛЕНО (миниатюры имеют фиксированный размер)
               />
             </button>
           ))}
