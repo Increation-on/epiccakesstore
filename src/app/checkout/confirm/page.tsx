@@ -31,6 +31,7 @@ export default function ConfirmPage() {
   const [orderId, setOrderId] = useState<string | null>(null)
   const [cartLoaded, setCartLoaded] = useState(false)
   const [formData, setFormData] = useState<any>(null)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const cartItems = Array.isArray(items) ? items : []
   const currency = useCurrencyStore((state) => state.currency)
@@ -200,54 +201,63 @@ useEffect(() => {
     return sum + (product?.price || 0) * (item?.quantity || 0)
   }, 0)
 
-  const handleConfirm = async () => {
-    setSubmitting(true)
+  
 
-    const orderData = {
-      ...formData,
-      items: cartItems.map(item => {
-        const product = products.find(p => p.id === item.productId)
-        return {
-          productId: item.productId,
-          name: product?.name,
-          quantity: item.quantity,
-          price: product?.price
-        }
-      }),
-      total: totalPrice,
-      status: 'PENDING',
-      userId: session?.user?.id
-    }
+const handleConfirm = async () => {
+  setSubmitting(true)
 
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
-      })
-
-      const result = await res.json()
-
-      if (res.ok) {
-        sessionStorage.removeItem('checkoutFormData')
-        sessionStorage.removeItem('paymentState')
-        clearCart()
-        window.location.href = `/order/${result.orderId}/success`
-      } else {
-        toast.error(result.error || 'Ошибка при оформлении заказа')
+  const orderData = {
+    ...formData,
+    items: cartItems.map(item => {
+      const product = products.find(p => p.id === item.productId)
+      return {
+        productId: item.productId,
+        name: product?.name,
+        quantity: item.quantity,
+        price: product?.price
       }
-    } catch (error) {
-      console.error('Ошибка:', error)
-      toast.error('Ошибка при отправке заказа')
-    } finally {
-      setSubmitting(false)
-    }
+    }),
+    total: totalPrice,
+    status: 'PENDING',
+    userId: session?.user?.id
   }
+
+  try {
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData)
+    })
+
+    const result = await res.json()
+
+    if (res.ok) {
+      sessionStorage.removeItem('checkoutFormData')
+      sessionStorage.removeItem('paymentState')
+      
+      // Показываем лоадер
+      setIsRedirecting(true)
+      
+      // Даем время на отображение лоадера
+      setTimeout(() => {
+        window.location.href = `/order/${result.orderId}/success`
+      }, 500)
+    } else {
+      toast.error(result.error || 'Ошибка при оформлении заказа')
+      setIsRedirecting(false)
+    }
+  } catch (error) {
+    console.error('Ошибка:', error)
+    toast.error('Ошибка при отправке заказа')
+    setIsRedirecting(false)
+  } finally {
+    setSubmitting(false)
+  }
+}
 
 const handleStartPayment = async () => {
   setLoadingPayment(true)
   try {
-    // НЕ очищаем корзину здесь!
     
     // Создаем заказ
     const orderData = {
@@ -399,6 +409,14 @@ const handleStartPayment = async () => {
           </Link>
         </div>
       )}
+      {isRedirecting && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-(--pink) border-t-transparent mx-auto mb-4" />
+          <p className="text-(--text)">Перенаправление на страницу заказа...</p>
+        </div>
+      </div>
+    )}
     </div>
   )
 }

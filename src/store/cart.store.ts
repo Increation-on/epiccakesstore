@@ -7,27 +7,26 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      isAuthenticated: false, // для типа
+      
+      setAuthenticated: (isAuth) => set({ isAuthenticated: isAuth }),
 
       addItem: async (productId, quantity = 1) => {
-        // Проверяем, не архивный ли товар
         try {
-          const res = await fetch(`/api/products/${productId}/check`)
-          const { isArchived } = await res.json()
-          
+          const res = await fetch(`/api/products/${productId}/check`);
+          const { isArchived } = await res.json();
           if (isArchived) {
-            toast.error('Этот товар больше не доступен')
-            return
+            toast.error('Этот товар больше не доступен');
+            return;
           }
         } catch (error) {
-          console.error('Error checking product:', error)
-          toast.error('Ошибка при проверке товара')
-          return
+          console.error('Error checking product:', error);
+          toast.error('Ошибка при проверке товара');
+          return;
         }
-        
-        // Добавляем товар в корзину
+
         set((state) => {
           const existing = state.items.find(i => i.productId === productId);
-
           if (existing) {
             return {
               items: state.items.map(i =>
@@ -43,37 +42,32 @@ export const useCartStore = create<CartStore>()(
               quantity: quantity,
               addedAt: new Date().toISOString()
             };
-
-            return {
-              items: [...state.items, newItem]
-            };
+            return { items: [...state.items, newItem] };
           }
         });
-        
-        // Синхронизация с сервером
-        const { items } = get()
+
+        const { items } = get();
         fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items })
         }).catch((error) => {
-          console.error('❌ Ошибка синхронизации корзины:', error)
-        })
+          console.error('❌ Ошибка синхронизации корзины:', error);
+        });
       },
 
       removeItem: (id) => {
         set((state) => ({
           items: state.items.filter(i => i.id !== id)
-        }))
-
-        const { items } = get()
+        }));
+        const { items } = get();
         fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items })
         }).catch((error) => {
-          console.error('❌ Ошибка синхронизации удаления:', error)
-        })
+          console.error('❌ Ошибка синхронизации удаления:', error);
+        });
       },
 
       updateQuantity: (id, quantity) => {
@@ -81,57 +75,40 @@ export const useCartStore = create<CartStore>()(
           items: state.items.map(i =>
             i.id === id ? { ...i, quantity } : i
           )
-        }))
-
-        const { items } = get()
+        }));
+        const { items } = get();
         fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items })
         }).catch((error) => {
-          console.error('❌ Ошибка синхронизации обновления:', error)
-        })
+          console.error('❌ Ошибка синхронизации обновления:', error);
+        });
       },
 
       clearCart: () => {
-        set({ items: [] })
-        localStorage.removeItem('cart-storage')
-
+        set({ items: [] });
         fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items: [] })
         }).catch((error) => {
-          console.error('❌ Ошибка очистки корзины на сервере:', error)
-        })
+          console.error('❌ Ошибка очистки корзины на сервере:', error);
+        });
       },
 
       setItems: (newItems) => {
-        set({ items: newItems })
+        set({ items: newItems });
       },
 
       get totalItems() {
-        try {
-          const state = get()
-          if (!state || !state.items) return 0
-          return state.items.reduce((sum, item) => sum + item.quantity, 0)
-        } catch {
-          return 0
-        }
+        const state = get();
+        if (!state || !Array.isArray(state.items)) return 0;
+        return state.items.reduce((sum, item) => sum + item.quantity, 0);
       }
     }),
     {
       name: 'cart-storage',
-      partialize: (state) => ({
-        items: state.items
-      }),
-      onRehydrateStorage: (state) => {
-        return (restoredState, error) => {
-          if (error) {
-            console.error('❌ Ошибка загрузки:', error)
-          }
-        }
-      }
     }
   )
 );

@@ -1,9 +1,11 @@
+//src/app/layut.tsx
+
 import { Inter, Playfair_Display } from 'next/font/google';
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SessionProviderWrapper from "@/components/providers/SessionProviderWrapper";
-import CartSyncWrapper from "@/components/providers/CartSyncWrapper";
+import { CartSyncWrapper } from '@/components/providers/CartSyncWrapper';
 import { ToasterProvider } from '@/components/ui/ToasterProvider';
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
@@ -20,16 +22,6 @@ const playfair = Playfair_Display({
   weight: ['400', '600', '700'],
 });
 
-
-export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
-  title: 'EpicCakesStore',
-  description: 'Лучшие торты на заказ',
-  icons: {
-    icon: '/favicon.ico?v=3',
-  },
-};
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -39,7 +31,6 @@ export default async function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        {/* Preload правильного формата WebP */}
         <link 
           rel="preload" 
           as="image" 
@@ -50,10 +41,10 @@ export default async function RootLayout({
       </head>
       <body>
         <SessionProviderWrapper session={session}>
-          <Header />
-          {children}
-          <CartSyncWrapper />
-          <Footer />
+           <CartSyncWrapper />
+            <Header />
+            {children}
+            <Footer />
         </SessionProviderWrapper>
         <ToasterProvider />
       </body>

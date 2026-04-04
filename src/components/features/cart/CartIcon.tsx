@@ -1,13 +1,27 @@
-'use client'
+'use client';
 
-import { useCartStore } from '@/store/cart.store'
-import Link from 'next/link'
-import { ShoppingCartIcon } from '@heroicons/react/24/outline'
+import Link from 'next/link';
+import { useCartStore } from '@/store/cart.store';
+import { ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { useEffect, useState } from 'react';
 
 export function CartIcon() {
-  const items = useCartStore((state) => state.items)
-  const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0)
+  const [mounted, setMounted] = useState(false);
+  const items = useCartStore((state) => state.items);
+  const itemCount = items.reduce((sum, item) => sum + (item?.quantity || 0), 0);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
+  if (!mounted) {
+    return (
+      <Link href="/cart" className="relative">
+        <ShoppingCartIcon className="w-6 h-6 text-gray-300 hover:text-(--pink) transition" />
+      </Link>
+    );
+  }
+  
   return (
     <Link href="/cart" className="relative">
       <ShoppingCartIcon className="w-6 h-6 text-gray-300 hover:text-(--pink) transition" />
@@ -17,5 +31,5 @@ export function CartIcon() {
         </span>
       )}
     </Link>
-  )
+  );
 }
