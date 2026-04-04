@@ -1,22 +1,22 @@
-// types/domain/cart.types.ts
+// src/types/domain/cart.types.ts
 import { Product } from "./product.types";
 
 export interface CartItem {
-  id: string;              // UUID позиции (свой)
-  productId: Product['id'];  // ID товара из Product
+  id: string;
+  productId: Product['id'];
   quantity: number;
   addedAt: string;
 }
 
 export interface CartStore {
   items: CartItem[];
+  isAuthenticated: boolean;
   
-  addItem: (productId: Product['id'], quantity?: number) =>Promise<void>;
-  removeItem: (itemId: string) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
+  addItem: (productId: string, quantity?: number) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
-  setItems: (items: CartItem[]) => void;
-  
-  // Просто количество товаров (считаем из items)
-  totalItems: number;
+  setItems: (newItems: CartItem[]) => void;
+  setAuthenticated: (state: boolean) => void;
+  readonly totalItems: number;
 }

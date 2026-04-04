@@ -52,7 +52,9 @@ export default function Header() {
           {/* Правая часть */}
           <div className="flex items-center gap-6 shrink-0">
             <CurrencySwitcher/>
-            <CartIcon />
+            
+            {/* 🔥 Иконка корзины — только для авторизованных */}
+            {isLoggedIn && <CartIcon />}
 
             <div className="hidden md:flex items-center gap-6">
               {isLoggedIn ? (
@@ -86,16 +88,14 @@ export default function Header() {
           </div>
         </div>
 
-        {/* 🔥 Мобильное меню — выпадающий блок под хедером, поверх контента */}
+        {/* Мобильное меню */}
         {isMenuOpen && (
           <div className="relative md:hidden">
-            {/* Затемнение только под меню */}
             <div
               className="fixed inset-x-0 top-[calc(100%+1px)] bottom-0 bg-black/50 z-40"
               onClick={() => setIsMenuOpen(false)}
             />
 
-            {/* Мобильное меню — на всю ширину экрана */}
             <div
               ref={menuRef}
               className="absolute left-1/2 transform -translate-x-1/2 w-screen top-full mt-3.5 bg-neutral-900/95 backdrop-blur-sm border border-gray-800 rounded-b-lg shadow-xl z-50"

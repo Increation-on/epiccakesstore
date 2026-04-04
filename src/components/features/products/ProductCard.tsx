@@ -6,7 +6,9 @@ import { Button } from "../../ui/Button";
 import { useCartStore } from "@/store/cart.store";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
+import Link from "next/link";
 import { toast } from "@/lib/toast";
 import { Price } from "@/components/ui/Price";
 
@@ -16,14 +18,16 @@ type ProductCardProps = {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const router = useRouter();
+  const { status } = useSession();
+  const isAuthenticated = status === 'authenticated';
   const addItem = useCartStore(state => state.addItem);
   const [imgError, setImgError] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!product.inStock) return; // ← защита
-    addItem(product.id, 1);
+    if (!product.inStock) return;
+    addItem(String(product.id), 1);
     toast.success(`${product.name} добавлен в корзину`);
   };
 
@@ -49,8 +53,21 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     (imageUrl.startsWith('/') || imageUrl.startsWith('https://')) &&
     !imgError;
 
+  // Компонент кнопки для неавторизованных
+  const LoginToBuyButton = () => (
+    <Link href="/login" className="block w-full">
+      <Button
+        size="md"
+        className="mt-4 w-full"
+        variant="outline"
+      >
+        Войдите, чтобы купить
+      </Button>
+    </Link>
+  );
+
   return (
-  <Card className="group p-4 border-none rounded-[20px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.1)]! transition-all duration-250 relative">
+    <Card className="group p-4 border-none rounded-[20px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.1)]! transition-all duration-250 relative">
       {/* Затемнение и спиннер при навигации */}
       {isNavigating && (
         <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center z-10">
@@ -59,34 +76,34 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       )}
 
       {/* Блок с изображением — кликабельный */}
-<div
-  className="bg-(--mint) mb-4 rounded-lg overflow-hidden cursor-pointer relative aspect-square"
-  onClick={handleCardClick}
->
-  {hasValidImage ? (
-    <Image
-      src={imageUrl}
-      alt={product.name}
-      fill
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-      className="object-cover transition group-hover:scale-105"
-      onError={() => setImgError(true)}
-      loading="lazy"
-      unoptimized={isBlobUrl}
-    />
-  ) : (
-    <div className="w-full h-full flex items-center justify-center text-4xl text-(--text-muted)">
-      🍰
-    </div>
-  )}
-  
-  {/* Бейдж "Нет в наличии" */}
-  {!product.inStock && (
-    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
-      Нет в наличии
-    </div>
-  )}
-</div>
+      <div
+        className="bg-(--mint) mb-4 rounded-lg overflow-hidden cursor-pointer relative aspect-square"
+        onClick={handleCardClick}
+      >
+        {hasValidImage ? (
+          <Image
+            src={imageUrl}
+            alt={product.name}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition group-hover:scale-105"
+            onError={() => setImgError(true)}
+            loading="lazy"
+            unoptimized={isBlobUrl}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-4xl text-(--text-muted)">
+            🍰
+          </div>
+        )}
+        
+        {/* Бейдж "Нет в наличии" */}
+        {!product.inStock && (
+          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
+            Нет в наличии
+          </div>
+        )}
+      </div>
 
       {/* Название — кликабельное */}
       <h2
@@ -103,18 +120,20 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
       {/* Цена */}
       <p className="text-2xl font-bold mt-4 text-(--pink)">
-         <Price price={product.price} />
+        <Price price={product.price} />
       </p>
 
-      {/* 🔥 Кнопка — отключается если нет в наличии */}
-      <Button
-        size="md"
-        className="mt-4 w-full text-white"
-        onClick={handleAddToCart}
-        disabled={!product.inStock}
-      >
-        {product.inStock ? 'В корзину' : 'Нет в наличии'}
-      </Button>
+      {/* Кнопка — только для авторизованных, иначе предложение войти */}
+      {isAuthenticated && (
+        <Button
+          size="md"
+          className="mt-4 w-full text-white"
+          onClick={handleAddToCart}
+          disabled={!product.inStock}
+        >
+          {product.inStock ? 'В корзину' : 'Нет в наличии'}
+        </Button>
+      )}
     </Card>
   );
 };

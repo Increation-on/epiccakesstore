@@ -17,10 +17,10 @@ import { Price } from '@/components/ui/Price'
 export default function CartContent() {
   const router = useRouter()
   const { data: session } = useSession()
+  const isLoggedIn = !!session
   const { items, removeItem, updateQuantity, clearCart } = useCartStore()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [showAuthModal, setShowAuthModal] = useState(false)
   const [isCartLoading, setIsCartLoading] = useState(true)
   const [showArchiveModal, setShowArchiveModal] = useState(false)
   const [archivedProducts, setArchivedProducts] = useState<any[]>([])
@@ -128,11 +128,7 @@ export default function CartContent() {
       return
     }
     
-    if (!session) {
-      setShowAuthModal(true)
-    } else {
-      router.push('/checkout')
-    }
+    router.push('/checkout')
   }
 
   // Функции для модалки
@@ -345,9 +341,17 @@ export default function CartContent() {
               </div>
             </div>
 
-            <Button onClick={handleCheckout} size="lg" className="w-full">
-              Оформить заказ
-            </Button>
+            {isLoggedIn ? (
+              <Button onClick={handleCheckout} size="lg" className="w-full">
+                Оформить заказ
+              </Button>
+            ) : (
+              <Link href="/login">
+                <Button size="lg" className="w-full" variant="outline">
+                  Войдите, чтобы оформить заказ
+                </Button>
+              </Link>
+            )}
 
             <button
               onClick={openClearModal}
@@ -402,43 +406,6 @@ export default function CartContent() {
           </Button>
         </div>
       </Modal>
-
-      {/* Модалка авторизации */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md mx-4">
-            <h2 className="text-2xl font-bold text-(--text) mb-4 font-serif">
-              Необходима авторизация
-            </h2>
-            <p className="text-(--text-muted) mb-6">
-              Чтобы оформить заказ, пожалуйста, войдите или зарегистрируйтесь.
-              Ваши товары сохранятся и будут перенесены в ваш аккаунт.
-            </p>
-            <div className="space-y-3">
-              <Link
-                href="/api/auth/signin?callbackUrl=/checkout/confirm&cartTransfer=true"
-                className="block w-full text-center bg-(--pink) text-white px-4 py-2 rounded hover:bg-(--pink-dark) transition"
-                onClick={() => setShowAuthModal(false)}
-              >
-                Войти
-              </Link>
-              <Link
-                href="/register?callbackUrl=/checkout/confirm&cartTransfer=true"
-                className="block w-full text-center bg-(--mint) text-(--text) px-4 py-2 rounded hover:bg-(--mint-dark) transition"
-                onClick={() => setShowAuthModal(false)}
-              >
-                Зарегистрироваться
-              </Link>
-              <button
-                onClick={() => setShowAuthModal(false)}
-                className="block w-full text-center bg-gray-200 text-(--text) px-4 py-2 rounded hover:bg-gray-300 transition"
-              >
-                Отмена
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

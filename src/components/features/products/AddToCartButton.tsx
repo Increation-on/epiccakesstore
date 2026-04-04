@@ -2,6 +2,8 @@
 
 import { useCartStore } from '@/store/cart.store'
 import { Button } from '@/components/ui/Button'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { toast } from '@/lib/toast'
 
 interface Props {
@@ -10,19 +12,35 @@ interface Props {
 }
 
 export function AddToCartButton({ productId, stock }: Props) {
+  const { status } = useSession()
+  const isAuthenticated = status === 'authenticated'
   const addItem = useCartStore(state => state.addItem)
   
   const isOutOfStock = stock === 0
 
-  const handleClick = () => {
-    if (isOutOfStock) return
-    
-    try {
-      addItem(productId, 1)
-      toast.success('Товар добавлен в корзину')
-    } catch (error) {
-      toast.error('Не удалось добавить товар')
-    }
+const handleClick = () => {
+  console.log('🖱️ handleClick вызван, isOutOfStock =', isOutOfStock);
+  if (isOutOfStock) return;
+  
+  try {
+    console.log('🛒 Вызываем addItem для товара:', productId);
+    addItem(productId, 1);
+    toast.success('Товар добавлен в корзину');
+  } catch (error) {
+    console.error('Ошибка при добавлении:', error);
+    toast.error('Не удалось добавить товар');
+  }
+}
+
+  // Если не авторизован — показываем кнопку "Войдите, чтобы купить"
+  if (!isAuthenticated) {
+    return (
+      <Link href="/login" className="block w-full md:w-auto">
+        <Button size="lg" className="w-full md:w-auto" variant="outline">
+          Войдите, чтобы купить
+        </Button>
+      </Link>
+    )
   }
 
   return (
