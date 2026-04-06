@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment jsdom
+ */
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -8,7 +11,8 @@ describe('Button', () => {
     render(<Button>Нажми меня</Button>);
     
     const button = screen.getByText('Нажми меня');
-    expect(button).toBeInTheDocument();
+    expect(button).toBeDefined();
+    expect(button.textContent).toBe('Нажми меня');
   });
 
   it('применяет variant primary по умолчанию', () => {
@@ -94,6 +98,6 @@ describe('Button', () => {
     const button = screen.getByText('Кнопка');
     expect(button.className).toContain('opacity-50');
     expect(button.className).toContain('cursor-not-allowed');
-    expect(button).toBeDisabled();
+    expect(button.hasAttribute('disabled')).toBe(true);
   });
 });
