@@ -21,9 +21,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const { status } = useSession();
   const isAuthenticated = status === 'authenticated';
   const addItem = useCartStore(state => state.addItem);
+  const getItemQuantity = useCartStore(state => state.getItemQuantity);
+  const items = useCartStore(state => state.items);
   const [imgError, setImgError] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isInStock, setIsInStock] = useState(product.inStock);
+  const [isAdding, setIsAdding] = useState(false);
+  const [cartQuantity, setCartQuantity] = useState(0);
 
   // Проверяем актуальный stock после монтирования
   useEffect(() => {
@@ -46,11 +50,29 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     checkStock();
   }, [product.id]);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  // Следим за количеством в корзине
+  useEffect(() => {
+    const quantity = getItemQuantity(product.id);
+    setCartQuantity(quantity);
+  }, [items, product.id, getItemQuantity]);
+
+  const canAddMore = isInStock && cartQuantity < product.stock;
+  const remaining = product.stock - cartQuantity;
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isInStock) return;
-    addItem(String(product.id), 1);
-    toast.success(`${product.name} добавлен в корзину`);
+    if (!canAddMore || isAdding) return;
+    
+    setIsAdding(true);
+    try {
+      await addItem(String(product.id), 1);
+      toast.success(`${product.name} добавлен в корзину`);
+    } catch (error) {
+      console.error('Ошибка добавления:', error);
+      toast.error('Ошибка при добавлении в корзину');
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleCardClick = () => {
@@ -88,16 +110,22 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     </Link>
   );
 
+  // Текст кнопки в зависимости от состояния
+  const getButtonText = () => {
+    if (isAdding) return 'Добавляем...';
+    if (!canAddMore && cartQuantity >= product.stock) return 'Товар закончился';
+    if (!isInStock) return 'Нет в наличии';
+    return 'В корзину';
+  };
+
   return (
     <Card className="group p-4 border-none rounded-[20px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.1)]! transition-all duration-250 relative">
-      {/* Затемнение и спиннер при навигации */}
       {isNavigating && (
         <div className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center z-10">
           <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent" />
         </div>
       )}
 
-      {/* Блок с изображением — кликабельный */}
       <div
         className="bg-(--mint) mb-4 rounded-lg overflow-hidden cursor-pointer relative aspect-square"
         onClick={handleCardClick}
@@ -119,15 +147,19 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
         )}
         
-        {/* Бейдж "Нет в наличии" */}
         {!isInStock && (
           <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
             Нет в наличии
           </div>
         )}
+        
+        {isInStock && remaining > 0 && remaining <= 3 && (
+          <div className="absolute bottom-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
+            Осталось {remaining} шт.
+          </div>
+        )}
       </div>
 
-      {/* Название — кликабельное */}
       <h2
         className="text-xl font-semibold text-(--text) font-serif line-clamp-1 cursor-pointer hover:text-(--pink) transition"
         onClick={handleCardClick}
@@ -135,25 +167,22 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         {product.name}
       </h2>
 
-      {/* Описание */}
       <p className="text-(--text-muted) mt-2 text-sm line-clamp-2">
         {product.description}
       </p>
 
-      {/* Цена */}
       <p className="text-2xl font-bold mt-4 text-(--pink)">
         <Price price={product.price} />
       </p>
 
-      {/* Кнопка — только для авторизованных, иначе предложение войти */}
       {isAuthenticated && (
         <Button
           size="md"
           className="mt-4 w-full text-white"
           onClick={handleAddToCart}
-          disabled={!isInStock}
+          disabled={!canAddMore || isAdding}
         >
-          {isInStock ? 'В корзину' : 'Нет в наличии'}
+          {getButtonText()}
         </Button>
       )}
     </Card>

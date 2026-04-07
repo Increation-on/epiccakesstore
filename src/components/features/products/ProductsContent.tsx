@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Product } from '@/types/domain/product.types';
 import { Category } from '@/types/domain/categoery.types';
 import ProductCard from '@/components/features/products/ProductCard';
@@ -16,15 +16,7 @@ import CatalogSkeleton from '@/components/features/skeleton/CatalogSkeleton';
 import ProductSearchInput from './search/ProductsSearchInput';
 import { useProductsStore } from '@/store/products.store';
 
-type ProductsResponse = {
-    products: Product[];
-    totalCount: number;
-    currentPage: number;
-    totalPages: number;
-};
-
 export default function ProductsContent() {
-    const [page, setPage] = useState(1);
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [sort, setSort] = useState<SortOption>('newest')
@@ -32,23 +24,35 @@ export default function ProductsContent() {
     const [maxPrice, setMaxPrice] = useState<number>();
     const [inStockOnly, setInStockOnly] = useState(false);
 
-    // Берем данные из стора
     const { data, isLoading, error, fetchProducts, setData, clearCache } = useProductsStore();
 
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const productsContainerRef = useRef<HTMLDivElement>(null);
+    
+    const page = Number(searchParams.get('page')) || 1;
 
-    // Читаем параметры из URL при монтировании
+    // Отключаем авто-восстановление скролла браузера
     useEffect(() => {
-        const pageFromUrl = Number(searchParams.get('page')) || 1;
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual'
+        }
+        return () => {
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'auto'
+            }
+        }
+    }, [])
+
+    // Читаем остальные параметры из URL при монтировании
+    useEffect(() => {
         const sortFromUrl = searchParams.get('sort') as SortOption || 'newest';
         const categoryFromUrl = searchParams.get('category');
         const minPriceFromUrl = searchParams.get('minPrice');
         const maxPriceFromUrl = searchParams.get('maxPrice');
         const inStockFromUrl = searchParams.get('inStock') === 'true';
 
-        setPage(pageFromUrl);
         setSort(sortFromUrl);
         setSelectedCategory(categoryFromUrl);
         setMinPrice(minPriceFromUrl ? Number(minPriceFromUrl) : undefined);
@@ -59,7 +63,7 @@ export default function ProductsContent() {
     // Обновляем URL при изменении параметров
     useEffect(() => {
         const params = new URLSearchParams();
-        if (page !== 1) params.set('page', String(page));
+        params.set('page', String(page));
         if (sort !== 'newest') params.set('sort', sort);
         if (selectedCategory) params.set('category', selectedCategory);
         if (minPrice) params.set('minPrice', String(minPrice));
@@ -67,7 +71,7 @@ export default function ProductsContent() {
         if (inStockOnly) params.set('inStock', 'true');
 
         const queryString = params.toString();
-        const url = queryString ? `${pathname}?${queryString}` : pathname;
+        const url = `${pathname}?${queryString}`;
         router.push(url, { scroll: false });
     }, [page, sort, selectedCategory, minPrice, maxPrice, inStockOnly]);
 
@@ -86,7 +90,7 @@ export default function ProductsContent() {
         fetchCategories();
     }, []);
 
-    // Загрузка товаров при изменении параметров
+    // Загрузка товаров
     useEffect(() => {
         const params = new URLSearchParams({
             page: String(page),
@@ -100,14 +104,35 @@ export default function ProductsContent() {
         fetchProducts(params);
     }, [page, selectedCategory, sort, minPrice, maxPrice, inStockOnly, fetchProducts]);
 
-    // Сброс страницы при смене фильтров
-    useEffect(() => {
-        setPage(1);
-    }, [selectedCategory, sort, inStockOnly, minPrice, maxPrice]);
+    const handleFilterChange = () => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', '1');
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        
+        setTimeout(() => {
+            productsContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+    };
 
     const handlePriceApply = (min?: number, max?: number) => {
         setMinPrice(min);
         setMaxPrice(max);
+        handleFilterChange();
+    };
+
+    const handleCategorySelect = (category: string | null) => {
+        setSelectedCategory(category);
+        handleFilterChange();
+    };
+
+    const handleSortChange = (newSort: SortOption) => {
+        setSort(newSort);
+        handleFilterChange();
+    };
+
+    const handleInStockChange = (checked: boolean) => {
+        setInStockOnly(checked);
+        handleFilterChange();
     };
 
     const hasActiveFilters = Boolean(
@@ -124,12 +149,22 @@ export default function ProductsContent() {
         setMaxPrice(undefined);
         setInStockOnly(false);
         setSort('newest');
-        setPage(1);
         clearCache();
-        setData(null); // сбрасываем данные
+        setData(null);
+        router.push(pathname, { scroll: false });
     };
 
-    // Показываем скелетон только если нет данных и идет загрузка
+    const handlePageChange = (newPage: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', String(newPage));
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        
+        // Скроллим к контейнеру товаров
+        setTimeout(() => {
+            productsContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+    };
+
     if ((!data && isLoading) || (!data && !isLoading && !error)) {
         return <CatalogSkeleton />;
     }
@@ -149,7 +184,7 @@ export default function ProductsContent() {
                         <CategorySidebar
                             categories={categories}
                             selectedCategory={selectedCategory}
-                            onSelectCategory={setSelectedCategory}
+                            onSelectCategory={handleCategorySelect}
                         />
                     </div>
 
@@ -164,7 +199,7 @@ export default function ProductsContent() {
                             <input
                                 type="checkbox"
                                 checked={inStockOnly}
-                                onChange={(e) => setInStockOnly(e.target.checked)}
+                                onChange={(e) => handleInStockChange(e.target.checked)}
                                 className="w-4 h-4 accent-(--pink)"
                             />
                             <span className="text-sm text-(--text-muted)">Только в наличии</span>
@@ -182,13 +217,16 @@ export default function ProductsContent() {
                         onClear={handleClearFilters}
                     />
 
-                    <ProductSort value={sort} onChange={setSort} />
+                    <ProductSort value={sort} onChange={handleSortChange} />
 
                     {data.products.length === 0 ? (
                         <EmptyState onClear={handleClearFilters} />
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div 
+                                ref={productsContainerRef}
+                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                            >
                                 {data.products.map((product: Product) => (
                                     <ProductCard key={product.id} product={product} />
                                 ))}
@@ -197,7 +235,7 @@ export default function ProductsContent() {
                                 <Pagination
                                     currentPage={page}
                                     totalPages={data.totalPages}
-                                    onPageChange={setPage}
+                                    onPageChange={handlePageChange}
                                 />
                             )}
                         </>
