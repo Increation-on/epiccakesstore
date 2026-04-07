@@ -19,3 +19,5 @@ export const useCurrencyStore = create<CurrencyStore>()(
     }
   )
 )
+
+export type { Currency }
