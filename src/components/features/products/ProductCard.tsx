@@ -4,7 +4,7 @@ import { Product } from "@/types/domain/product.types";
 import { Card } from "../../ui/Card";
 import { Button } from "../../ui/Button";
 import { useCartStore } from "@/store/cart.store";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -23,10 +23,32 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const addItem = useCartStore(state => state.addItem);
   const [imgError, setImgError] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isInStock, setIsInStock] = useState(product.inStock);
+
+  // Проверяем актуальный stock после монтирования
+  useEffect(() => {
+    const checkStock = async () => {
+      try {
+        const res = await fetch('/api/products/by-ids', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [product.id] })
+        });
+        const data = await res.json();
+        if (data && data[0]) {
+          setIsInStock(data[0].stock > 0);
+        }
+      } catch (error) {
+        console.error('Ошибка проверки stock:', error);
+      }
+    };
+    
+    checkStock();
+  }, [product.id]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!product.inStock) return;
+    if (!isInStock) return;
     addItem(String(product.id), 1);
     toast.success(`${product.name} добавлен в корзину`);
   };
@@ -98,7 +120,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         )}
         
         {/* Бейдж "Нет в наличии" */}
-        {!product.inStock && (
+        {!isInStock && (
           <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
             Нет в наличии
           </div>
@@ -129,9 +151,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           size="md"
           className="mt-4 w-full text-white"
           onClick={handleAddToCart}
-          disabled={!product.inStock}
+          disabled={!isInStock}
         >
-          {product.inStock ? 'В корзину' : 'Нет в наличии'}
+          {isInStock ? 'В корзину' : 'Нет в наличии'}
         </Button>
       )}
     </Card>

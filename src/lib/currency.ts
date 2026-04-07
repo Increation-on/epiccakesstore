@@ -1,4 +1,7 @@
-import { Currency } from '@/store/currency.store'
+// lib/currency.ts
+
+// Экспортируем тип
+export type Currency = 'BYN' | 'RUB' | 'USD' | 'EUR'
 
 // Курсы относительно BYN (1 BYN = X)
 export const exchangeRates: Record<Currency, number> = {
@@ -18,9 +21,13 @@ export const currencySymbols: Record<Currency, string> = {
 export const formatPrice = (priceInBYN: number, currency: Currency): string => {
   const rate = exchangeRates[currency]
   let value = priceInBYN * rate
-  
-  // Округляем до 2 знаков
   const rounded = Math.round(value * 100) / 100
-  
   return `${rounded} ${currencySymbols[currency]}`
+}
+
+// Функция для конвертации (возвращает число)
+export const convertPrice = (priceInBYN: number, targetCurrency: Currency): number => {
+  const rate = exchangeRates[targetCurrency]
+  const value = priceInBYN * rate
+  return Math.round(value * 100) / 100
 }
