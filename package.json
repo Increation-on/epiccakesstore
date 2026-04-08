@@ -15,7 +15,7 @@
     "test:unit": "vitest run --environment jsdom",
     "test:e2e": "playwright test",
     "test": "npm run test:unit && npm run test:e2e",
-    "test:integration": "dotenv -e .env.test -- vitest run --config vitest.integration.config.ts"
+    "test:integration": "dotenv -e .env.test -- vitest run --config vitest.integration.config.ts --no-file-parallelism"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

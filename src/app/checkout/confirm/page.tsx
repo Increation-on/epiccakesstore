@@ -243,7 +243,6 @@ export default function ConfirmPage() {
   }
 
   const handleStartPayment = async () => {
-    console.log('🔍 handleStartPayment вызван', { formData, cartItems, totalPrice })
     
     setLoadingPayment(true)
     try {
@@ -275,7 +274,6 @@ export default function ConfirmPage() {
         userId: session?.user?.id
       }
 
-      console.log('📦 Отправляем заказ:', orderData)
 
       const orderRes = await fetch('/api/orders', {
         method: 'POST',
@@ -284,7 +282,6 @@ export default function ConfirmPage() {
       })
 
       const orderResult = await orderRes.json()
-      console.log('📦 Ответ заказа:', orderResult)
 
       if (!orderRes.ok) {
         throw new Error(orderResult.error || 'Ошибка создания заказа')
@@ -292,8 +289,6 @@ export default function ConfirmPage() {
 
       const newOrderId = orderResult.orderId
       setOrderId(newOrderId)
-
-      console.log('💳 Создаём Payment Intent для суммы:', totalPrice)
 
       const paymentRes = await fetch('/api/create-payment-intent', {
         method: 'POST',
@@ -305,7 +300,6 @@ export default function ConfirmPage() {
       })
 
       const paymentData = await paymentRes.json()
-      console.log('💳 Ответ Payment Intent:', paymentData)
 
       if (!paymentRes.ok) {
         throw new Error(paymentData.error || 'Ошибка создания платежа')

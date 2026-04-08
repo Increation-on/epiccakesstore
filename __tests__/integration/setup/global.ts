@@ -1,3 +1,4 @@
+// __tests__/integration/setup/global.ts
 import { beforeAll, afterAll, afterEach } from 'vitest'
 import { execSync } from 'child_process'
 import { prismaTest } from '@/lib/prisma.test'
@@ -27,18 +28,21 @@ beforeAll(async () => {
   })
 })
 
-afterEach(async () => {
-  const tables = await prismaTest.$queryRaw<Array<{ tablename: string }>>`
-    SELECT tablename FROM pg_tables WHERE schemaname='public'
-  `
-  
-  for (const { tablename } of tables) {
-    if (tablename !== '_prisma_migrations') {
-      await prismaTest.$executeRawUnsafe(`TRUNCATE TABLE "public"."${tablename}" CASCADE`)
-    }
-  }
-})
+// Временно отключаем глобальную очистку
+// afterEach(async () => {
+//   const tables = await prismaTest.$queryRaw<Array<{ tablename: string }>>`
+//     SELECT tablename FROM pg_tables WHERE schemaname='public'
+//   `
+//   
+//   for (const { tablename } of tables) {
+//     if (tablename !== '_prisma_migrations') {
+//       await prismaTest.$executeRawUnsafe(`TRUNCATE TABLE "public"."${tablename}" CASCADE`)
+//     }
+//   }
+// })
 
 afterAll(async () => {
+  // Финальная очистка
+  await prismaTest.$executeRaw`TRUNCATE TABLE "Product", "Category" CASCADE`
   await prismaTest.$disconnect()
 })
