@@ -8,7 +8,7 @@ Live: https://epiccakesstore.vercel.app/ | GitHub: https://github.com/Increation
 
 ## ✨ Features
 
-**Users:** Catalog (pagination, search, filters) | Product page (gallery, swipe, reviews) | Cart (guest localStorage + server sync) | Checkout (multi‑step, Zod) | Stripe & Cash payments | Order history & repeat order | Reviews & ratings | Currency switcher (4 currencies) | Dark theme | Responsive (890px breakpoint)
+**Users:** Catalog (pagination, search, filters) | Product page (gallery, swipe, reviews) | Cart (guest localStorage + server sync) | Checkout (multi‑step, Zod) | Stripe & Cash payments | Order history & repeat order | Reviews & ratings | Currency switcher (4 currencies)
 
 **Admins:** Product CRUD (create, edit, archive, restore, delete) | Category CRUD | Order management | Review moderation | Stock management (low stock warnings)
 
