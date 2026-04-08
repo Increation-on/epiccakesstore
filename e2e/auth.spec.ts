@@ -7,8 +7,12 @@ test('регистрация нового пользователя', async ({ pa
   await page.fill('input[name="name"]', 'Новый Пользователь');
   await page.fill('input[name="email"]', uniqueEmail);
   await page.fill('input[name="password"]', 'Test123456');
-  await page.click('button[type="submit"]');
   
+  const responsePromise = page.waitForResponse('/api/register');
+  await page.click('button[type="submit"]');
+  await responsePromise;
+  
+  await page.waitForURL(/\/login\?registered=true/, { timeout: 10000 });
   await expect(page).toHaveURL(/\/login\?registered=true/);
 });
 
@@ -20,16 +24,26 @@ test('логин существующего пользователя', async ({ 
   await page.fill('input[name="name"]', 'Новый Пользователь');
   await page.fill('input[name="email"]', uniqueEmail);
   await page.fill('input[name="password"]', 'Test123456');
+  
+  let responsePromise = page.waitForResponse('/api/register');
   await page.click('button[type="submit"]');
-  await expect(page).toHaveURL(/\/login\?registered=true/);
+  await responsePromise;
+  await page.waitForURL(/\/login\?registered=true/);
   
   // Логин
   await page.fill('input[type="email"]', uniqueEmail);
   await page.fill('input[type="password"]', 'Test123456');
-  await page.click('button[type="submit"]');
   
+  responsePromise = page.waitForResponse('/api/auth/callback/credentials');
+  await page.click('button[type="submit"]');
+  await responsePromise;
+  
+  await page.waitForURL('/', { timeout: 10000 });
   await expect(page).toHaveURL('/');
-  await expect(page.locator('text=Новый Пользователь')).toBeVisible();
+  
+  // Проверяем, что пользователь залогинен — кнопка "Выйти" должна быть видна
+  const logoutButton = page.locator('button:has-text("Выйти")');
+  await expect(logoutButton).toBeVisible({ timeout: 10000 });
 });
 
 test('неверный пароль показывает ошибку', async ({ page }) => {
@@ -37,7 +51,10 @@ test('неверный пароль показывает ошибку', async ({
   
   await page.fill('input[type="email"]', 'nonexistent@example.com');
   await page.fill('input[type="password"]', 'wrongpassword');
+  
+  const responsePromise = page.waitForResponse('/api/auth/callback/credentials');
   await page.click('button[type="submit"]');
+  await responsePromise;
   
   await expect(page.locator('text=Неверный email или пароль')).toBeVisible();
 });

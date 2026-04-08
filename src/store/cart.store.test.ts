@@ -1,31 +1,30 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-vi.mock('@/lib/toast', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
 import { useCartStore } from './cart.store';
 
-// Мокаем fetch
-global.fetch = vi.fn();
+// Мокаем fetch глобально
+const mockFetch = vi.fn();
+
+beforeEach(() => {
+  useCartStore.setState({ items: [] });
+  vi.clearAllMocks();
+  global.fetch = mockFetch;
+});
 
 describe('cart.store', () => {
-  beforeEach(() => {
-    useCartStore.setState({ items: [] });
-    vi.clearAllMocks();
-    
-    // Настраиваем мок для fetch
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({ isArchived: false }),
-    });
-  });
-
   describe('addItem', () => {
     it('добавляет новый товар в корзину', async () => {
+      // Мокаем успешный ответ от /api/products/by-ids
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ id: 'product-1', stock: 10, isArchived: false, name: 'Тест' }]
+      });
+      
+      // Мокаем успешный ответ от /api/cart
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true })
+      });
+
       const { addItem } = useCartStore.getState();
       
       await addItem('product-1', 1);
@@ -37,6 +36,11 @@ describe('cart.store', () => {
     });
 
     it('увеличивает количество существующего товара', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [{ id: 'product-1', stock: 10, isArchived: false, name: 'Тест' }]
+      });
+
       const { addItem } = useCartStore.getState();
       
       await addItem('product-1', 1);
@@ -48,6 +52,11 @@ describe('cart.store', () => {
     });
 
     it('создаёт уникальный id для каждого товара', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [{ id: 'product-1', stock: 10, isArchived: false, name: 'Тест' }]
+      });
+
       const { addItem } = useCartStore.getState();
       
       await addItem('product-1', 1);
@@ -60,6 +69,11 @@ describe('cart.store', () => {
 
   describe('removeItem', () => {
     it('удаляет товар по id', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [{ id: 'product-1', stock: 10, isArchived: false, name: 'Тест' }]
+      });
+
       const { addItem, removeItem } = useCartStore.getState();
       
       await addItem('product-1', 1);
@@ -76,6 +90,11 @@ describe('cart.store', () => {
 
   describe('updateQuantity', () => {
     it('обновляет количество товара', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [{ id: 'product-1', stock: 10, isArchived: false, name: 'Тест' }]
+      });
+
       const { addItem, updateQuantity } = useCartStore.getState();
       
       await addItem('product-1', 1);
@@ -90,6 +109,11 @@ describe('cart.store', () => {
 
   describe('clearCart', () => {
     it('очищает всю корзину', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [{ id: 'product-1', stock: 10, isArchived: false, name: 'Тест' }]
+      });
+
       const { addItem, clearCart } = useCartStore.getState();
       
       await addItem('product-1', 1);
@@ -119,18 +143,23 @@ describe('cart.store', () => {
     });
   });
 
-describe('totalItems', () => {
-  it('считает общее количество товаров', async () => {
-    const { addItem } = useCartStore.getState();
-    
-    await addItem('product-1', 2);
-    await addItem('product-2', 3);
-    
-    const { items } = useCartStore.getState();
-    const calculatedTotal = items.reduce((sum, item) => sum + item.quantity, 0);
-    
-    expect(items).toHaveLength(2);
-    expect(calculatedTotal).toBe(5);
+  describe('totalItems', () => {
+    it('считает общее количество товаров', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [{ id: 'product-1', stock: 10, isArchived: false, name: 'Тест' }]
+      });
+
+      const { addItem } = useCartStore.getState();
+      
+      await addItem('product-1', 2);
+      await addItem('product-2', 3);
+      
+      const { items } = useCartStore.getState();
+      const calculatedTotal = items.reduce((sum, item) => sum + item.quantity, 0);
+      
+      expect(items).toHaveLength(2);
+      expect(calculatedTotal).toBe(5);
+    });
   });
-});
 });

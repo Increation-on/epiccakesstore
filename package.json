@@ -13,7 +13,7 @@
     "type-check": "tsc --noEmit",
     "prisma:seed": "tsx prisma/seed.ts",
     "test:unit": "vitest run --environment jsdom",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --workers=1",
     "test": "npm run test:unit && npm run test:e2e",
     "test:integration": "dotenv -e .env.test -- vitest run --config vitest.integration.config.ts --no-file-parallelism"
   },

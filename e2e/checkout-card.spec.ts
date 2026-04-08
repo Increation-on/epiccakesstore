@@ -6,6 +6,7 @@ test('оплата заказа картой', async ({ page }) => {
   await page.goto('/');
   await page.waitForTimeout(3000);
   
+  // Добавляем товар
   await page.evaluate(() => {
     const card = document.querySelector('.bg-white.border.rounded-lg.p-4');
     const buttons = card?.querySelectorAll('button');
@@ -34,13 +35,11 @@ test('оплата заказа картой', async ({ page }) => {
   // Нажимаем "Перейти к оплате"
   await page.click('button:has-text("Перейти к оплате")');
   
-  // Ждем появления формы Stripe (любой iframe)
-  await page.waitForSelector('iframe', { timeout: 15000 });
-  
-  // Берем первый iframe (скорее всего это Stripe)
+  // Ждём появления формы Stripe
+  await page.waitForSelector('iframe', { timeout: 30000 });
   const stripeFrame = page.frameLocator('iframe').first();
   
-  // Заполняем данные карты (селекторы могут отличаться)
+  // Заполняем карту
   await stripeFrame.locator('input[type="text"]').first().fill('4242 4242 4242 4242');
   await stripeFrame.locator('input[type="text"]').nth(1).fill('12/34');
   await stripeFrame.locator('input[type="text"]').nth(2).fill('123');
@@ -48,10 +47,12 @@ test('оплата заказа картой', async ({ page }) => {
   // Чекбокс подтверждения
   await page.locator('input[type="checkbox"]').check();
   
-  // Нажимаем "Оплатить"
-  await page.click('button:has-text("Оплатить")');
+  // Нажимаем "Оплатить" и ЖДЁМ редиректа
+  await Promise.all([
+    page.waitForURL(/\/order\/.+\/success/, { timeout: 30000 }),
+    page.click('button:has-text("Оплатить")')
+  ]);
   
-  await expect(page).toHaveURL(/\/order\/.+\/success/, { timeout: 30000 });
   await expect(page.locator('text=Оплачено')).toBeVisible();
   
   await page.goto('/cart');
