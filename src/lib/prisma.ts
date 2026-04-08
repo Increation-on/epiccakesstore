@@ -5,15 +5,26 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL!
-
-if (!connectionString) {
-  throw new Error('❌ DATABASE_URL is not set')
+// Фабрика для создания клиента с кастомным URL
+export function createPrismaClient(dbUrl?: string) {
+  const connectionString = dbUrl || 
+    process.env.POSTGRES_PRISMA_URL || 
+    process.env.DATABASE_URL
+  
+  if (!connectionString) {
+    throw new Error('Database URL is required')
+  }
+  
+  const adapter = new PrismaNeon({ connectionString })
+  return new PrismaClient({ adapter })
 }
 
-// ✅ Передаём строку подключения напрямую в адаптер, без Pool
-const adapter = new PrismaNeon({ connectionString })
+// Singleton для продакшена
+const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter })
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+export { prisma }
+export default prisma
