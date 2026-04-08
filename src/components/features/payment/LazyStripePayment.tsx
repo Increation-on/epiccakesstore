@@ -2,8 +2,8 @@
 
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
+import { type Currency } from '@/lib/currency'  // ← импорт типа
 
-// Динамический импорт с отключенным SSR
 const StripePayment = dynamic(
   () => import('./StripePayment').then(mod => mod.StripePayment),
   {
@@ -17,9 +17,10 @@ const StripePayment = dynamic(
 )
 
 export function LazyStripePayment(props: {
-  amount: number
+  amount: number           // сумма в BYN для Stripe
+  displayAmount: number    // сумма для отображения в выбранной валюте
+  displayCurrency: Currency  // ← меняем string на Currency
   clientSecret: string
-  // onSuccess: () => void
   orderId: string
 }) {
   return (

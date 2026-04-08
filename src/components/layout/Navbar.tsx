@@ -16,11 +16,11 @@ export default function Navbar({ isAdmin, isLoggedIn, isMobile = false, onLinkCl
 
   const linkClass = isMobile 
     ? "block py-2 text-gray-300 hover:text-(--pink) transition"
-    : "text-gray-300 hover:text-(--pink) transition";
+    : "text-gray-300 hover:text-(--pink) transition text-sm lg:text-base xl:text-lg whitespace-nowrap";
 
   const wrapperClass = isMobile 
     ? "flex flex-col gap-2"
-    : "flex items-center gap-6";
+    : "flex items-center gap-3 lg:gap-4 xl:gap-6";
 
   return (
     <div className={wrapperClass}>

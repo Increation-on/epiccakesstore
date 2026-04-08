@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useCurrencyStore, Currency } from '@/store/currency.store'
-import { Button } from '@/components/ui/Button'
+
 
 const currencies: { code: Currency; label: string; symbol: string }[] = [
   { code: 'BYN', label: 'BYN', symbol: 'Br' },
@@ -22,7 +22,7 @@ export const CurrencySwitcher = () => {
       {/* Кнопка-триггер */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-2 py-1.5 text-sm font-medium text-gray-300 hover:text-(--pink) transition"
+        className="flex items-center gap-1 py-1.5 text-sm font-medium text-gray-300 hover:text-(--pink) transition"
       >
         <span>{currentCurrency?.symbol}</span>
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

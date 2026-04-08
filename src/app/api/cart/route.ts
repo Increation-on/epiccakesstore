@@ -1,104 +1,234 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../auth/[...nextauth]/route'
-import { prisma } from '@/lib/prisma'
-import { NextResponse } from 'next/server'
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { CartStore, CartItem } from '@/types/domain/cart.types'
+import { toast } from '@/lib/toast'
 
-// GET - загрузить корзину
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+export const useCartStore = create<CartStore>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      isAuthenticated: false,
+      
+      setAuthenticated: (isAuth) => set({ isAuthenticated: isAuth }),
 
-    const cart = await prisma.cart.findUnique({
-      where: { userId: session.user.id },
-      include: {
-        items: {
-          include: {
-            product: true
+      addItem: async (productId, quantity = 1) => {
+        // 1. Проверяем остаток через by-ids
+        try {
+          const stockRes = await fetch('/api/products/by-ids', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: [productId] })
+          });
+          
+          if (!stockRes.ok) {
+            toast.error('Не удалось проверить наличие');
+            return;
+          }
+          
+          const products = await stockRes.json();
+          const product = products[0];
+          
+          if (!product) {
+            toast.error('Товар не найден');
+            return;
+          }
+          
+          if (product.stock < quantity) {
+            toast.error(`Товара "${product.name}" нет в нужном количестве. Осталось: ${product.stock}`);
+            return;
+          }
+          
+          if (product.isArchived) {
+            toast.error('Этот товар больше не доступен');
+            return;
+          }
+        } catch (error) {
+          console.error('Ошибка проверки stock:', error);
+          toast.error('Ошибка при проверке наличия');
+          return;
+        }
+
+        // 2. Добавляем в локальный стор (optimistic update)
+        set((state) => {
+          const existing = state.items.find(i => i.productId === productId);
+          if (existing) {
+            return {
+              items: state.items.map(i =>
+                i.productId === productId
+                  ? { ...i, quantity: i.quantity + quantity }
+                  : i
+              )
+            };
+          } else {
+            const newItem: CartItem = {
+              id: crypto.randomUUID(),
+              productId: productId,
+              quantity: quantity,
+              addedAt: new Date().toISOString()
+            };
+            return { items: [...state.items, newItem] };
+          }
+        });
+
+        // 3. Синхронизируем с сервером
+        const { items } = get();
+        
+        try {
+          const res = await fetch('/api/cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          });
+          
+          if (!res.ok) {
+            const error = await res.json();
+            // Если сервер вернул ошибку — откатываем локальное состояние
+            console.error('❌ Server error:', error);
+            toast.error(error.error || 'Ошибка синхронизации корзины');
+            
+            // Перезагружаем корзину с сервера
+            const cartRes = await fetch('/api/cart');
+            if (cartRes.ok) {
+              const serverItems = await cartRes.json();
+              set({ items: serverItems });
+            }
+            return;
+          }
+          
+          toast.success('Товар добавлен в корзину');
+        } catch (error) {
+          console.error('❌ Ошибка синхронизации корзины:', error);
+          toast.error('Ошибка синхронизации корзины');
+          
+          // Откатываем — перезагружаем с сервера
+          const cartRes = await fetch('/api/cart');
+          if (cartRes.ok) {
+            const serverItems = await cartRes.json();
+            set({ items: serverItems });
           }
         }
-      }
-    })
+      },
 
-    return NextResponse.json(cart?.items || [])
-  } catch (error) {
-    console.error('❌ GET cart error:', error)
-    return NextResponse.json(
-      { error: 'Failed to load cart' },
-      { status: 500 }
-    )
-  }
-}
-
-// POST метод
-export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { items } = await req.json()
-    
-    // Если items пустой — удаляем всё
-    if (!items || items.length === 0) {
-      await prisma.cartItem.deleteMany({
-        where: { cart: { userId: session.user.id } }
-      })
-      return NextResponse.json({ success: true })
-    }
-
-    // Группируем дубликаты
-    const itemsMap = new Map()
-    for (const item of items) {
-      const existing = itemsMap.get(item.productId)
-      if (existing) {
-        existing.quantity += item.quantity
-      } else {
-        itemsMap.set(item.productId, { ...item })
-      }
-    }
-    const groupedItems = Array.from(itemsMap.values())
-
-    // Находим или создаём корзину
-    let cart = await prisma.cart.findUnique({
-      where: { userId: session.user.id }
-    })
-
-    if (!cart) {
-      cart = await prisma.cart.create({
-        data: { userId: session.user.id }
-      })
-    }
-
-    // Обновляем или создаём каждый товар
-    for (const item of groupedItems) {
-      await prisma.cartItem.upsert({
-        where: {
-          cartId_productId: {
-            cartId: cart.id,
-            productId: item.productId
+      removeItem: async (id) => {
+        // Удаляем локально
+        set((state) => ({
+          items: state.items.filter(i => i.id !== id)
+        }));
+        
+        // Синхронизируем с сервером
+        const { items } = get();
+        
+        try {
+          const res = await fetch('/api/cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          });
+          
+          if (!res.ok) {
+            const error = await res.json();
+            console.error('❌ Server error:', error);
+            toast.error(error.error || 'Ошибка синхронизации');
+            
+            // Перезагружаем корзину
+            const cartRes = await fetch('/api/cart');
+            if (cartRes.ok) {
+              const serverItems = await cartRes.json();
+              set({ items: serverItems });
+            }
           }
-        },
-        update: {
-          quantity: item.quantity
-        },
-        create: {
-          cartId: cart.id,
-          productId: item.productId,
-          quantity: item.quantity
+        } catch (error) {
+          console.error('❌ Ошибка синхронизации:', error);
+          toast.error('Ошибка синхронизации');
+          
+          // Откатываем
+          const cartRes = await fetch('/api/cart');
+          if (cartRes.ok) {
+            const serverItems = await cartRes.json();
+            set({ items: serverItems });
+          }
         }
-      })
-    }
+      },
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('❌ [API] Error:', error)
-    return NextResponse.json(
-      { error: 'Failed to update cart' },
-      { status: 500 }
-    )
-  }
-}
+      updateQuantity: async (id, quantity) => {
+        if (quantity < 1) {
+          await get().removeItem(id);
+          return;
+        }
+        
+        // Обновляем локально
+        set((state) => ({
+          items: state.items.map(i =>
+            i.id === id ? { ...i, quantity } : i
+          )
+        }));
+        
+        // Синхронизируем с сервером
+        const { items } = get();
+        
+        try {
+          const res = await fetch('/api/cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          });
+          
+          if (!res.ok) {
+            const error = await res.json();
+            console.error('❌ Server error:', error);
+            toast.error(error.error || 'Ошибка синхронизации');
+            
+            // Перезагружаем корзину
+            const cartRes = await fetch('/api/cart');
+            if (cartRes.ok) {
+              const serverItems = await cartRes.json();
+              set({ items: serverItems });
+            }
+          }
+        } catch (error) {
+          console.error('❌ Ошибка синхронизации:', error);
+          toast.error('Ошибка синхронизации');
+          
+          // Откатываем
+          const cartRes = await fetch('/api/cart');
+          if (cartRes.ok) {
+            const serverItems = await cartRes.json();
+            set({ items: serverItems });
+          }
+        }
+      },
+
+      clearCart: async () => {
+        // Очищаем локально
+        set({ items: [] });
+        
+        try {
+          const res = await fetch('/api/cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: [] })
+          });
+          
+          if (!res.ok) {
+            console.error('❌ Failed to clear cart on server');
+          }
+        } catch (error) {
+          console.error('❌ Ошибка очистки корзины:', error);
+        }
+      },
+
+      setItems: (newItems) => {
+        set({ items: newItems });
+      },
+
+      get totalItems() {
+        const state = get();
+        if (!state || !Array.isArray(state.items)) return 0;
+        return state.items.reduce((sum, item) => sum + item.quantity, 0);
+      }
+    }),
+    {
+      name: 'cart-storage',
+    }
+  )
+);

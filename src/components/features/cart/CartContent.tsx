@@ -203,79 +203,82 @@ export default function CartContent() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Левая колонка — товары */}
         <div className="flex-1 min-w-0 space-y-4">
-          {(
-            cartItems.map(item => {
-              const product = products.find(p => p.id === item.productId)
-              if (!product) return null
+          {cartItems.map(item => {
+            const product = products.find(p => p.id === item.productId)
+            if (!product) return null
 
-              // Если товар архивный — показываем его с пометкой
-              const isArchived = product.isArchived === true
+            // Если товар архивный — показываем его с пометкой
+            const isArchived = product.isArchived === true
+            const remainingStock = product.stock - item.quantity
 
-              return (
-                <div
-                  key={item.id}
-                  className={`flex flex-col gap-4 bg-white p-4 rounded-lg shadow-sm border ${isArchived ? 'border-red-300 bg-red-50' : 'border-(--border)'}`}
-                >
-                  {/* Верхняя часть: картинка слева, текст справа */}
-                  <div className="flex gap-4 items-center">
-                    {/* Картинка */}
-                    <div className="shrink-0 cursor-pointer" onClick={() => router.push(`/products/${product.id}`)}>
-                      {(() => {
-                        let imageUrl = null
-                        try {
-                          if (product.images) {
-                            if (typeof product.images === 'string') {
-                              const parsed = JSON.parse(product.images)
-                              imageUrl = Array.isArray(parsed) ? parsed[0] : parsed
-                            } else if (Array.isArray(product.images)) {
-                              imageUrl = product.images[0]
-                            }
-                          }
-                        } catch (error) {
-                          if (typeof product.images === 'string' && product.images.startsWith('http')) {
-                            imageUrl = product.images
+            return (
+              <div
+                key={item.id}
+                className={`flex flex-col gap-4 bg-white p-4 rounded-lg shadow-sm border ${isArchived ? 'border-red-300 bg-red-50' : 'border-(--border)'}`}
+              >
+                {/* Верхняя часть: картинка слева, текст справа */}
+                <div className="flex gap-4 items-center">
+                  {/* Картинка */}
+                  <div className="shrink-0 cursor-pointer" onClick={() => router.push(`/products/${product.id}`)}>
+                    {(() => {
+                      let imageUrl = null
+                      try {
+                        if (product.images) {
+                          if (typeof product.images === 'string') {
+                            const parsed = JSON.parse(product.images)
+                            imageUrl = Array.isArray(parsed) ? parsed[0] : parsed
+                          } else if (Array.isArray(product.images)) {
+                            imageUrl = product.images[0]
                           }
                         }
-
-                        if (imageUrl && (imageUrl.startsWith('/') || imageUrl.startsWith('http'))) {
-                          return (
-                            <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
-                              <Image
-                                src={imageUrl}
-                                alt={product.name}
-                                fill
-                                className="object-cover rounded"
-                              />
-                            </div>
-                          )
+                      } catch (error) {
+                        if (typeof product.images === 'string' && product.images.startsWith('http')) {
+                          imageUrl = product.images
                         }
+                      }
+
+                      if (imageUrl && (imageUrl.startsWith('/') || imageUrl.startsWith('http'))) {
                         return (
-                          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
-                            <span className="text-3xl">🍰</span>
+                          <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
+                            <Image
+                              src={imageUrl}
+                              alt={product.name}
+                              fill
+                              className="object-cover rounded"
+                            />
                           </div>
                         )
-                      })()}
-                    </div>
-
-                    {/* Текст: название и цена */}
-                    <div className="flex-1 min-w-0 flex justify-center flex-col">
-                      <h3 className="font-semibold text-(--text) line-clamp-2 wrap-break-word text-center ">
-                        {product.name}
-                      </h3>
-                      <p className="text-(--pink) font-bold mt-1 text-center "><Price price={product.price} /></p>
-                      {isArchived ? (
-                        <span className="text-red-500 text-sm text-center mt-1">
-                          ❌ Товар больше не доступен
-                        </span>
-                      ) : (
-                        <div className="mt-2 flex justify-center">
-                          <ProductStockStatus stock={product.stock} />
+                      }
+                      return (
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-(--mint) rounded-lg flex items-center justify-center shrink-0">
+                          <span className="text-3xl">🍰</span>
                         </div>
-                      )}
-                    </div>
+                      )
+                    })()}
                   </div>
 
-                  {/* Нижняя часть: кнопки */}
+                  {/* Текст: название и цена */}
+                  <div className="flex-1 min-w-0 flex justify-center flex-col">
+                    <h3 className="font-semibold text-(--text) line-clamp-2 wrap-break-word text-center">
+                      {product.name}
+                    </h3>
+                    <p className="text-(--pink) font-bold mt-1 text-center">
+                      <Price price={product.price} />
+                    </p>
+                    {isArchived ? (
+                      <span className="text-red-500 text-sm text-center mt-1">
+                        ❌ Товар больше не доступен
+                      </span>
+                    ) : (
+                      <div className="mt-2 flex justify-center">
+                        <ProductStockStatus stock={product.stock} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Нижняя часть: кнопки */}
+                <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-end gap-2 border-t pt-3">
                     <button
                       onClick={() => {
@@ -312,10 +315,23 @@ export default function CartContent() {
                       🗑️
                     </button>
                   </div>
+
+                  {/* Подсказка об остатке */}
+                  {!isArchived && remainingStock > 0 && remainingStock <= 3 && (
+                    <p className="text-xs text-amber-600 text-right">
+                      ⚠️ Осталось всего {remainingStock} шт. Товар не зарезервирован до оплаты.
+                    </p>
+                  )}
+                  
+                  {!isArchived && remainingStock === 0 && (
+                    <p className="text-xs text-red-500 text-right">
+                      ❌ Вы добавили максимальное количество
+                    </p>
+                  )}
                 </div>
-              )
-            })
-          )}
+              </div>
+            )
+          })}
         </div>
 
         {/* Правая колонка — итог */}

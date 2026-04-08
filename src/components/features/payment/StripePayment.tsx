@@ -3,12 +3,18 @@
 import React, { useState } from 'react'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
+import { currencySymbols, type Currency } from '@/lib/currency'  // ← правильный импорт
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-const PaymentForm = React.memo(({ amount, orderId }: { 
-  amount: number; 
-  orderId: string; 
+const PaymentForm = React.memo(({ 
+  displayAmount, 
+  displayCurrency, 
+  orderId 
+}: { 
+  displayAmount: number
+  displayCurrency: Currency  // ← меняем string на Currency
+  orderId: string 
 }) => {
   const stripe = useStripe()
   const elements = useElements()
@@ -36,6 +42,9 @@ const PaymentForm = React.memo(({ amount, orderId }: {
       setProcessing(false)
     }
   }
+
+  const symbol = currencySymbols[displayCurrency]  // ← теперь TypeScript не ругается
+  const formattedAmount = `${displayAmount.toFixed(2)} ${symbol}`
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,18 +77,28 @@ const PaymentForm = React.memo(({ amount, orderId }: {
             : 'bg-purple-600 text-white hover:bg-purple-700 active:scale-[0.98]'
         }`}
       >
-        {processing ? 'Обработка...' : `Оплатить ${amount} ₽`}
+        {processing ? 'Обработка...' : `Оплатить ${formattedAmount}`}
       </button>
+      
+      <p className="text-xs text-gray-500 text-center mt-2">
+        * Списание произойдёт в чешских кронах (CZK) по курсу вашего банка
+      </p>
     </form>
   )
 })
 
 PaymentForm.displayName = 'PaymentForm'
 
-export const StripePayment = React.memo(({ amount, clientSecret, orderId }: { 
-  amount: number; 
-  clientSecret: string; 
-  orderId: string;
+export const StripePayment = React.memo(({ 
+  displayAmount, 
+  displayCurrency, 
+  clientSecret, 
+  orderId 
+}: { 
+  displayAmount: number
+  displayCurrency: Currency  // ← меняем string на Currency
+  clientSecret: string
+  orderId: string
 }) => {
   const options = {
     clientSecret,
@@ -94,7 +113,11 @@ export const StripePayment = React.memo(({ amount, clientSecret, orderId }: {
 
   return (
     <Elements stripe={stripePromise} options={options}>
-      <PaymentForm amount={amount} orderId={orderId} />
+      <PaymentForm 
+        displayAmount={displayAmount}
+        displayCurrency={displayCurrency}
+        orderId={orderId} 
+      />
     </Elements>
   )
 })

@@ -18,7 +18,6 @@ export default function Header() {
   const isAdmin = session?.user?.role === 'admin'
   const isLoggedIn = !!session
 
-  // Закрываем меню при клике вне его
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -44,26 +43,26 @@ export default function Header() {
             <Logo />
           </div>
 
-          {/* Навигация — только десктоп */}
-          <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+          {/* Навигация — видна на экранах ≥890px */}
+          <div className="hidden min-[890px]:block absolute left-1/2 transform -translate-x-1/2">
             <Navbar isAdmin={isAdmin} isLoggedIn={isLoggedIn} />
           </div>
 
           {/* Правая часть */}
           <div className="flex items-center gap-6 shrink-0">
-            <CurrencySwitcher/>
+            <CurrencySwitcher />
             
-            {/* 🔥 Иконка корзины — только для авторизованных */}
             {isLoggedIn && <CartIcon />}
 
-            <div className="hidden md:flex items-center gap-6">
+            {/* Десктопные элементы */}
+            <div className="hidden min-[890px]:flex items-center gap-4">
               {isLoggedIn ? (
                 <>
                   <Link href="/profile" className="flex items-center gap-1">
                     <div className="w-8 h-8 rounded-full bg-(--mint) flex items-center justify-center text-(--text)">
                       {session.user?.name?.[0]?.toUpperCase() || 'U'}
                     </div>
-                    <span className="text-sm text-gray-300 hidden xl:inline">
+                    <span className="text-sm text-gray-300 hidden 2xl:inline">
                       {session.user?.name || 'Профиль'}
                     </span>
                   </Link>
@@ -77,10 +76,10 @@ export default function Header() {
               )}
             </div>
 
-            {/* Бургер */}
+            {/* Бургер — виден на экранах <890px */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-gray-300 hover:text-(--pink)"
+              className="max-[889px]:block hidden p-2 text-gray-300 hover:text-(--pink)"
               aria-label={isMenuOpen ? "Закрыть меню" : "Открыть меню"}
             >
               {isMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
@@ -90,7 +89,7 @@ export default function Header() {
 
         {/* Мобильное меню */}
         {isMenuOpen && (
-          <div className="relative md:hidden">
+          <div className="relative max-[889px]:block hidden">
             <div
               className="fixed inset-x-0 top-[calc(100%+1px)] bottom-0 bg-black/50 z-40"
               onClick={() => setIsMenuOpen(false)}

@@ -1,7 +1,7 @@
+// store/currency.store.ts
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-export type Currency = 'BYN' | 'RUB' | 'USD' | 'EUR'
+import { Currency } from '@/lib/currency'  // ← импортируем из lib, не объявляем новый
 
 interface CurrencyStore {
   currency: Currency
@@ -19,3 +19,5 @@ export const useCurrencyStore = create<CurrencyStore>()(
     }
   )
 )
+
+export type { Currency }

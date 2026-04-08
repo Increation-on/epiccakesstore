@@ -9,6 +9,7 @@ export interface CartItem {
 }
 
 export interface CartStore {
+  [x: string]: any;
   items: CartItem[];
   isAuthenticated: boolean;
   
