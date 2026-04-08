@@ -7,6 +7,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-     url: process.env["POSTGRES_PRISMA_URL"] || process.env["DATABASE_URL"],
+    // Убираем TEST_DATABASE_URL отсюда, оставляем только продуктовые
+    url: process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL,
   },
 });

@@ -19,11 +19,9 @@ export function AddToCartButton({ productId, stock }: Props) {
   const isOutOfStock = stock === 0
 
 const handleClick = () => {
-  console.log('🖱️ handleClick вызван, isOutOfStock =', isOutOfStock);
   if (isOutOfStock) return;
   
   try {
-    console.log('🛒 Вызываем addItem для товара:', productId);
     addItem(productId, 1);
     toast.success('Товар добавлен в корзину');
   } catch (error) {
