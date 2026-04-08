@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎂 EpicCakesStore
 
-## Getting Started
+My first **production‑ready** Next.js e‑commerce project. What started as a simple catalog turned into a full‑stack platform with cart sync, Stripe payments, admin panel, and **115 tests**.
 
-First, run the development server:
+🔗 Links
 
-```bash
+Live: https://epiccakesstore.vercel.app/ | GitHub: https://github.com/Increation-on/epiccakesstore
+
+## ✨ Features
+
+**Users:** Catalog (pagination, search, filters) | Product page (gallery, swipe, reviews) | Cart (guest localStorage + server sync) | Checkout (multi‑step, Zod) | Stripe & Cash payments | Order history & repeat order | Reviews & ratings | Currency switcher (4 currencies) | Dark theme | Responsive (890px breakpoint)
+
+**Admins:** Product CRUD (create, edit, archive, restore, delete) | Category CRUD | Order management | Review moderation | Stock management (low stock warnings)
+
+**Tech:** SEO (dynamic OG, sitemap, robots.txt) | Lighthouse: 100/90 | Image optimization (WebP, Vercel Blob) | **115 tests** (83 unit/component + 21 integration + 11 e2e)
+
+## 🛠️ Tech Stack
+
+Frontend: Next.js 15, React 19, TypeScript, Tailwind CSS, Zustand | Backend: Next.js API routes, Prisma 7, PostgreSQL (Neon) | Auth: NextAuth.js (Google + Credentials) | Payments: Stripe + Cash | Storage: Vercel Blob | Testing: Vitest, Playwright | Deployment: Vercel
+
+## 🧪 Test Coverage
+
+Unit + Component: 83 ✅ | Integration: 21 ✅ | E2E: 11 ✅ | **Total: 115 ✅**
+
+npm run test:unit        # Unit + Component
+npm run test:integration # Integration (requires Docker)
+npm run test:e2e         # E2E (sequential)
+
+🚀 Quick Start
+
+git clone https://github.com/Increation-on/epiccakesstore.git
+cd epiccakesstore
+npm install
+npx prisma generate
+npx prisma migrate dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Required env vars: DATABASE_URL, NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, STRIPE_SECRET_KEY, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, BLOB_READ_WRITE_TOKEN
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+📊 Lighthouse
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Desktop: Performance 100, Accessibility 96, Best Practices 100, SEO 100 | Mobile: Performance 89-90, Accessibility 96, Best Practices 100, SEO 100
 
-## Learn More
+🧠 What I Learned
 
-To learn more about Next.js, take a look at the following resources:
+Next.js 15 App Router (async params, server components) | Prisma 7 + Neon PostgreSQL (transactions, migrations) | Zustand persist + Next.js SSR (cart sync battle) | Stripe integration with webhooks (Stripe CLI in restricted regions) | Integration tests with isolated database (Docker + Vitest) | E2E testing with Playwright (sequential workers) | Image optimization (WebP, Vercel Blob) | 31 days, ~135 bugs fixed
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+🛣️ Roadmap
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Email notifications | Wishlist | Discount coupons | Export orders to CSV
 
-## Deploy on Vercel
+📝 License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+MIT ©  [@Increation-on](https://github.com/Increation-on)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+👤 Author
+
+Maksim Dudarev | GitHub: [@Increation-on](https://github.com/Increation-on)
