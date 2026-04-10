@@ -1,4 +1,4 @@
-//app/checkout/_components/CheckoutContetnt.tsx
+// app/checkout/_components/CheckoutContent.tsx
 'use client'
 
 import { useCartStore } from '@/store/cart.store'
@@ -12,11 +12,7 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/Button'
 import { toast } from '@/lib/toast'  
 import { Price } from '@/components/ui/Price'
-
-
-
-
-
+import CheckoutSkeleton from '@/components/features/skeleton/CheckoutSkeleton'
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
@@ -36,6 +32,7 @@ export default function CheckoutContent() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [isReady, setIsReady] = useState(false) // ← Флаг готовности к рендеру
 
   const {
     register,
@@ -47,11 +44,27 @@ export default function CheckoutContent() {
 
   const cartItems = Array.isArray(items) ? items : []
 
+  // Проверка при загрузке - не завершен ли уже заказ
+  useEffect(() => {
+    const orderCompleted = sessionStorage.getItem('orderCompleted')
+    
+    if (orderCompleted) {
+      sessionStorage.removeItem('orderCompleted')
+      window.location.href = '/cart'
+      return
+    }
+  }, [])
+
   useEffect(() => {
     async function loadProducts() {
+      setLoading(true)
+      setIsReady(false) // ← Сбрасываем готовность при начале загрузки
+      
       if (cartItems.length === 0) {
         setProducts([])
         setLoading(false)
+        // Небольшая задержка чтобы избежать мигания
+        setTimeout(() => setIsReady(true), 50)
         return
       }
 
@@ -76,6 +89,8 @@ export default function CheckoutContent() {
         setProducts([])
       } finally {
         setLoading(false)
+        // Небольшая задержка чтобы избежать мигания
+        setTimeout(() => setIsReady(true), 50)
       }
     }
 
@@ -88,30 +103,29 @@ export default function CheckoutContent() {
   }, 0)
 
   const onSubmit = async (data: CheckoutFormData) => {
-
-  setSubmitting(true)
-  
-  try {
-  
-    sessionStorage.setItem('checkoutFormData', JSON.stringify(data))
+    setSubmitting(true)
     
-    // Проверяем, что сохранилось
-    const saved = sessionStorage.getItem('checkoutFormData')
-   
-    if (saved) {
-      const parsed = JSON.parse(saved)
+    try {
+      sessionStorage.setItem('checkoutFormData', JSON.stringify(data))
+      
+      setTimeout(() => {
+        window.location.href = '/checkout/confirm'
+      }, 100)
+      
+    } catch (error) {
+      console.error('🔴 [Checkout] Ошибка:', error)
+      toast.error('Ошибка при сохранении данных')
+      setSubmitting(false)
     }
-    
-    router.push('/checkout/confirm')
-  } catch (error) {
-    console.error('🔴🔴🔴 [Checkout] Ошибка:', error)
-    toast.error('Ошибка при сохранении данных')
-    setSubmitting(false)
   }
-}
+
+  // Показываем скелетон пока не готовы
+  if (!isReady || loading) {
+    return <CheckoutSkeleton />
+  }
 
   // Если корзина пуста после загрузки — показываем сообщение
-  if (cartItems.length === 0 && !loading) {
+  if (cartItems.length === 0) {
     return (
       <div className="container mx-auto p-4 text-center">
         <h1 className="text-2xl font-bold mb-4">Корзина пуста</h1>
@@ -123,7 +137,7 @@ export default function CheckoutContent() {
     )
   }
 
-  // Показываем форму, когда данные загружены
+  // Показываем форму
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Оформление заказа</h1>
@@ -131,25 +145,19 @@ export default function CheckoutContent() {
       {/* Список товаров */}
       <div className="mb-6 border border-(--border) rounded-lg p-4 bg-(--bg)">
         <h2 className="font-semibold mb-2">Ваш заказ:</h2>
-        {loading ? (
-          <div className="text-(--text-muted) py-4">Загрузка товаров...</div>
-        ) : (
-          <>
-            {cartItems.map(item => {
-              const product = products.find(p => p.id === item.productId)
-              return (
-                <div key={item.id} className="flex justify-between py-2 border-b last:border-0">
-                  <span>{product?.name || '...'} x{item.quantity}</span>
-                  <span><Price price={product?.price || 0} /></span>
-                </div>
-              )
-            })}
-            <div className="flex justify-between font-bold mt-2 pt-2 border-t">
-              <span>Итого:</span>
-              <span><Price price={totalPrice} /></span>
+        {cartItems.map(item => {
+          const product = products.find(p => p.id === item.productId)
+          return (
+            <div key={item.id} className="flex justify-between py-2 border-b last:border-0">
+              <span>{product?.name || '...'} x{item.quantity}</span>
+              <span><Price price={product?.price || 0} /></span>
             </div>
-          </>
-        )}
+          )
+        })}
+        <div className="flex justify-between font-bold mt-2 pt-2 border-t">
+          <span>Итого:</span>
+          <span><Price price={totalPrice} /></span>
+        </div>
       </div>
 
       {/* Форма с валидацией */}
@@ -233,11 +241,11 @@ export default function CheckoutContent() {
         <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <Button
             type="submit"
-            disabled={submitting || loading}
+            disabled={submitting}
             size="lg"
             className="w-full sm:w-auto"
           >
-            {submitting ? 'Оформляем...' : 'Подтвердить заказ'}
+            {submitting ? 'Сохраняем...' : 'Продолжить'}
           </Button>
 
           <Link href="/cart">

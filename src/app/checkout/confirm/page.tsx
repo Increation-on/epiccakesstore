@@ -1,10 +1,11 @@
+// app/confirm/page.tsx
 'use client'
 
 export const dynamic = 'force-dynamic'
 
 import { useCartStore } from '@/store/cart.store'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Product } from '@/types/domain/product.types'
 import Link from 'next/link'
 import { LazyStripePayment } from '@/components/features/payment/LazyStripePayment'
@@ -13,14 +14,12 @@ import { toast } from '@/lib/toast'
 import { ConfirmPageSkeleton } from '@/components/features/skeleton/ConfirmPageSkeleton'
 import { useCurrencyStore } from '@/store/currency.store'
 import { OrderSummary } from './_components/orderSummary'
-import FullscreenLoader from '@/components/ui/FullscreenLoader'
-import { convertPrice, type Currency } from '@/lib/currency'
+import { convertPrice } from '@/lib/currency'
 
 export default function ConfirmPage() {
-
   const router = useRouter()
   const { data: session, status } = useSession()
-  const { items, setItems, clearCart } = useCartStore()
+  const { items, setItems } = useCartStore()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingFormData, setLoadingFormData] = useState(true)
@@ -29,12 +28,60 @@ export default function ConfirmPage() {
   const [showPayment, setShowPayment] = useState(false)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
-  const [cartLoaded, setCartLoaded] = useState(false)
   const [formData, setFormData] = useState<any>(null)
-  const [isRedirecting, setIsRedirecting] = useState(false)
   
+  const redirectingRef = useRef(false)
   const currency = useCurrencyStore((state) => state.currency)
   const cartItems = Array.isArray(items) ? items : []
+
+  // Проверка при загрузке
+  useEffect(() => {
+    const savedData = sessionStorage.getItem('checkoutFormData')
+    if (!savedData) {
+      window.location.href = '/cart'
+      return
+    }
+    
+    try {
+      const parsed = JSON.parse(savedData)
+      setFormData(parsed)
+    } catch (error) {
+       console.error('🔴 [Confirm] Ошибка парсинга formData:', error)
+      window.location.href = '/cart'
+    } finally {
+      setLoadingFormData(false)
+    }
+  }, [])
+
+  // Загрузка товаров
+  useEffect(() => {
+    async function loadProducts() {
+      if (cartItems.length === 0) {   
+        setProducts([])
+        setLoading(false)
+        return
+      }
+
+      const productIds = cartItems.map(item => item.productId)
+
+      try {
+        const res = await fetch('/api/products/by-ids', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: productIds })
+        })
+        const data = await res.json()
+        setProducts(Array.isArray(data) ? data : [])
+      } catch (error) {
+        console.error('Ошибка загрузки товаров:', error)
+        setProducts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProducts()
+  }, [cartItems.length])
 
   // Перенос корзины после входа/регистрации
   useEffect(() => {
@@ -94,98 +141,21 @@ export default function ConfirmPage() {
     const savedPaymentState = sessionStorage.getItem('paymentState')
     
     if (savedPaymentState) {
-      const { showPayment, clientSecret, orderId, timestamp } = JSON.parse(savedPaymentState)
-      
-      if (timestamp && Date.now() - timestamp < 5 * 60 * 1000) {
-        fetch(`/api/orders/${orderId}`)
-          .then(res => res.json())
-          .then(order => {
-            if (order.status === 'PAID' || order.status === 'DELIVERED') {
-              sessionStorage.removeItem('paymentState')
-              setShowPayment(false)
-              setClientSecret(null)
-              setOrderId(null)
-            } else {
-              setShowPayment(showPayment)
-              setClientSecret(clientSecret)
-              setOrderId(orderId)
-            }
-          })
-          .catch(() => {
-            sessionStorage.removeItem('paymentState')
-            setShowPayment(false)
-            setClientSecret(null)
-            setOrderId(null)
-          })
-      } else {
+      try {
+        const { showPayment, clientSecret, orderId, timestamp } = JSON.parse(savedPaymentState)
+        
+        if (timestamp && Date.now() - timestamp < 5 * 60 * 1000) {
+          setShowPayment(showPayment)
+          setClientSecret(clientSecret)
+          setOrderId(orderId)
+        } else {
+          sessionStorage.removeItem('paymentState')
+        }
+      } catch (error) {
         sessionStorage.removeItem('paymentState')
       }
     }
   }, [])
-
-  // Сохраняем состояние оплаты
-  useEffect(() => {
-    if (showPayment && clientSecret && orderId) {
-      sessionStorage.setItem('paymentState', JSON.stringify({
-        showPayment,
-        clientSecret,
-        orderId,
-        timestamp: Date.now()
-      }))
-    } else {
-      sessionStorage.removeItem('paymentState')
-    }
-  }, [showPayment, clientSecret, orderId])
-
-  // Следим за загрузкой корзины
-  useEffect(() => {
-    if (items) setCartLoaded(true)
-  }, [items])
-
-  // Загрузка товаров и данных формы
-  useEffect(() => {
-    async function loadProducts() {
-      if (cartItems.length === 0) {   
-        setProducts([])
-        setLoading(false)
-        return
-      }
-
-      const productIds = cartItems.map(item => item.productId)
-
-      try {
-        const res = await fetch('/api/products/by-ids', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: productIds })
-        })
-        const data = await res.json()
-        setProducts(Array.isArray(data) ? data : [])
-      } catch (error) {
-        console.error('Ошибка загрузки товаров:', error)
-        setProducts([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    const savedData = sessionStorage.getItem('checkoutFormData')
-    
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData)
-        setFormData(parsed)
-      } catch (error) {
-        console.error('Ошибка парсинга formData:', error)
-        router.push('/checkout')
-      }
-    } else {
-      router.push('/checkout')
-    }
-    
-    setLoadingFormData(false)
-    loadProducts()
-  }, [cartItems.length, router])
 
   const totalPrice = cartItems.reduce((sum, item) => {
     const product = products.find(p => p.id === item.productId)
@@ -195,8 +165,12 @@ export default function ConfirmPage() {
   const displayAmount = convertPrice(totalPrice, currency)
 
   const handleConfirm = async () => {
+    if (submitting || redirectingRef.current){
+return
+    } 
+    // Сразу блокируем рендер
     setSubmitting(true)
-    setIsRedirecting(true)
+    redirectingRef.current = true
 
     const orderData = {
       formData: formData,
@@ -212,6 +186,8 @@ export default function ConfirmPage() {
       total: totalPrice
     }
 
+
+
     try {
       const res = await fetch('/api/orders/cash/confirm', {
         method: 'POST',
@@ -220,40 +196,37 @@ export default function ConfirmPage() {
       })
 
       const result = await res.json()
-
       if (res.ok) {
-        clearCart()
-        sessionStorage.removeItem('checkoutFormData')
-        sessionStorage.removeItem('paymentState')
-        
-        setTimeout(() => {
+        // Используем requestAnimationFrame чтобы гарантировать что DOM обновился
+        requestAnimationFrame(() => {
           window.location.href = `/order/${result.orderId}/success`
-        }, 500)
+        })
       } else {
+         console.error('🔴 [Confirm] Ошибка API:', result.error)
         toast.error(result.error || 'Ошибка при оформлении заказа')
-        setIsRedirecting(false)
+        redirectingRef.current = false
+        setSubmitting(false)
       }
     } catch (error) {
+      console.error('🔴 [Confirm] Исключение:', error)
       console.error('Ошибка:', error)
       toast.error('Ошибка при отправке заказа')
-      setIsRedirecting(false)
-    } finally {
+      redirectingRef.current = false
       setSubmitting(false)
     }
   }
 
   const handleStartPayment = async () => {
+    if (loadingPayment) return
     
     setLoadingPayment(true)
     try {
       if (!formData) {
-        console.error('❌ formData отсутствует!')
         toast.error('Данные формы не найдены')
         return
       }
 
       if (cartItems.length === 0) {
-        console.error('❌ Корзина пуста!')
         toast.error('Корзина пуста')
         return
       }
@@ -273,7 +246,6 @@ export default function ConfirmPage() {
         status: 'PENDING_PAYMENT',
         userId: session?.user?.id
       }
-
 
       const orderRes = await fetch('/api/orders', {
         method: 'POST',
@@ -316,44 +288,44 @@ export default function ConfirmPage() {
       }))
 
     } catch (error) {
-      console.error('❌ Ошибка:', error)
+      console.error('Ошибка:', error)
       toast.error(error instanceof Error ? error.message : 'Ошибка при создании платежа')
     } finally {
       setLoadingPayment(false)
     }
   }
 
-  // === ПОРЯДОК РЕНДЕРА ===
-  
-  // 1. Если редирект — только лоадер
-  if (isRedirecting) {
-    return <FullscreenLoader />
-  }
-
-  // 2. Защита от неавторизованных
-  if (status === 'unauthenticated') {
-    router.push('/cart')
-    return null
-  }
-
-  // 3. Показываем скелетон пока загружаются данные
-  if (!cartLoaded || loading || loadingFormData) {    
-    return <ConfirmPageSkeleton />
-  }
-
-  // 4. Если после загрузки нет данных — ошибка
-  if (cartItems.length === 0 || !formData) {
+  // Если редирект - показываем оверлей
+  if (redirectingRef.current) {
     return (
-      <div className="container mx-auto p-4 text-center">
-        <h1 className="text-2xl font-bold mb-4">Нет данных для подтверждения</h1>
-        <Link href="/cart" className="text-blue-500 hover:underline">
-          Вернуться в корзину
-        </Link>
+      <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin text-4xl mb-4">⏳</div>
+          <p className="text-gray-600">Оформление заказа...</p>
+        </div>
       </div>
     )
   }
 
-  // 5. Нормальный рендер
+  // Показываем скелетон пока загружаются данные
+  if (loadingFormData || loading) {    
+    return <ConfirmPageSkeleton />
+  }
+
+  // Нет данных для оформления - редирект
+  if (cartItems.length === 0 || !formData) {
+    window.location.href = '/cart'
+    return (
+      <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin text-4xl mb-4">⏳</div>
+          <p className="text-gray-600">Перенаправление...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Нормальный рендер
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Подтверждение заказа</h1>

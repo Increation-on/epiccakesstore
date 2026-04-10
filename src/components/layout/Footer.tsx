@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
           <div>
-            <h3 className="font-semibold mb-3 text-gray-200">EpicCakes</h3>
+            <h3 className="font-semibold mb-3 text-gray-200">EpicCakesStore</h3>
             <p className="text-sm text-gray-400">
               Вкуснейшие торты с доставкой. Только натуральные ингредиенты.
             </p>
@@ -34,7 +34,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-4 text-center text-sm text-gray-400">
-          © {new Date().getFullYear()} EpicCakes. Все права защищены.
+          © {new Date().getFullYear()} EpicCakesStore. Все права защищены.
         </div>
       </div>
     </footer>

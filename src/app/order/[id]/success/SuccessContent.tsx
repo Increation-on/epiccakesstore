@@ -1,4 +1,4 @@
-//app/order/[id]/success/SuccessContent.tsx
+// app/order/[id]/success/SuccessContent.tsx
 'use client'
 
 import { useParams } from 'next/navigation'
@@ -17,7 +17,6 @@ export default function SuccessContent() {
 
   useEffect(() => {
     async function confirmOrder() {
-
       // Устанавливаем флаг, что оплата обрабатывается
       sessionStorage.setItem('processing_payment', 'true')
       
@@ -36,7 +35,6 @@ export default function SuccessContent() {
           const data = await res.json()
           
           if (res.ok) {
-            
             // ТОЛЬКО ПОСЛЕ УСПЕШНОГО API очищаем корзину
             clearCart()
             localStorage.removeItem('cart-storage')
@@ -47,6 +45,9 @@ export default function SuccessContent() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ items: [] })
             })
+            
+            // Устанавливаем флаг завершения заказа
+            sessionStorage.setItem('orderCompleted', 'true')
             
             setPaymentStatus('paid')
             toast.success('Оплата прошла успешно!')
@@ -79,6 +80,9 @@ export default function SuccessContent() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: [] })
           })
+          
+          // Устанавливаем флаг завершения заказа
+          sessionStorage.setItem('orderCompleted', 'true')
           
           setPaymentStatus('pending')
         } catch (error) {

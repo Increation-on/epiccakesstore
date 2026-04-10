@@ -1,3 +1,4 @@
+// app/cart/page.tsx (CartContent)
 'use client'
 
 import { useCartStore } from '@/store/cart.store'
@@ -24,6 +25,7 @@ export default function CartContent() {
   const [isCartLoading, setIsCartLoading] = useState(true)
   const [showArchiveModal, setShowArchiveModal] = useState(false)
   const [archivedProducts, setArchivedProducts] = useState<any[]>([])
+  const [isCheckingOut, setIsCheckingOut] = useState(false) // ← Добавляем состояние
 
   // Состояние для модалки подтверждения
   const [modalState, setModalState] = useState<{
@@ -117,6 +119,12 @@ export default function CartContent() {
   }, 0)
 
   const handleCheckout = () => {
+    // Блокируем повторные клики
+    if (isCheckingOut) {
+      return
+    }
+    
+    
     // Проверяем, нет ли архивных товаров перед переходом
     const hasArchived = cartItems.some(item => {
       const product = products.find(p => p.id === item.productId)
@@ -128,7 +136,17 @@ export default function CartContent() {
       return
     }
     
-    router.push('/checkout')
+    if (cartItems.length === 0) {
+      toast.error('Корзина пуста')
+      return
+    }
+    
+    setIsCheckingOut(true)
+    
+    // Используем setTimeout чтобы гарантировать что состояние обновилось
+    setTimeout(() => {
+      window.location.href = '/checkout'
+    }, 100)
   }
 
   // Функции для модалки
@@ -358,8 +376,13 @@ export default function CartContent() {
             </div>
 
             {isLoggedIn ? (
-              <Button onClick={handleCheckout} size="lg" className="w-full">
-                Оформить заказ
+              <Button 
+                onClick={handleCheckout} 
+                disabled={isCheckingOut} // ← Блокируем кнопку во время перехода
+                size="lg" 
+                className="w-full"
+              >
+                {isCheckingOut ? '...' : 'Оформить заказ'}
               </Button>
             ) : (
               <Link href="/login">
@@ -379,7 +402,7 @@ export default function CartContent() {
         </div>
       </div>
 
-      {/* Модалка подтверждения */}
+      {/* Модалки... */}
       <Modal
         isOpen={modalState.isOpen}
         onClose={closeModal}
@@ -400,7 +423,6 @@ export default function CartContent() {
         </div>
       </Modal>
 
-      {/* Модалка архивных товаров */}
       <Modal
         isOpen={showArchiveModal}
         onClose={() => setShowArchiveModal(false)}
