@@ -63,7 +63,12 @@ export default function ProductsContent() {
     // Обновляем URL при изменении параметров
     useEffect(() => {
         const params = new URLSearchParams();
-        params.set('page', String(page));
+        
+        // ✅ Добавляем page только если это не первая страница
+        if (page > 1) {
+            params.set('page', String(page));
+        }
+        
         if (sort !== 'newest') params.set('sort', sort);
         if (selectedCategory) params.set('category', selectedCategory);
         if (minPrice) params.set('minPrice', String(minPrice));
@@ -71,9 +76,9 @@ export default function ProductsContent() {
         if (inStockOnly) params.set('inStock', 'true');
 
         const queryString = params.toString();
-        const url = `${pathname}?${queryString}`;
+        const url = queryString ? `${pathname}?${queryString}` : pathname;
         router.push(url, { scroll: false });
-    }, [page, sort, selectedCategory, minPrice, maxPrice, inStockOnly]);
+    }, [page, sort, selectedCategory, minPrice, maxPrice, inStockOnly, pathname, router]);
 
     // Загрузка категорий
     useEffect(() => {
@@ -159,7 +164,6 @@ export default function ProductsContent() {
         params.set('page', String(newPage));
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
         
-        // Скроллим к контейнеру товаров
         setTimeout(() => {
             productsContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }, 100)
